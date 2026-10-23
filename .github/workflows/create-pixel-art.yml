@@ -68,7 +68,7 @@ jobs:
               b=sources[p]
               digest.update(p.encode()+b'\0'+len(b).to_bytes(8,'big')+b)
           expected='49d8e6c29c0c2aee1dbdafcc67517bc6f36d0d7d0bd1c6a3902e3feb9e6c9e44'
-          assert digest.hexdigest()==expected, 'Source bytes differ from user's verified ZIP'
+          assert digest.hexdigest()==expected, "Source bytes differ from user's verified ZIP"
           pathlib.Path('/tmp/toonroyale-input.zip').unlink(missing_ok=True)
           with zipfile.ZipFile('/tmp/toonroyale-input.zip','w',zipfile.ZIP_DEFLATED) as z:
               for name,content in sources.items():z.writestr(name,content)
