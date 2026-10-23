@@ -1,0 +1,1767 @@
+{
+  "edition": "pixel-art-fiel-v1",
+  "source": "assets/img",
+  "total": 176,
+  "files": [
+    {
+      "path": "accessories/access_1.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "d071194af1cce793d8edb808b8d064ec8600325f5e59497bab66e55e2baecf2c"
+    },
+    {
+      "path": "accessories/access_10.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "3bdc365f5db4ca049c642ffa1c9b5e82ba69aa4736826f7ace20ee4850b1cc86"
+    },
+    {
+      "path": "accessories/access_11.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.95502,
+      "sha256": "7ab72106a0127b2cf8d07cd8a7f01a54bf1ccef95f49d9533515f6b708e45f80"
+    },
+    {
+      "path": "accessories/access_12.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.97441,
+      "sha256": "3601ed8abbd4f1c308fe7d451789bdb7660c84397c80df38e9820be98a6e2524"
+    },
+    {
+      "path": "accessories/access_13.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.96897,
+      "sha256": "cf8609a1054a3402ad6f1407fd29c1fa5440302f3d9e316dc8ca0ad3e8806c9c"
+    },
+    {
+      "path": "accessories/access_14.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.96034,
+      "sha256": "e860965bea6b8eda66f107fcb572f88070d7bdb11cbb16c8b50b6a04ff50a66f"
+    },
+    {
+      "path": "accessories/access_15.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.9719,
+      "sha256": "976bfd91892c003ecc307c142dc162151ebbce2abf73aeeb55d786574e88df96"
+    },
+    {
+      "path": "accessories/access_16.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98446,
+      "sha256": "65b73bff885260196e9f98388128879c2ee7912cbdfb2f76614188cb2b06a6a3"
+    },
+    {
+      "path": "accessories/access_17.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.99088,
+      "sha256": "cb460ff30e18c3d180436697c4160343bba5db6da0af5869fe27cda9a1e71952"
+    },
+    {
+      "path": "accessories/access_18.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.95042,
+      "sha256": "ba623d27c57c73001f229777b31fc9c79ddee13d1a9eaa3ec093525e04384072"
+    },
+    {
+      "path": "accessories/access_19.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.96968,
+      "sha256": "6d91c378b2b557798b1c767076bde1867ed9a5202501bbdc1399b830d9522fc5"
+    },
+    {
+      "path": "accessories/access_2.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "838e92418e93305871aec5a15bf71ce27a5043161ac99109069f158ac0a3e754"
+    },
+    {
+      "path": "accessories/access_20.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.96451,
+      "sha256": "315b4302dc207ef35a4e17b89efb54308670202ee55f8d8e982b26029a7020aa"
+    },
+    {
+      "path": "accessories/access_21.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.97425,
+      "sha256": "31b08c51e33c2231fff8ec338441f258210c5d49f95c7a806b9ca25b61be17d0"
+    },
+    {
+      "path": "accessories/access_3.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "eabea4ccd60d90944842f8c7b7f17904e5e8c8c64acae6b37d5d653e600ad144"
+    },
+    {
+      "path": "accessories/access_4.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "ae1e615509a6c5046f646df27323e415cc648efe3467801e4b1bf6733232f1ce"
+    },
+    {
+      "path": "accessories/access_5.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "ef63ec2e98326f3c3212a835919873ee8ff16f7a467652214cdbd23a8ae7d3e9"
+    },
+    {
+      "path": "accessories/access_6.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "0965067567c3bf8edcd3a172aa1336f99f47414876bbf2d9f27395f97c47327b"
+    },
+    {
+      "path": "accessories/access_7.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "d70f4b113e9dc47abfdd0f37c955bcde6a9d02d850dd5d9848ad849e60c04052"
+    },
+    {
+      "path": "accessories/access_8.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98364,
+      "sha256": "1670ddba85258496b41a33d40abff0f6157edd27269e5fb19b0ad87f96b057aa"
+    },
+    {
+      "path": "accessories/access_9.png",
+      "size": [
+        200,
+        200
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98528,
+      "sha256": "44e593d6b8d74adfe912d291021057dd7d62cdf4a7ca2d4f92fcb75e725b62e1"
+    },
+    {
+      "path": "animals/bull_1.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98646,
+      "sha256": "8eae89f4f85e67e1db72a2abf765766d65efb6389500fb025e7b647c2e7b61af"
+    },
+    {
+      "path": "animals/bull_2.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98646,
+      "sha256": "873ee69e7de8740a11388d7f04d7b1a33c0853f2c899e10096a6a2ea2e91f975"
+    },
+    {
+      "path": "animals/chicken_1.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.97899,
+      "sha256": "5d1ce44e90aff31e4268522bc87514e47a47b89ed9fbce856f725fc6f300bf41"
+    },
+    {
+      "path": "animals/cow_1.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98727,
+      "sha256": "97ecbe85c920544a246be5c836fa061d6e1f13f5013a58196e85311defb82158"
+    },
+    {
+      "path": "animals/crate_1.png",
+      "size": [
+        128,
+        128
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.97454,
+      "sha256": "b35b1d5fc9d2b3c7acad3172e3649cfddfce72c7977dd8de5f7820b76dda836b"
+    },
+    {
+      "path": "animals/duck_1.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.97972,
+      "sha256": "d3e9f4ecbf5ab2bec697bbbba388b75dfb81c31a0a9e91eaadccc3bb636ddf05"
+    },
+    {
+      "path": "animals/enemy.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.96709,
+      "sha256": "10d1cf1f9f06bda1091f8e312b31a31115f8d276a42a659ad7e75cedbb580c2a"
+    },
+    {
+      "path": "animals/fish_1.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.96397,
+      "sha256": "90890cec500db59fdad03926d6b3991e37bca585175d3b065b69c8d22faddf17"
+    },
+    {
+      "path": "animals/pig_1.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98288,
+      "sha256": "39cda004d0001ef569f9a33a216a18336d6bef1c1a1456ad9868c2ef4e16b26c"
+    },
+    {
+      "path": "animals/sheep_1.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98469,
+      "sha256": "cf6d8a09c9b0ae1000de275c909a2b66a1863611a4cfed6682d136b440845f7f"
+    },
+    {
+      "path": "animals/sid.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.96713,
+      "sha256": "6460d7028bff4ff50695b4675c3df9a9797e1da4ac0b316b3eaca04474009c20"
+    },
+    {
+      "path": "animals/vince.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.9662,
+      "sha256": "fb7abc11ce857c04c18cf0e9334a9fdf1eaee653a0b00e74825e58ba35f236a0"
+    },
+    {
+      "path": "animals/wolf_1.png",
+      "size": [
+        300,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98525,
+      "sha256": "8035ab409c878e9c07810664a48b3713fc149bb4b91b34e1864186c2138b726b"
+    },
+    {
+      "path": "animals/wolf_2.png",
+      "size": [
+        263,
+        300
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98438,
+      "sha256": "ce3e1ab38ba7f59f21f503e55946a428c19a87580e8b6f600808673f8db917a4"
+    },
+    {
+      "path": "favicon.png",
+      "size": [
+        32,
+        32
+      ],
+      "pixel_cell": 1,
+      "shape_overlap": 1.0,
+      "sha256": "8d6a81c14fce2e95817e62b95ed4ec83cee3962ef2ef33141cdf076d33eb3abd"
+    },
+    {
+      "path": "hats/hat_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98467,
+      "sha256": "1c7aaefa97e9e722b51afb17c4dfb0739ba37d6f6173fcf99192b66b217bb45a"
+    },
+    {
+      "path": "hats/hat_10.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98659,
+      "sha256": "35dbc444e7382b10c9db7f112d35dbbbbc1028ecc980cb4d448506d5be1e26bb"
+    },
+    {
+      "path": "hats/hat_11.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98266,
+      "sha256": "1171a8f3a02885f97a89b5f2997795d3ca335e9439c9b4087a03486a2a5579ff"
+    },
+    {
+      "path": "hats/hat_11_p.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98019,
+      "sha256": "3d57f8828158b7f40e63023b08042dc39ee6b260faff015e61ba5d97649760fd"
+    },
+    {
+      "path": "hats/hat_11_top.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.97528,
+      "sha256": "6436354f0e39d0450543c9b987e30fd9d680eb76eccc55c36321565472472361"
+    },
+    {
+      "path": "hats/hat_12.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98565,
+      "sha256": "b765593f5930d2409eee124e35a16de6f66fb91f6d6f460a1b23e3102e70b551"
+    },
+    {
+      "path": "hats/hat_13.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98618,
+      "sha256": "892ec3f2715236fa73da9c559f9455428e94c0da5421e17d159b0fd4e83d0283"
+    },
+    {
+      "path": "hats/hat_14.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98419,
+      "sha256": "7bdb5a4863c96d239a0766166550a88fc9e36036871221defdd5ba91624f3809"
+    },
+    {
+      "path": "hats/hat_14_p.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98435,
+      "sha256": "6821c0e94243e94bf4b320006b99aaa993d2a8356f007c23399a7522dce0bee3"
+    },
+    {
+      "path": "hats/hat_14_top.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.97918,
+      "sha256": "995b7408659a1219cfebe8c2c28731a319b63a8331d8836d8d626f24ceef36f8"
+    },
+    {
+      "path": "hats/hat_15.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98565,
+      "sha256": "3c27bee1e414be9f07e3dd541116ba793d79cf0c60ad122c131da94b27a3423b"
+    },
+    {
+      "path": "hats/hat_18.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98467,
+      "sha256": "5464eeed99e1a47d56fcb0181e04fd5790bf870df3423e5f109081141829e913"
+    },
+    {
+      "path": "hats/hat_2.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98565,
+      "sha256": "41bcde6d78314f5f1d13ba1588f4288c9f1e0ff1b8b77803f0d957121afb1496"
+    },
+    {
+      "path": "hats/hat_20.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.9848,
+      "sha256": "a584957296257f84afd2fa0fc5d383cd98fdc7d60da8f0b3477902ff1866c2c5"
+    },
+    {
+      "path": "hats/hat_21.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98613,
+      "sha256": "544be072d8aa0c0ea85a6c0663b6d253d8bf8e14a65130e07e9ea69cfd1c5329"
+    },
+    {
+      "path": "hats/hat_22.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98553,
+      "sha256": "cc95ac07849d33985b0d2261630f96ee8c47ec5c817dd4da6bd5782f3708cf34"
+    },
+    {
+      "path": "hats/hat_23.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98565,
+      "sha256": "f3bca262e6f328f24dd0d1ffdaef673d7bb2eeab51e9c0d92d7e786c6dabe595"
+    },
+    {
+      "path": "hats/hat_26.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.9827,
+      "sha256": "46d460c1ae86373c98d817f18729b81586ed362354cc1c5a0a2c2a0e3c171c7b"
+    },
+    {
+      "path": "hats/hat_27.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98206,
+      "sha256": "502087140091cb1b5bf29f178c6fde9f78799ee7468d6680d18a4a19fb9c4b83"
+    },
+    {
+      "path": "hats/hat_28.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98589,
+      "sha256": "fbd93ddf4e124ebf0d06b05c14771aa07ba04f110d736adb50c2d58465ac5e0f"
+    },
+    {
+      "path": "hats/hat_29.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98569,
+      "sha256": "10c89845a8f6cf6291aa215fe424bf38ce63e98710517457e7b0327651051c09"
+    },
+    {
+      "path": "hats/hat_30.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98453,
+      "sha256": "466f418d144fca996bba406ad6f8981e204804043a71604bc03454df9fa9ea93"
+    },
+    {
+      "path": "hats/hat_31.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98205,
+      "sha256": "6c8ef8404edc00d1f75d3d71ac1ee9cee41862fb163366d5911cf06b6c1efcae"
+    },
+    {
+      "path": "hats/hat_32.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98535,
+      "sha256": "0c2514c196af98d7fc34c2a50a4681b2af55561eec7dd8c384841eb15015880b"
+    },
+    {
+      "path": "hats/hat_35.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.97501,
+      "sha256": "604204cc0fc2cea432c27a7897f6bcb93d57bfebb49e6bbc1cc4cd82cb2c6ae3"
+    },
+    {
+      "path": "hats/hat_36.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98575,
+      "sha256": "15383c3d9b5f5a708af70393d203bbbae42621488b01e2d0e130760ed7aba224"
+    },
+    {
+      "path": "hats/hat_37.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98472,
+      "sha256": "dd5991b5de0c9f0affcb0c6ca20c16acb013543da579556e85a1a5e5ee576492"
+    },
+    {
+      "path": "hats/hat_38.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98575,
+      "sha256": "64d54b72beadd4cc61962d3e071fd536da6ec6a3426f46cf2a678962486bec9d"
+    },
+    {
+      "path": "hats/hat_4.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98565,
+      "sha256": "47593b9b0066c10cdc2f6c37b7836e4c18fc0d745fcad7c8094c27eac1e33cf2"
+    },
+    {
+      "path": "hats/hat_40.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98419,
+      "sha256": "468ac796befdef47701d63d276b4481421d5b4dcd32840a2b0f54b74afa0f8ea"
+    },
+    {
+      "path": "hats/hat_42.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98585,
+      "sha256": "a7cf6c229eaf0d850c5a798e9b8c2bbca523520d5af4e705fc44625ad7683da5"
+    },
+    {
+      "path": "hats/hat_43.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98558,
+      "sha256": "dbf692d39ebf66c8962c808bdbd5f1cd6452885cb3c9790908218735993d537a"
+    },
+    {
+      "path": "hats/hat_44.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98577,
+      "sha256": "a5b70e7d736991b83a0b05d78427319250a420b6dc764219fb003fb75dd430d2"
+    },
+    {
+      "path": "hats/hat_45.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98216,
+      "sha256": "77288ad62f6368f63c5209819b27e470ea42fe918449c1afef393f37cb5e236f"
+    },
+    {
+      "path": "hats/hat_46.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98494,
+      "sha256": "144ecf7fbd9b382dd9d40c314bdb06bc84e090cbc2b41eae2958c26830c72bf4"
+    },
+    {
+      "path": "hats/hat_48.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.96244,
+      "sha256": "4dcab8a2072faa8b60874bcc1594991438d3073939934fd4dcc3f65fe620f2db"
+    },
+    {
+      "path": "hats/hat_49.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98101,
+      "sha256": "e107ec713f84256517d1488c2cffcf5c48d3174c6341eacf9e78c238a5707aab"
+    },
+    {
+      "path": "hats/hat_5.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98565,
+      "sha256": "19d9af749736dac5b5e0dd3e78fcd1ce13c46399fc5b72ed59d4ea9fcfefa3c9"
+    },
+    {
+      "path": "hats/hat_50.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98129,
+      "sha256": "8d4047f185236bfd5bc3be40fd9a831d2b56c6680416f89008a51d87d114fa11"
+    },
+    {
+      "path": "hats/hat_51.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98129,
+      "sha256": "a17e334c66470b87f0b5135ac21bb88c49a8f68ea61d3fe44be5af8b9f9a59a3"
+    },
+    {
+      "path": "hats/hat_52.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98622,
+      "sha256": "a5a153378fd5ca6a199c0cfb1261d78e24427d622641b21c2e63b6b600b2fe8e"
+    },
+    {
+      "path": "hats/hat_53.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98479,
+      "sha256": "ec3c196e2cf33555d75810de3d3c9a10145346809ef12603238ec72d9e8863d2"
+    },
+    {
+      "path": "hats/hat_53_p.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.9833,
+      "sha256": "30434b5863f7f009b47bd15c6ffae75b1d3a5326257669b17b0ebf150e9d9cc8"
+    },
+    {
+      "path": "hats/hat_53_top.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.9815,
+      "sha256": "ce17cd4e10df1d8d7d24f3fc5ba092ee1bab5bc85a038afd8e5c3cf950ec3d20"
+    },
+    {
+      "path": "hats/hat_55.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98453,
+      "sha256": "29bbabd7a49e6c3c25d5114888534831bbbb444ed6852bb621656da55360a8d4"
+    },
+    {
+      "path": "hats/hat_56.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.9851,
+      "sha256": "e295674995d722cf71ff7dd7c8b4b96c654334fce131a60226dd779bc8296484"
+    },
+    {
+      "path": "hats/hat_57.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98647,
+      "sha256": "4f3bf783e99176161c675834f9338ff26b19873ec22e91c3e83489713739aec6"
+    },
+    {
+      "path": "hats/hat_58.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98311,
+      "sha256": "685b14377efb7d2576a38172b6004463ec8fa8b59ec9baafffe7dbacddb4bf09"
+    },
+    {
+      "path": "hats/hat_6.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98565,
+      "sha256": "9b5c169acc8f993d50ee8380aedebb743f9b25fcb9979d9d15dc1d8c76c685db"
+    },
+    {
+      "path": "hats/hat_7.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98414,
+      "sha256": "c2786eb9bc919f72df9470667d0cc8b6e35419def77ab54dfb7cfa4de78ba38f"
+    },
+    {
+      "path": "hats/hat_8.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98565,
+      "sha256": "8b33da32b7d4a2e801458ed554ebfea7bf69a54b691fe9dd39fd6877811f4963"
+    },
+    {
+      "path": "hats/hat_9.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 3,
+      "shape_overlap": 0.98553,
+      "sha256": "16f470e0c2523ae757b88366f96de0df0a10774c803b3c6ae84d4cd2ddd6102b"
+    },
+    {
+      "path": "icons/crown.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9834,
+      "sha256": "cbfed7983e3128d1d0d8a743a95001951285f097d1c948aca8f32337f3f4917c"
+    },
+    {
+      "path": "icons/skull.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9879,
+      "sha256": "6d2a368dee339368e43265f79acb970d92d57239f9445642b57481ee4d5894ba"
+    },
+    {
+      "path": "promotion/banner_4.png",
+      "size": [
+        640,
+        200
+      ],
+      "pixel_cell": 1,
+      "shape_overlap": 1.0,
+      "sha256": "c3f2d1986e430cc47dc3040d92d040f2f6bfb4e4c0934134520b49e86291acbd"
+    },
+    {
+      "path": "resources/food_ico.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.99042,
+      "sha256": "b3238d9b0cb3280eac9b05efa95af11c1c2d52546920deccf5336a8fbab67e9c"
+    },
+    {
+      "path": "resources/gold_ico.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.99046,
+      "sha256": "c4bf23087fec9f2f32d3bbc0cee55803786f23d2d6097ef1ee69ad250ede1554"
+    },
+    {
+      "path": "resources/stone_ico.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.99151,
+      "sha256": "c48198114deedc7721db9f7c35f5bdb22f26c1756f6c9fee3f524e4ecd47bbcd"
+    },
+    {
+      "path": "resources/wood_ico.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9884,
+      "sha256": "ac559fcf8e3bbaa77d644eb1c4697093dafaaf44566f48df8846582f8a693fdb"
+    },
+    {
+      "path": "weapons/arrow_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.95621,
+      "sha256": "ea4b2bf1ae5b5dac2b136b651b78e90454fd603eb2f09eaf8031762070429ad3"
+    },
+    {
+      "path": "weapons/axe_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97564,
+      "sha256": "c37b61ba0803928de97ff31cdae1e0a8b7eb40f3e3ea54c2b5e214c04f51e732"
+    },
+    {
+      "path": "weapons/axe_1_d.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97903,
+      "sha256": "b19a0a47764a9845fd87f8d1968295ecdb2b29a0bd99b5335f79dd2e1cdb0aa3"
+    },
+    {
+      "path": "weapons/axe_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97694,
+      "sha256": "761613394f0d180245de2b7490fae621ea6e9db87ed07c1e968f3410c8d92074"
+    },
+    {
+      "path": "weapons/axe_1_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97861,
+      "sha256": "1d2b6331297aa92126b05a531a4ac18bbd966e4ac327d0eb5a557ceb8769d555"
+    },
+    {
+      "path": "weapons/axe_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97412,
+      "sha256": "465b23c134a2d7757839180c9bb674dcc464b0b9fc3aa65431041bec780a15e2"
+    },
+    {
+      "path": "weapons/bat_1.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97836,
+      "sha256": "771dfe19506e8234b13232ee9ca75b0e2e6e742e446fef203c5d8bd3646e8742"
+    },
+    {
+      "path": "weapons/bat_1_d.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97671,
+      "sha256": "31132b94d6539be6fdb4fc29d5098ad0f3f529afe106efd060f66bfa0737a556"
+    },
+    {
+      "path": "weapons/bat_1_e.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97262,
+      "sha256": "28c079445effa41ec0f3e6a236633a8882748f109b15c36a4cd67a4ff141db58"
+    },
+    {
+      "path": "weapons/bat_1_g.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97522,
+      "sha256": "bc10de3feddcd7697ec2d70f2ddeea607449c6bdb6ddcae3560a045e1218ac10"
+    },
+    {
+      "path": "weapons/bat_1_r.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.98083,
+      "sha256": "26df718e9d2690357a4c8646d492ac7ea93a9bb0839254fd2a54973c68fbd46c"
+    },
+    {
+      "path": "weapons/bow_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.95635,
+      "sha256": "5f5ca7359444247d2fadf21f0dd69671fa6ecbd246c3dc098405938807865890"
+    },
+    {
+      "path": "weapons/bow_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9638,
+      "sha256": "e7bdc22f5c13e504c4bf7216b6209667f2f8fe9f995588e3b12f37218f6f0689"
+    },
+    {
+      "path": "weapons/bow_1_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9564,
+      "sha256": "5917397f10a56c77347e857cb852f54cdc0263ad4e6649ba6514279884c2c730"
+    },
+    {
+      "path": "weapons/bow_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.95826,
+      "sha256": "9a182906cbd169419d3da9b08462644e1dcb93abecf6f44e6d55ec88f3b6d2eb"
+    },
+    {
+      "path": "weapons/bullet_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.94553,
+      "sha256": "8fb94a7b9a3c6b0ad22c187cbe38596187d1e586cdfb6ad309246b5af527973a"
+    },
+    {
+      "path": "weapons/crossbow_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97068,
+      "sha256": "aee5a7e52e1ae74741a4becf20d60f143710c8ca661f8b9331c6fe53619d8ff1"
+    },
+    {
+      "path": "weapons/crossbow_1_d.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96894,
+      "sha256": "d5a79abb80feacdbf94602819950f1f0a0874f981ef780b63ab1cfe73672f7e5"
+    },
+    {
+      "path": "weapons/crossbow_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96402,
+      "sha256": "4b14de99eecedd88657d68e8f9ddab4d99088ac0f3fa85941c969eff442b53fc"
+    },
+    {
+      "path": "weapons/crossbow_1_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97001,
+      "sha256": "b72886c63fb0ab73585222655ec0f5d400281b61a3af3d02f4f62261ddb082af"
+    },
+    {
+      "path": "weapons/crossbow_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.95934,
+      "sha256": "01217bdb97ed46c2941ce25f48538e29209c2de5423558f29266ef6e86885125"
+    },
+    {
+      "path": "weapons/crossbow_2.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96042,
+      "sha256": "f9dab966dd5fcf45231ad8d0e38c1ad7d3105ccb343ae5d9c25c714b5c830c86"
+    },
+    {
+      "path": "weapons/crossbow_2_d.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96024,
+      "sha256": "13da67111c590a486f9bebbe2bd80af4a51d766a81a5f195cb4c2533da027b64"
+    },
+    {
+      "path": "weapons/crossbow_2_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9681,
+      "sha256": "72f9bdf2050b4bc13ed331c78b19238bb7015cc7eac51292905c92e29b31a1b2"
+    },
+    {
+      "path": "weapons/crossbow_2_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97896,
+      "sha256": "d881460c847f152087f5a88b8c939961cdf3bdf4a13cd1b528c2987a05abe0c0"
+    },
+    {
+      "path": "weapons/crossbow_2_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.95215,
+      "sha256": "0ac338f5ab11545126e5f93c23db3e19a3c59c9055968b39494a1a329849a6df"
+    },
+    {
+      "path": "weapons/dagger_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96492,
+      "sha256": "f2ca24fc2352a0b176c89bb1254a5fc5b0caf386c926b56af959caa5dc082293"
+    },
+    {
+      "path": "weapons/dagger_1_d.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97337,
+      "sha256": "d4b0804064a5cde30cb9d683adf83b4fc6351fc1f109d0bd42badabd3ec680f4"
+    },
+    {
+      "path": "weapons/dagger_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.95354,
+      "sha256": "145acc44a34ca6868eb981be1d27d3ac3dc881acc639296dec1c61e2237f9181"
+    },
+    {
+      "path": "weapons/dagger_1_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96496,
+      "sha256": "047a7dfc2fc1e7e1e79bf438055c7aa235a85a841b9cb8aaac3d102f1afd2f78"
+    },
+    {
+      "path": "weapons/dagger_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96535,
+      "sha256": "172f4ffb5aecababc6c75cb04783cb3d7f8591b75e6cd0031720b15f5eb49a56"
+    },
+    {
+      "path": "weapons/grab_1.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97693,
+      "sha256": "c516978d1aa255994be5fc4fce17a901619f876c743a880059dbcacbcc09789c"
+    },
+    {
+      "path": "weapons/grab_1_d.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97693,
+      "sha256": "a72c64c95f25cd959d2970a1c4482777ab08edf7cba23a34a2ee0cbfbf089cfc"
+    },
+    {
+      "path": "weapons/grab_1_e.png",
+      "size": [
+        192,
+        300
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97371,
+      "sha256": "b67e1d8135402f7ebfc0f60218820653832ea34284cab512f317e12accf42027"
+    },
+    {
+      "path": "weapons/grab_1_g.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97693,
+      "sha256": "a243cfd09033f2a89a8baa24de90508f49414e5e9671ff806e22e89935702c26"
+    },
+    {
+      "path": "weapons/grab_1_r.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97676,
+      "sha256": "98d9a4639268eb087701816d3809567ed6810d0014dabf6e6b9c6cca94023788"
+    },
+    {
+      "path": "weapons/great_axe_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97714,
+      "sha256": "28f5140f0ce24e1ddf2cd23845667a9857cb6c60737ba951387109d851ec578a"
+    },
+    {
+      "path": "weapons/great_axe_1_d.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97845,
+      "sha256": "068783ae22587ae8607fdf981f6cbfe56bc6db3be72cea69e9bbb0ab1a86089c"
+    },
+    {
+      "path": "weapons/great_axe_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97148,
+      "sha256": "c1d19b2862406a94643349ba16ea341327a0518e18e3cd8cfa87e719777117c1"
+    },
+    {
+      "path": "weapons/great_axe_1_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97965,
+      "sha256": "3461e59a922cf8e23ab6579919293a9cd68d1d49bfda1ed32ac7b78f93b05140"
+    },
+    {
+      "path": "weapons/great_axe_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97806,
+      "sha256": "976ea09643434bcc4e94105f88075789101cb39adb7e9bf6009de24ca8aed012"
+    },
+    {
+      "path": "weapons/great_hammer_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9761,
+      "sha256": "5859c3cf516ac0bf4187e1690fcfe00bc22fdcca6137187af490d33930c14ec7"
+    },
+    {
+      "path": "weapons/great_hammer_1_d.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9817,
+      "sha256": "da8e7fb6b159f65ae74b7568458aaa016d615a4fe55763203cc6047b92d41b7c"
+    },
+    {
+      "path": "weapons/great_hammer_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97554,
+      "sha256": "7a0d934c7cf44aa5b2cc965f39f776cc590728f070d6a7dd8b66fb4d629368ae"
+    },
+    {
+      "path": "weapons/great_hammer_1_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.98148,
+      "sha256": "c8326e6ce3117f9af3784d1febaeda30f4f4af1926d7898dcd31c95d72c66e0c"
+    },
+    {
+      "path": "weapons/great_hammer_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.98379,
+      "sha256": "b12deb8560b1928c2a84be1a8158775bd87ebca704cbbbdeb40f293441795bcf"
+    },
+    {
+      "path": "weapons/hammer_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97575,
+      "sha256": "4b7c5742d3c8ff594e7f4efee753e965fe5f10e0f7d1ea6955b23d53a8ffd965"
+    },
+    {
+      "path": "weapons/hammer_1_d.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97881,
+      "sha256": "d70e04ff956977f41d1b927ad0b80b5d1c119af5c1a7f7d607f7f56e0028aa5c"
+    },
+    {
+      "path": "weapons/hammer_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97197,
+      "sha256": "27fcfad02c324c79f82306606351de66dd02c76e2195c62c926386e3c72fbaf5"
+    },
+    {
+      "path": "weapons/hammer_1_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9746,
+      "sha256": "2583efd77c61ac9f4141d686a1d12d0337867b15cadce728f7f781503ad855d3"
+    },
+    {
+      "path": "weapons/hammer_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97486,
+      "sha256": "06caf98fa05b054b735a387e8e2303292f6b30dc7ebb5405882405b105026018"
+    },
+    {
+      "path": "weapons/musket_1.png",
+      "size": [
+        400,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97177,
+      "sha256": "86c134d1d744bbcc0afed287cb428c2f9de98e58ca7e6640e690fe5f7def0c87"
+    },
+    {
+      "path": "weapons/musket_1_d.png",
+      "size": [
+        400,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97469,
+      "sha256": "3f6116c7406bc21c6c36b888ba8f01c52cf462cf4fc2250c649087b22c7c5c1f"
+    },
+    {
+      "path": "weapons/musket_1_e.png",
+      "size": [
+        400,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97645,
+      "sha256": "a3e6e1b5d32a0f2dae29ab45ac294e915de497d80d1f7109338b4d4b31d51993"
+    },
+    {
+      "path": "weapons/musket_1_g.png",
+      "size": [
+        400,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97368,
+      "sha256": "db755095a6161363c72ae5958054b55e3b89f0ba7a379ccaace5c02a2b2e575a"
+    },
+    {
+      "path": "weapons/musket_1_r.png",
+      "size": [
+        400,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97773,
+      "sha256": "8955885c05e22cb8f6a375e43b04b2afb2b19d92ac07ddd86608eabef07d12f4"
+    },
+    {
+      "path": "weapons/samurai_1.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97316,
+      "sha256": "f6addbfbd521d3a0298b67f4a5d37a4df6573a6835ed23de32fb621ebb2d2865"
+    },
+    {
+      "path": "weapons/samurai_1_d.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97399,
+      "sha256": "ed9e7534ddd0f279e817215d2f04a52c65989b7494dd48c5d8ef7aa0d3b82fa9"
+    },
+    {
+      "path": "weapons/samurai_1_e.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9757,
+      "sha256": "ff8cc88bf1b613b21832f08bad38cc96befb0a107d35ea5320473b373ec60722"
+    },
+    {
+      "path": "weapons/samurai_1_g.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97316,
+      "sha256": "ca64fcbe0938ef7c1faa9dd28169f6d9fcf492122f7fcfa2a4219c5ea010ac12"
+    },
+    {
+      "path": "weapons/samurai_1_r.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97636,
+      "sha256": "77cfac33fce676a04f0bc050ea5c245abb91cec4950bfa91d4897678b36ad746"
+    },
+    {
+      "path": "weapons/shield_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96422,
+      "sha256": "90f66db9e8954ad9e430757d89ccea2bf52e4e43ac3e60ff47d9db1e40e19a4e"
+    },
+    {
+      "path": "weapons/shield_1_d.png",
+      "size": [
+        276,
+        276
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96274,
+      "sha256": "48b8052663aafc12bd3872173412c13b1b202b010485683ba0950e3e44e239bc"
+    },
+    {
+      "path": "weapons/shield_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.9678,
+      "sha256": "466de4e27e7d24b3b18aff3c09c9a06446f9ced770f2bb62f998b7f0b2887654"
+    },
+    {
+      "path": "weapons/shield_1_g.png",
+      "size": [
+        276,
+        276
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96274,
+      "sha256": "23714cdd1f6fa84b400864f5bb989c544a63044597210dab05cf5fabcec3df2e"
+    },
+    {
+      "path": "weapons/shield_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96451,
+      "sha256": "d4532aa163e477cb2dd665dd061bbe51e1754c865ce5212f3df2e2bb2ff78a58"
+    },
+    {
+      "path": "weapons/spear_1.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97159,
+      "sha256": "f3de98f55959a8d666396fc075ab50cda766426d7420b0b9e647425c61cbc254"
+    },
+    {
+      "path": "weapons/spear_1_d.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97401,
+      "sha256": "9784b130986a8526e76a98d20901500287d1379143db1005d485d554fef6dbb7"
+    },
+    {
+      "path": "weapons/spear_1_e.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97125,
+      "sha256": "25c2ea025fa59616a9d7fc6f0c4c4bb7b3e620d081f455501eea3c3bd6d845b8"
+    },
+    {
+      "path": "weapons/spear_1_g.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97192,
+      "sha256": "502eb993963df47ca4b72ef938861742be6170e93d759bee3683099addd0b7f0"
+    },
+    {
+      "path": "weapons/spear_1_r.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.95764,
+      "sha256": "af8f6bd96eac44f8918f27a869afb6bd751d30b8a65dc1ddae3be70f6e51c75b"
+    },
+    {
+      "path": "weapons/stick_1.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96967,
+      "sha256": "83f2cd7546cf9a3a6b057d810891673d074777903f2a0fe83bdb87c3f29e29ba"
+    },
+    {
+      "path": "weapons/stick_1_d.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96967,
+      "sha256": "9998a8792327c08705be3a21adae229ddd9f1f8d116e9f0b164aa00665eb6370"
+    },
+    {
+      "path": "weapons/stick_1_e.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.98519,
+      "sha256": "cfcfd30eed04c9378eae0a011f6d5b9249906f7d1313f96b1719ab793a1cc158"
+    },
+    {
+      "path": "weapons/stick_1_g.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96967,
+      "sha256": "821edb3993a2bf6d7a6cd145e2a80aca8894bafb767751033bfcf05bf736c04c"
+    },
+    {
+      "path": "weapons/stick_1_r.png",
+      "size": [
+        256,
+        256
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.96684,
+      "sha256": "bbbf5ab8e3805b6cca88dd4c5fbaf4b31ac926caeb0ddbb435a155d40d1d8310"
+    },
+    {
+      "path": "weapons/sword_1.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97477,
+      "sha256": "a065f594dd276fca45be20192b135362e557ebcba7c12bc602551f09603ce402"
+    },
+    {
+      "path": "weapons/sword_1_d.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97598,
+      "sha256": "ce60d09770db0dbb583d41ae6745db1da59974c34bdeecb2d8f618d36d584c28"
+    },
+    {
+      "path": "weapons/sword_1_e.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97966,
+      "sha256": "3d275d32a59b7ea05c37e7fbfc7ccd074d03f7528c09e3bedae62ad9dfbc7495"
+    },
+    {
+      "path": "weapons/sword_1_g.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97477,
+      "sha256": "34f3f1305f872c3904e6cce85997dfbab7609eb791c5198805c04cf6d3e0dcae"
+    },
+    {
+      "path": "weapons/sword_1_r.png",
+      "size": [
+        256,
+        400
+      ],
+      "pixel_cell": 2,
+      "shape_overlap": 0.97329,
+      "sha256": "4987949f0cd3eafa8b01bace3bc76ab61961435ebf663603749b175b7d76cb2e"
+    }
+  ]
+}
