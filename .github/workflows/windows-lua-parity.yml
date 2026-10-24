@@ -67,14 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
-      - name: Economia recursos e experiencia Node vs Lua (18 cenarios)
+      - name: Economia recursos e experiencia Node vs Lua (19 cenarios)
         run: |
           set -euo pipefail
           node server-lua/tests/economy-reference.mjs > /tmp/moo-econ-node.txt
           lua5.4 server-lua/tests/economy-reference.lua > /tmp/moo-econ-lua.txt
           diff -u /tmp/moo-econ-node.txt /tmp/moo-econ-lua.txt
-          test "$(wc -l < /tmp/moo-econ-node.txt)" -eq 18
-          echo 'PASS 18 cenarios de economia e XP'
+          test "$(wc -l < /tmp/moo-econ-node.txt)" -eq 19
+          echo 'PASS 19 cenarios de economia e XP'
       - name: Vida dano morte e recompensas Node vs Lua (16 cenarios)
         run: |
           set -euo pipefail
