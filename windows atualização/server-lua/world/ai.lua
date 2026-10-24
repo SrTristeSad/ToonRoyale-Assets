@@ -55,7 +55,7 @@ function AI.init(ai,x,y,direction,index,data)
  ai.runFrom=nil;ai.chargeTarget=nil;ai.dmgOverTime={}
  ai.boss=not not data.boss;ai.secret=ai.boss
  ai.state=0;ai.stateTimer=0;ai.submerged=false
- ai.damageBy={};ai.bossAttack=nil;ai.bossCooldown=3000
+ ai.damageBy={};ai.damageOrder={};ai.bossAttack=nil;ai.bossCooldown=3000
  return ai
 end
 function AI.new(sid,opts)
