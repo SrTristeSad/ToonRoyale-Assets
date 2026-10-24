@@ -26,6 +26,8 @@ local C = {
   skinColors = {"#bf8f54","#cbb091","#896c4b","#fadadc","#ececec",
     "#c37373","#4c4c4c","#ecaff7","#738cc3","#8bc373"},
   gatherAngle = math.pi/2.6,
+  hitReturnRatio = 0.25, -- shared/config.js [Ad]
+  hitAngle = math.pi/2, -- shared/config.js [Od]
   shieldAngle = math.pi/3, -- shared/config.js [qd], original shield arc
   colGrid = 10,
   areaCount = 7,
