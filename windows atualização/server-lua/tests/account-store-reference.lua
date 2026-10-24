@@ -13,7 +13,7 @@ local clan={name="ABC",members={{id=id,role="officer",kills=1,periods={}}},
  requests={"someone"},invites={},stats={kills=0,raidKills=0,periods={}}}
 local store=Store.open("server-lua/tests/.does-not-exist.json",{
  nowMs=function()return 1792864800000 end,
- isRude=function() return false end,
+ isRude=function(value) return value=="badword" end,
  randomBytes=function(n) assert(n==8); return "abcdefgh" end})
 store.data={accounts={[id]=a},names={tester=id},emails={["a@example.com"]=id},
  clans={ABC=clan},social={friends={[id]={{id="friend"}}},
@@ -125,3 +125,14 @@ out("FRIEND_CANCEL",store:cancelFriendRequest("one",canceled.request.id),
 out("FRIEND_REMOVE",store:removeFriend("one","two"),
  store:removeFriend("one","two"),#store:friendsOf("one"))
 out("FRIEND_MISSING",store:createFriendRequest("one","missing").status)
+
+local socialResult=store:setSocials(a,{youtube="Hi.Name",discord=" dev-id ",tiktok=""})
+local num=0
+for _ in pairs(socialResult.body.socials) do num=num+1 end
+out("SOCIAL_SET",socialResult.status,socialResult.body.socials.youtube,
+ socialResult.body.socials.discord,num)
+socialResult=store:setSocials(a,{youtube="bad?handle"})
+out("SOCIAL_FORMAT",socialResult.status,socialResult.body.field,socialResult.body.why)
+socialResult=store:setSocials(a,{twitch="badword"})
+out("SOCIAL_RUDE",socialResult.status,socialResult.body.field,socialResult.body.why)
+out("SOCIAL_UNCHANGED",a.socials.youtube,a.socials.discord)
