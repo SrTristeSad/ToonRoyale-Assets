@@ -1,5 +1,6 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Port of handleAdmin in the copied Node server/src/network/packets.js.
+local MP=require("src.protocol.msgpack")
 local Admin={}
 local lists={
  size={1,1.5,2,3},power={1,2,5,10,20,50,100},
@@ -10,7 +11,7 @@ local function number(v)
  return type(v)=="number" and v==v and v~=math.huge and v~=-math.huge
 end
 local function integer(v) return number(v) and v%1==0 end
-local function truth(v) return v~=nil and v~=false and v~=0 end
+local function truth(v) return v~=nil and v~=false and v~=0 and v~=MP.null end
 local function teleport(p,x,y) p.x=x;p.y=y;p.xVel=0;p.yVel=0 end
 local function resend(game,p)
  assert(type(p.sentTo)=="table","Player.sentTo required")
@@ -19,7 +20,7 @@ local function resend(game,p)
  end
 end
 local function targetFor(game,admin,sid)
- if sid==nil then return admin end
+ if sid==nil or sid==MP.null then return admin end
  for _,p in ipairs(game.players) do
   if p.sid==sid and p.alive then return p end
  end
