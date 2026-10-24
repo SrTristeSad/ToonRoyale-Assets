@@ -1,5 +1,7 @@
 # Migração Windows para Lua — três etapas de aceitação
 
+**Alvo exclusivo:** servidor local iniciado pela opção **Criar minha sala** no Windows, `scripts/start-server.ps1` → `server/src/offline.mjs` (fonte `server/src/index.js`, modo padrão sem V2).
+
 Esta pasta é a cópia de trabalho. O código em `SrTristeSad/Moo-IO` e
 `windows atualização/server/` permanece intacto. Não trocar o servidor
 padrão até os três critérios de saída serem verificáveis.
@@ -13,6 +15,8 @@ Implementado e coberto por testes diferenciais Node/Lua:
 - Pacotes H (evolução), c (compra/equipamento)
 - Tribos: criação, entrada, pedido, aprovação, expulsão, saída e remoção
 - Chat 6: filtro, cooldown, mensagens e shadowban
+- Bots 0–8 da sala LOCAL: decisões originais, cura, caça, coleta e respawn; SIDs reais e exclusão da contagem de jogadores humanos
+- Limpeza de construções: `ObjectManager.removeAllItems` original no encerramento de sessão
 - Modo anônimo I para contas registradas
 
 Evidências na CI: `tests/equipment-reference.*` (33 casos),
@@ -23,9 +27,9 @@ Evidências na CI: `tests/equipment-reference.*` (33 casos),
 **Ainda faltam** para equivalência total:
 - Pacotes e ações de moderação, estatísticas de perfil, administração
   e quaisquer handlers de `packets.js` ainda entregues a `onUnportedPacket`
-- Serviços de contas e autorização V2, clãs de contas, restrições e permissões
+- Serviços de contas e autorização do servidor local, clãs de contas, restrições e permissões
 - Persistência de vida, progresso, sanções, denúncias e presença
-- Bots com os mesmos comportamentos do servidor original
+- Bots já portados de `server/src/mooio/bots.js` e ligados ao `Player` real; falta validação de partida completa e aprovação da comparação diferencial
 - Integração de todos os subsistemas reais sem callbacks substitutos de teste
 
 Saída: todos os pacotes conhecidos com regras originais em Lua,
