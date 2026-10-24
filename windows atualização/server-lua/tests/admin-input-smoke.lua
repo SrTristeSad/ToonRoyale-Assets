@@ -21,6 +21,11 @@ local ctx={game=game,items={weapons={[5]={id=5,type=1}},list={[2]={id=2}}},
 local function send(...)return Input.handle(ctx,admin,"A",{...}) end
 send("godlike",1)
 assert(admin.powers.godlike==1 and admin.powers.god==1 and admin.powers.aura==1 and admin.sentTo.b==nil)
+send("godlike","")
+assert(admin.powers.godlike==0 and admin.powers.god==0 and admin.powers.aura==0,
+  "Node Boolean(empty string) must disable admin powers")
+send("godlike",1)
+assert(admin.powers.godlike==1)
 send("speed",2)
 assert(admin.powers.speed==2)
 send("speed",999)
