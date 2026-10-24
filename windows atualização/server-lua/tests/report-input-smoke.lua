@@ -54,4 +54,9 @@ assert(events[#events-1]=="ban" and events[#events]=="kick:kicked",
   "Node bans the IP and kicks even without persistent accounts")
 send({2,1})
 assert(target.shadowed==true,"shadow must work without account service")
-print("PASS pacote R: denuncias, staff e sancoes com/sem AccountStore")
+-- Unknown client packets follow Node's default invalid("unhandled").
+send({2,99})
+Input.handle(ctx,reporter,"unknown",{})
+assert(events[#events]=="invalid:unknown:unhandled",
+  "unknown packet must reach the original anticheat invalid path")
+print("PASS pacote R e pacotes desconhecidos conforme packets.js")
