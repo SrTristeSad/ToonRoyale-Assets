@@ -7,7 +7,7 @@
 - **Protocolo autenticado** em `protocol/session.lua`: io-init, IDs dinâmicos das mensagens, SHA-256/HMAC, máscaras, contador, anti-replay e ledger.
 - **WebSocket RFC6455** em `net/websocket.lua`: upgrade, SHA-1, frame binário, mascaramento, comprimento, fragmentação rejeitada e limite de payload.
 - **Gateway LuaSocket** em `net/host.lua`: endpoint `/ping`, parâmetros `/mooio/protocol`, status, emissão de tickets de convite de uso único em `POST /api/join`, negociação `/s/LC`, limite de jogadores, bind restrito a LAN/VPN e loop não bloqueante. O host recebe **callbacks obrigatórios** `onConnect` e `onPacket`, que serão fornecidos pelo motor do mundo quando portado.
-- **Adaptador de sala** em `net/room_transport.lua`: associa o peer WebSocket a um `Player` verdadeiro via callback obrigatório, entrega pacotes autenticados a `Room.handleInput` e exige rotina real de boas-vindas/limpeza de conta e tribo. Preserva `null` explícito na lista de argumentos MessagePack e recusa comandos após a desconexão. **Não há criação de jogadores fictícios em produção**, nem troca automática do host Node.
+- **Adaptador de sala** em `net/room_transport.lua`: associa cada peer WebSocket a um `Player` verdadeiro, entrega pacotes autenticados a `Room.handleInput`, preserva `null` no MessagePack, bloqueia sessões encerradas e separa limpeza pré-remoção de notificações posteriores. Pode ser configurado com os callbacks reais de `player_registry.lua`; não troca automaticamente o host Node.
 - Gerador criptográfico de parâmetros do protocolo em `protocol/build.lua`.
 - Testes: `tests/protocol.lua` contra os valores calculados pelo JavaScript original (`tests/reference.mjs`), `tests/websocket.lua` e um teste de HTTP + WebSocket real (`tests/host-smoke.lua` / `tests/host-smoke.py`).
 
@@ -32,6 +32,11 @@ Implementações independentes no diretório `world/`:
 - `structures.lua`: port de `Game.updateStructures`, `Game.turretTarget` e `GameObject.update`: atualização de moinhos, temporizador de torretas, seleção de alvo, proteção por tribo, invisibilidade, disparo em direção ao inimigo e atualização visual `M`. Estruturas destruídas são retiradas de `updateObjects` como no Node.
 - `game_loop.lua`: transcrição da ordem de atualização de `Game.tick`: bots, cooldowns, jogadores, projéteis, estruturas, IA, spawn de animais, líderes, placar, minimapa, estatísticas e sincronização por observador. Usa o relógio monotônico injetado e exige serviços reais para módulos ainda não portados.
 - `player_update.lua`: conecta `vitals.lua`, `movement.lua` e `weapon_tick.lua` na mesma ordem de `Player.update`, incluindo a verificação de morte após dano periódico e antes da física.
+- `player_identity.lua`: transcrição do preâmbulo do construtor `Player`, com IDs, equipamentos iniciais, poderes, permissões, nomes, personalização e métodos `resetMoveDir`, `addItem`, `setUserData`, `shownName`, `getData`, `applyPowers` e `displaySkin`. A filtragem exige o vocabulário integral `NAME_WORDS` original, fornecido externamente; os testes diferenciais usam um dicionário reduzido explícito apenas para verificar a lógica.
+- `player.lua`: monta o jogador a partir de `Identity`, `Spawn`, `Economy`, `Health`, `Gather`, `Build`, `Snapshot` e `PlayerUpdate`, incluindo seleção de variantes, torreta, animação de ataque e pacotes. Exige mundo e configuração originais, catálogo de lojas, anticheat, emissor de pacotes e callback real de morte.
+- `score.lua`: port de `Game.scoreCallback` para pontos, XP, progresso e estatísticas, com comparação direta contra Node.
+- `player_registry.lua`: ciclo de sessão de `Game.addPlayer/removePlayer` com atribuição/reuso dos 50 SIDs, hash SHA-256 do endereço de conexão, campos de conta, boas-vindas `A` contendo os 15 animais originais, hooks obrigatórios de limpeza, notificações de presença, contagem e saída `E`. Inclui callbacks prontos para `RoomTransport`, sem permitir pular a autenticação ou a gestão de clãs.
+
 - `room.lua`: **motor de sala Lua integrado (ainda sem conexão de rede ao Player real)**: executa `Game.tick`, `Player.update`, projéteis, estruturas, snapshots de jogadores/objetos/animais, líderes, placar, minimapa e estatísticas. `handleInput` entrega comandos validados somente a um jogador daquela sala. O spawn de animais pode usar `animals.lua` nativo; contas com coroas seguem exigindo o `crownOf` real, e a vitória no Crab King exige broadcast e serviços reais.
 - `input.lua`: port parcial de `server/src/network/packets.js::handlePacket` para `M` (spawn), `D` (direção), `9` (movimento/parada), `e` (reset), `F` (ataque/construção), `z` (armas/itens), `K` (alternâncias), `0` (ping da rede), `S` (marcação da posição no mapa) e `U` (posição escolhida no mapa tático Android). Preserva `mapPingTime`, alcance e restrições por tribo, e exige anticheat real. **Demais pacotes exigem um handler autoritativo**, não são aceitos silenciosamente.
 - `social_sync.lua`: ports fiéis de `Game.syncAnimals` (pacote `I`), `sendMinimap` (`7`), `updateLeaders`, `sendLeaderboard` (`G`) e `sendStats` (`F`). Inclui jogadores anônimos, tribos, ocultação de condenados, coroas, permissões administrativas, rastreamento de animais visíveis e estatísticas, com a mesma ordenação e payloads do Node.
@@ -80,19 +85,24 @@ As novas suítes diferenciais também comparam:
 
 - `animals-health-smoke.lua`: testa a rota completa `Room` → `AiManager` → `AI.changeHealth` → recompensas e estatísticas, incluindo o bônus da Cow Cape e a ausência de drops em animais administrativos.
 - `room-transport-smoke.lua`: verifica callbacks do Host com Room real, criação de jogador por serviço obrigatório, envio seguro, alinhamento de campos MessagePack, rejeição de peers desconhecidos e remoção ao desconectar.
+- `player-identity-reference.mjs/.lua`: **18 casos** usando preâmbulo e métodos de identidade extraídos diretamente de `Player` no Node, incluindo anon, nome, equipamento gratuito, troca de item e aparência.
+- `player-score-reference.mjs/.lua`: **20 variantes de arma + 8 cenários de pontuação**, comparados com `Player.variant` e `Game.scoreCallback` originais.
+- `player-full-smoke.lua`: percorre `Player.new` → pacote `M` → spawn → `Game.tick` → movimento, XP, construção, combate e animações.
+- `player-registry-smoke.lua`: verifica `Host`/`RoomTransport` → construtor Lua real → welcome `A` → spawn e comandos → saída, metadados de conta, hash IP, ordem de limpeza, reutilização de SID e pacote `E`.
+
 
 - `player-update-reference.mjs/.lua`: **18 situações × 3 ticks = 54 snapshots**, executando o método `Player.update` **inteiro**, incluindo a parada por morte durante efeitos periódicos.
 - `room-smoke.lua`: valida uma sala integrada com jogador, animal, projétil e construção; emite `D`/`a`/`H`/`X`/`I`/`7`/`G`/`F`, recebe comandos da sala e mantém obrigatórios os serviços ainda não portados.
 
 Testes novos executam as funções originais do Node.js, comparando os mesmos efeitos na implementação Lua: `spawn-reference` (8 cenários), `vitals-reference` (12 cenários com múltiplos ticks), `health-reference` (16 cenários de danos, morte e recompensas) e `economy-reference` (19 cenários de recursos, XP e custos). A suíte GitHub Actions roda automaticamente na branch `main` do ToonRoyale-Assets.
 
-**Integração parcial de sala confirmada:** a sala Lua já processa movimento, projéteis, estruturas, snapshots, IA animal e os ataques e recompensas do Crab King, ranking, minimapa, estatísticas e comandos diretos da sala no mesmo tick. O adaptador de sessão Host→Room existe, mas o sistema completo de autenticação, construtor Player, bots, clãs, comandos restantes, entrada/saída e persistência ainda não está ligado ao jogo. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
+**Integração parcial de sala confirmada:** jogador Lua composto, movimento, construções, combate, economia, animais e Crab King já executam em `Room.tick`; `player_registry.lua` conecta sessões autenticadas pelo convite do Host aos jogadores, com SID e saída testados. O host ainda precisa de implantação conjunta com todos os serviços reais de moderação de nomes, anticheat, loja, clãs, presença e persistência, além dos pacotes faltantes. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
 
 ## Limites — NÃO é o servidor completo
 
-A infraestrutura de rede e um núcleo de sala Lua funcionam isoladamente, com testes de paridade contra o Node. **Ainda não existe uma sala Lua completa de ponta a ponta para substituir o Node.js**, porque o despachante dos pacotes, a construção integral do Player e os serviços de animal/conta/tribo continuam faltando.
+A infraestrutura de rede e um núcleo de sala Lua funcionam isoladamente, com testes de paridade contra o Node. **Ainda não existe uma instalação Lua completa e publicável para substituir o Node.js**: o construtor já existe e foi testado, mas faltam catálogo completo de produção, vocabulário `NAME_WORDS`, anticheat definitivo, handlers de pacotes e serviços de contas, tribos, bots e persistência.
 
-Pendente: contas/autorização V2, endpoints HTTP restantes, ligação do host a `room.lua` e ao construtor real de jogadores, **handlers restantes de entrada** (upgrades, loja, clãs, chat, rankings por categoria, moderação), conexão do construtor completo de Player ao host, bots, clãs, loja, persistência, moderação, comandos restantes de rede e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
+Pendente: integrar `player_registry.lua` com os serviços verdadeiros e com `net/host.lua` em uma instalação executável; contas/autorização V2, `NAME_WORDS` completo, catálogo e anticheat de produção, endpoints HTTP restantes, **handlers restantes de entrada** (upgrades, loja, clãs, chat, moderação), bots, clãs, persistência e testes reais do cliente contra o servidor Lua. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
@@ -109,6 +119,8 @@ lua5.4 server-lua/tests/room-animals-smoke.lua
 lua5.4 server-lua/tests/room-crab-smoke.lua
 lua5.4 server-lua/tests/animals-health-smoke.lua
 lua5.4 server-lua/tests/room-transport-smoke.lua
+lua5.4 server-lua/tests/player-full-smoke.lua
+lua5.4 server-lua/tests/player-registry-smoke.lua
 node server-lua/tests/social-reference.mjs > /tmp/social-node.txt
 lua5.4 server-lua/tests/social-reference.lua > /tmp/social-lua.txt
 diff -u /tmp/social-node.txt /tmp/social-lua.txt
