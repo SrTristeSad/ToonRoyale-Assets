@@ -42,7 +42,7 @@ function Animals.new(opts)
    killScore=opts.killScore or Rewards.killScore,
    dropAmount=opts.dropAmount or Rewards.dropAmount,
    health=opts.health,boss=opts.boss or Crab.attach,
-   onCrabKingKilled=crabKilled
+   onCrabKingKilled=crabKilled,crabKillers=opts.crabKillers
  },Animals)
  if not self.health and type(self.score)=="function" and type(self.send)=="function" then
    self.health=function(actor,amount,doer,runFrom)
