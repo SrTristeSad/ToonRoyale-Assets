@@ -12,11 +12,11 @@ if(objectIdStart<0||objectIdEnd<2)throw Error("original ObjectId source changed"
 const {randomBytes}=await import("node:crypto");
 const objectId=new Function("randomBytes","return ("+source.slice(objectIdStart,objectIdEnd)+")")(randomBytes);
 const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude","objectId",
- "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes","DEVICE_REJOIN_MS","CLAN_RE","CLAN_MAX_MEMBERS",
+ "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes","DEVICE_REJOIN_MS","CLAN_RE","CLAN_MAX_MEMBERS","emptyStats","DISCORD_CODE_MS",
  "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(
  periods,defaults,value=>value==="badword",objectId,
  ["youtube","twitch","tiktok","x","discord"],/^[A-Za-z0-9._-]{1,32}$/,
- {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes,900000,/^[A-Za-z0-9]{3,4}$/,80);
+ {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes,900000,/^[A-Za-z0-9]{3,4}$/,80,()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}}),600000);
 const id="abc123";
 const base=()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,
  gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}});
@@ -196,3 +196,30 @@ for(const span of ["all","day","week","month"]){
 }
 const crowns=leaderboard.weeklyCrowns();
 out("WEEKLY_CROWNS",crowns["id-a"],crowns["id-b"],crowns["id-c"],crowns["id-d"]);
+
+const authStore=Object.create(Store.prototype);
+authStore.data={accounts:{},emails:{},names:{},clans:{},social:{friends:{},requests:[]},legacyIds:{}};
+authStore.loginFlows=new Map();
+authStore.discordCodes=new Map();
+let authSaves=0;authStore.save=()=>{authSaves++};
+out("ACCOUNT_EMPTY",authStore.accountForEmail("")===null,
+ authStore.accountForEmail("x".repeat(121))===null);
+const created=authStore.accountForEmail(" A@EXAMPLE.COM ");
+out("ACCOUNT_CREATE",/^[a-f0-9]{24}$/.test(created.id),created.email,
+ created.name===null,created.stats.lives,authSaves);
+out("ACCOUNT_REUSE",authStore.accountForEmail("a@example.com")===created,authSaves);
+const loginFlow=authStore.startLogin("a@example.com");
+out("LOGIN_START",/^[a-f0-9]{24}$/.test(loginFlow),authStore.loginFlows.has(loginFlow));
+out("LOGIN_FINISH",authStore.finishLogin(loginFlow)===created,
+ authStore.finishLogin(loginFlow)===null);
+const discord=authStore.createDiscordCode("D".repeat(40));
+out("DISCORD_CODE",/^[a-f0-9]{24}$/.test(discord),
+ authStore.discordCode(discord).discord.length);
+out("DISCORD_LINK",authStore.linkDiscord(created,discord).body.error);
+created.name="Permanent";
+const discordResult=authStore.linkDiscord(created,discord);
+out("DISCORD_LINK_OK",discordResult.status,discordResult.body.discord.length,
+ authStore.discordCode(discord)===null,created.discord.name.length);
+const expired=authStore.createDiscordCode("expired");
+authStore.discordCodes.get(expired).at-=600001;
+out("DISCORD_EXPIRE",authStore.discordCode(expired)===null);
