@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Coleta e combate corpo a corpo - Player.gather Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/gather-reference.mjs > /tmp/moo-gather-node.txt
+          lua5.4 server-lua/tests/gather-reference.lua > /tmp/moo-gather-lua.txt
+          diff -u /tmp/moo-gather-node.txt /tmp/moo-gather-lua.txt
+          test "$(wc -l < /tmp/moo-gather-node.txt)" -eq 36
+          echo "PASS 36 cenarios de coleta e melee"
       - name: Armas recarga e projeteis - Player.update Node vs Lua
         run: |
           set -euo pipefail
