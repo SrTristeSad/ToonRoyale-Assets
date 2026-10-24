@@ -107,6 +107,14 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: Chat 6 filtro original e shadowban Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/chat-reference.mjs > /tmp/moo-chat-node.txt
+          lua5.4 server-lua/tests/chat-reference.lua > /tmp/moo-chat-lua.txt
+          diff -u /tmp/moo-chat-node.txt /tmp/moo-chat-lua.txt
+          test "$(wc -l < /tmp/moo-chat-node.txt)" -eq 39
+          echo 'PASS 16 filtros e 23 pacotes de chat Node vs Lua'
       - name: Tribos ClanManager integral Node vs Lua
         run: |
           set -euo pipefail
