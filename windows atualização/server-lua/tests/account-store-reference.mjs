@@ -12,11 +12,11 @@ if(objectIdStart<0||objectIdEnd<2)throw Error("original ObjectId source changed"
 const {randomBytes}=await import("node:crypto");
 const objectId=new Function("randomBytes","return ("+source.slice(objectIdStart,objectIdEnd)+")")(randomBytes);
 const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude","objectId",
- "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes",
+ "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes","DEVICE_REJOIN_MS",
  "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(
  periods,defaults,value=>value==="badword",objectId,
  ["youtube","twitch","tiktok","x","discord"],/^[A-Za-z0-9._-]{1,32}$/,
- {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes);
+ {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes,900000);
 const id="abc123";
 const base=()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,
  gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}});
@@ -153,3 +153,21 @@ out("MIGRATE_SOCIAL",
  legacyStore.data.social.friends[aId][0].id===bId,
  legacyStore.data.social.requests[0].recipientId===bId,
  legacyStore.accountById(otherLegacy)===otherAccount);
+
+const ticketStore=Object.create(Store.prototype);
+ticketStore.data={accounts:{[id]:a}};
+ticketStore.tickets=new Map();
+ticketStore.devices=new Map();
+const trustedDid="f".repeat(16);
+const t1=ticketStore.issueTicket({account:a,did:trustedDid,server:"LC"});
+out("TICKET_ISSUE",/^[a-f0-9]{36}$/.test(t1.ticket),
+ t1.did===trustedDid,ticketStore.recentDevice(t1.did));
+const admission=ticketStore.consumeTicket(t1.ticket,60000);
+out("TICKET_CONSUME",admission.account===a,admission.did===trustedDid,
+ admission.server==="LC",ticketStore.consumeTicket(t1.ticket,60000)===null);
+const t2=ticketStore.issueTicket({account:null,did:"invalid",server:null});
+ticketStore.tickets.get(t2.ticket).at-=900001;
+out("TICKET_EXPIRED",/^[a-f0-9]{24}$/.test(t2.did),
+ ticketStore.consumeTicket(t2.ticket,60000)===null);
+ticketStore.devices.set(trustedDid,Date.now()-900001);
+out("TICKET_DEVICE_EXPIRED",ticketStore.recentDevice(trustedDid));
