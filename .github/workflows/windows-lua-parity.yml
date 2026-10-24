@@ -253,6 +253,10 @@ jobs:
           diff -u /tmp/moo-input-node.txt /tmp/moo-input-lua.txt
           test "$(wc -l < /tmp/moo-input-node.txt)" -eq 34
           echo "PASS 34 cenarios de pacotes gameplay comparados com Node"
+      - name: Consulta de perfil V e falha fechada sem servico persistente
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/profile-input-smoke.lua
       - name: Transporte Host para Room com sessão e Player real obrigatório
         run: |
           set -euo pipefail
