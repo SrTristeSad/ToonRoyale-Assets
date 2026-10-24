@@ -17,7 +17,7 @@ local game={players={admin,other},ais={{index=3,active=true,x=100,y=200,scale=15
  end}}
 local removed
 local ctx={game=game,items={weapons={[5]={id=5,type=1}},list={[2]={id=2}}},
- config={weaponVariants={[0]={xp=0},[1]={xp=100}}},tribes={remove=function(_,name)removed=name end}}
+ config={weaponVariants={{id=0,xp=0},{id=1,xp=100}}},tribes={remove=function(_,name)removed=name end}}
 local function send(...)return Input.handle(ctx,admin,"A",{...}) end
 send("godlike",1)
 assert(admin.powers.godlike==1 and admin.powers.god==1 and admin.powers.aura==1 and admin.sentTo.b==nil)
@@ -36,6 +36,12 @@ assert(admin.x==175 and admin.y==200)
 send("spawn",3)
 send("weapon",5,1)
 assert(admin.weaponIndex==5 and admin.weaponXP[5]==100)
+send("weapon",5,0)
+assert(admin.weaponXP[5]==0,"variant zero must match Node index zero")
+send("weapon",5,999)
+assert(admin.weaponXP[5]==0,"invalid variant must fall back to index zero")
+send("weapon",5,"1")
+assert(admin.weaponXP[5]==100,"JS-style numeric string property must match Node")
 send("item",2)
 assert(admin.items[1]==2)
 send("give",3,2000000)
