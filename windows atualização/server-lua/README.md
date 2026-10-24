@@ -18,6 +18,7 @@ Implementações independentes no diretório `world/`:
 - `collision.lua`: port da função `ObjectManager.checkCollision`, incluindo empurrão sólido, separação entre jogadores, dano e veneno, armadilhas, cura, boost, teleporte e `zIndex`. Efeitos que dependem de outros módulos recebem callbacks explícitos em vez de inventar implementações.
 - `environment.lua`: fórmulas de neve, regiões secretas e limites de mapa copiadas de `effects.js` e `Player.keepInWorld`.
 - `movement.lua`: port do **trecho de movimento de `Player.update`**, cobrindo aceleração, lentidão, rio/piscinas secretas, neve, acessórios, deslocamento em subpassos, colisões do mundo e com jogadores, desaceleração e limites. Recebe o equipamento real, a lista de jogadores, o relógio e o mundo via dependências obrigatórias. Não implementa sozinho regeneração, coleta, combate nem spawn.
+- `snapshot.lua`: port dos métodos **`Game.syncPlayers` e `Game.syncObjects`**, incluindo os pacotes `D`, `a`, `H` e `N` (quando sandbox ilimitado), campo de anonimato, envio inicial, delta de atributos, desaparecimento/retorno do campo de visão e visibilidade de construções por time. Mantém `null` explícito no MessagePack para não deslocar os campos.
 
 Testes diferenciais contra **código original Node.js executado como referência**:
 `world-reference.mjs` extrai a função real `generateWorld` de `server.js` e executa `ObjectManager` original. `world-reference.lua` executa o módulo Lua com a mesma semente de teste. Verificação de cada SID, tipo, posição (seis casas decimais), escala, grade, cacto, dano, além de consultas de posicionamento e células vizinhas. As sementes testadas são `1`, `42`, `12345` e `4294967295`.
@@ -25,6 +26,8 @@ Testes diferenciais contra **código original Node.js executado como referência
 `collision-reference.mjs/.lua` comparam casos sólidos, afastados, entre jogadores, armadilhas, impulso, cura, dano e teleporte. `environment-reference.mjs/.lua` comparam bordas, piscinas secretas e modificadores de neve.
 
 `movement-reference.mjs/.lua` comparam **27 cenários por três ticks (81 snapshots)**: deslocamento, inércia, correnteza, neve, equipamentos, limites, pedra, armadilha, impulso, cura e colisões entre jogadores. O teste executa o trecho da implementação original `Player.update` do Node por extração da função, e compara o estado produzido em Lua. Execução automática na branch `main` por `.github/workflows/windows-lua-parity.yml` do repositório **ToonRoyale-Assets**, sem tocar o repositório de origem.
+
+`snapshot-reference.mjs/.lua` executa os métodos originais de sincronização e testa três atualizações consecutivas, comprovando a mesma ordem e conteúdo de pacotes `D`/`a`/`H` em Lua. O teste também verifica anonimizacão, troca de equipamento e saída/entrada do campo de visão.
 
 **Ainda não está conectado ao jogo:** as demais fases de `Player.update` (regeneração/combate, armas/ferramentas), disparos, coleta, inventário, NPCs, objetos edificáveis, bots, tribos e endpoints de autenticação seguem pendentes. Até eles serem portados e testados, **o servidor local funcional continua sendo Node.js**.
 
