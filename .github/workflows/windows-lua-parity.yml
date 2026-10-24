@@ -67,6 +67,13 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Snapshots de jogadores e objetos (pacotes D, a, H)
+        run: |
+          set -euo pipefail
+          node server-lua/tests/snapshot-reference.mjs > /tmp/moo-sync-node.txt
+          lua5.4 server-lua/tests/snapshot-reference.lua > /tmp/moo-sync-lua.txt
+          diff -u /tmp/moo-sync-node.txt /tmp/moo-sync-lua.txt
+          echo 'PASS snapshots de jogadores e objetos'
       - name: Servidor de rede LuaSocket de verdade
         run: |
           set -euo pipefail
