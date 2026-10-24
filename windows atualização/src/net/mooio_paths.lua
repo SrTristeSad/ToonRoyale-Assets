@@ -50,6 +50,7 @@ function Paths.script(root)
   return join(root,"scripts/start-server.ps1")
 end
 function Paths.log(root)
+  if os.getenv("MOO_IO_LOCAL_SERVER_RUNTIME")=="lua" then return join(root,"server-lua/data/lua-host.log") end
   return join(root,"server/data/mooio-host.log")
 end
 return Paths
