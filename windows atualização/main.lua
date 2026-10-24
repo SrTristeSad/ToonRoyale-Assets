@@ -1,6 +1,36 @@
 -- Moo-Quest is a Lua client for the UNMODIFIED al007ex/moomoo-clone server.
 -- Real native gameplay rendering is gated by actual server C/D/a/H/I packets.
 -- Never generate local entities or claim spawn before the Node server confirms it.
+-- Opt-in, separate LOCAL Lua server process. The normal Windows client is
+-- completely unchanged unless its launcher explicitly sets this variable.
+if os.getenv("MOO_IO_LUA_SERVER")=="1" then
+  local instance
+  function love.load()
+    if love.window then love.window.setMode(1,1,{visible=false}) end
+    local Local=require("server-lua.local_server")
+    local Socket=require("socket")
+    local ip=assert(os.getenv("MOO_IO_BIND_IP"),"MOO_IO_BIND_IP required")
+    local code=assert(os.getenv("MOO_IO_ROOM_CODE"),"MOO_IO_ROOM_CODE required")
+    instance=Local.new({
+      bind=ip,port=tonumber(os.getenv("PORT")) or 8080,
+      mode=os.getenv("MOO_IO_NETWORK_MODE")=="vpn" and "vpn" or "lan",
+      roomCode=code,botCount=os.getenv("MOO_IO_BOT_COUNT") or "0",
+      dataDir=os.getenv("MOO_IO_LUA_DATA_DIR") or "server-lua/data",
+      guiHost=true,nowMs=function()return math.floor(Socket.gettime()*1000)end,
+      log=function(msg)print(msg)end
+    })
+    local ok,why=instance:start()
+    assert(ok,why)
+    print("MOOIO_LUA_SERVER_READY")
+  end
+  function love.update(dt)
+    if instance and instance:update()==false then love.event.quit(0) end
+  end
+  function love.draw() end
+  function love.quit()if instance then instance:close()end end
+  return
+end
+
 local Original=require("src.net.original_client")
 local World=require("src.game.world_state")
 local View=require("src.game.reference_view")
