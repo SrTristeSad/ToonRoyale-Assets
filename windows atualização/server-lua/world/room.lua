@@ -75,6 +75,7 @@ function Room.new(opts)
     config=config,items=items,services=callbacks,key=opts.key or "LC",
     accounts=opts.accounts,crabKillers=opts.crabKillers or {},
     crownOf=opts.crownOf,animal_manager=animals,
+    crowns=opts.crowns or {},crownsAt=opts.crownsAt or 0,
     lastTick=now,nowMs=now,
     bots=opts.bots,
     spawnTimer=0,leaderboardTimer=0,minimapTimer=0,statsTimer=0
@@ -94,6 +95,27 @@ end
 
 function Room:recordLife(player,died)
   return LifePersistence.record(self,player,died)
+end
+
+-- Game.onPlayerDeath and Game.crownOf from the original Node server.js.
+function Room:onPlayerDeath(player)
+  self:recordLife(player,true)
+  self.leaderboardTimer=0
+end
+
+function Room:crownOf(player)
+  if not player.account or player.anon or not self.accounts then return 0 end
+  local clock=assert(self.wallTimeMs,"real wall clock required for crowns")
+  local now=clock()
+  assert(type(now)=="number","wall clock must return milliseconds")
+  if now-self.crownsAt>60000 then
+    local crowns=assert(self.accounts.weeklyCrowns,
+      "original AccountStore.weeklyCrowns required")
+    self.crowns=crowns()
+    assert(type(self.crowns)=="table","weeklyCrowns must return account ranks")
+    self.crownsAt=now
+  end
+  return self.crowns[player.account.id] or 0
 end
 
 function Room:score(player,amount)
