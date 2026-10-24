@@ -188,3 +188,40 @@ out("TICKET_EXPIRED",#t2.did==24 and t2.did:match("^[a-f0-9]+$")~=nil,
  ticketStore:consumeTicket(t2.ticket,60000)==Json.null)
 ticketStore.devices[trustedDid]=ticketNow-900001
 out("TICKET_DEVICE_EXPIRED",ticketStore:recentDevice(trustedDid))
+
+local function rankedStats(total,weekly)
+ local stats=base()
+ stats.kills=total
+ stats.periods={
+  week={key="2026-10-19",kills=weekly,bestScore=30},
+  day={key="2026-10-24",kills=math.floor(weekly/2),bestScore=30},
+  month={key="2026-10",kills=weekly,bestScore=30}
+ }
+ return stats
+end
+local rankedAccounts={
+ ["id-a"]={id="id-a",name="A",stats=rankedStats(25,12),clan="ABC"},
+ ["id-b"]={id="id-b",name="B",stats=rankedStats(20,7),verdict="shadow"},
+ ["id-c"]={id="id-c",name="C",stats=rankedStats(15,4)},
+ ["id-d"]={id="id-d",name="D",stats=rankedStats(10,2)}
+}
+local rankedClans={
+ ABC={name="ABC",stats=rankedStats(10,9),members={{id="id-a"}}},
+ DEF={name="DEF",stats=rankedStats(8,5),members={{id="id-b"}},shadowed=true}
+}
+local leaderboard=Store.open("server-lua/tests/.does-not-exist.json",{
+ nowMs=function()return 1792864800000 end})
+leaderboard.data={accounts=rankedAccounts,clans=rankedClans}
+for _,span in ipairs({"all","day","week","month"}) do
+ local result=leaderboard:top(span)
+ local function summary(rows)
+  local names={}
+  for _,p in ipairs(rows) do
+   names[#names+1]=p.name..":"..p.kills..":"..(p.shadowed and "1" or "0")
+  end
+  return table.concat(names,",")
+ end
+ out("TOP_"..span:upper(),summary(result.players),summary(result.clans))
+end
+local crowns=leaderboard:weeklyCrowns()
+out("WEEKLY_CROWNS",crowns["id-a"],crowns["id-b"],crowns["id-c"],crowns["id-d"])
