@@ -5,6 +5,10 @@ local Animals=require("server-lua.world.animals")
 local World=require("server-lua.world.objects")
 local Crypto=require("src.protocol.original_crypto")
 local Config=require("src.game.config")
+local function jsNumber(v)
+ if type(v)=="number" and v%1==0 then return string.format("%.0f",v) end
+ return tostring(v)
+end
 local function normalized(value)
  if type(value)=="table" then
    local values={}
@@ -52,7 +56,7 @@ end
 manager:ensureAnimals()
 local list=manager.ais
 for i,a in ipairs(list) do
- print("SPAWN|"..(i-1).."|"..a.sid.."|"..a.index.."|"..a.x.."|"..a.y.."|"..
+ print("SPAWN|"..(i-1).."|"..a.sid.."|"..a.index.."|"..jsNumber(a.x).."|"..jsNumber(a.y).."|"..
    string.format("%.6f",a.dir).."|"..a.nameIndex.."|"..a.health.."|"..
    (a.spawnDelay or 0).."|"..(a.boss and 1 or 0))
 end
@@ -61,7 +65,7 @@ print("NO_DUP|"..#list)
 local first=list[1]
 first.active=false
 local reused=manager:spawn(850,920,0.4,9,{spawnDelay=2500})
-print("REUSE|"..reused.sid.."|"..reused.index.."|"..reused.x.."|"..reused.y..
+print("REUSE|"..reused.sid.."|"..reused.index.."|"..jsNumber(reused.x).."|"..jsNumber(reused.y)..
   "|"..reused.nameIndex.."|"..reused.spawnDelay.."|"..#list)
 local missing=manager:spawn(700,750,0.5,99)
-print("MISSING|"..missing.sid.."|"..missing.index.."|"..missing.x.."|"..#list)
+print("MISSING|"..missing.sid.."|"..missing.index.."|"..jsNumber(missing.x).."|"..#list)
