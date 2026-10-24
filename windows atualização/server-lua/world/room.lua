@@ -8,6 +8,7 @@ local Projectiles=require("server-lua.world.projectiles")
 local Structures=require("server-lua.world.structures")
 local Snapshot=require("server-lua.world.snapshot")
 local Social=require("server-lua.world.social_sync")
+local Score=require("server-lua.world.score")
 local PlayerUpdate=require("server-lua.world.player_update")
 local Input=require("server-lua.world.input")
 local Loop=require("server-lua.world.game_loop")
@@ -74,6 +75,16 @@ function Room.new(opts)
     spawnTimer=0,leaderboardTimer=0,minimapTimer=0,statsTimer=0
   },Room)
   return room
+end
+
+function Room:score(player,amount)
+  return Score.add(player,amount,self.config)
+end
+
+function Room:sendId(id,name,...)
+  for _,player in ipairs(self.players) do
+    if player.id==id then return player:send(name,...) end
+  end
 end
 
 function Room:updateStructures(delta)
