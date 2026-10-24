@@ -5,6 +5,7 @@ import socket
 import base64
 import os
 import struct
+import time
 
 HOST="127.0.0.1"
 PORT=18943
@@ -67,6 +68,14 @@ while len(remaining)<offset+payloadLen:remaining+=s.recv(4096)
 handshake=remaining[offset:offset+payloadLen]
 assert b"io-init" in handshake,handshake[:50]
 s.close()
+# The room must release the WebSocket slot after disconnecting.
+for _ in range(40):
+    _,status_body=request("GET","/ping")
+    if json.loads(status_body)["servers"][0]["playerCount"]==0:
+        break
+    time.sleep(0.03)
+else:
+    raise AssertionError("Disconnected player is still counted")
 # Tickets are single use.
 c=socket.create_connection((HOST,PORT),timeout=3)
 c.sendall(headers)
