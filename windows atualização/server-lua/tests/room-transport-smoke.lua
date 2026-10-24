@@ -23,6 +23,7 @@ local bridge=Transport.new({
      id="client-"..ticket.did,sid=pcount,alive=true,active=true,
      dir=0,moveDir=0,pingCooldown=0,
      weaponIndex=0,buildIndex=-1,mouseState=0,hits=0,
+     anticheat={allow=function()return true end},
      send=function()return true end,
      variant=function()return {id=0,val=1}end,
      canSee=function()return true end,
