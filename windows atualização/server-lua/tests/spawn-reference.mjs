@@ -12,7 +12,7 @@ function method(name,env) {
   const token="this."+name+" = function (";
   const at=src.indexOf(token),to=src.indexOf("\n        };",at);
   if(at<0||to<0)throw Error("Original Player."+name+" missing");
-  const fn=src.slice(at,to+11).replace("this."+name+" = ","");
+  const fn=src.slice(at,to+11).replace("this."+name+" = ","").replace(/;\s*$/u,"");
   return new Function("config","UTILS","objectManager","Date","return ("+fn+");")(
     env.cfg,UTILS,env.manager,{now:()=>543210}
   );
