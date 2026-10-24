@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Player variantes de armas e score Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/player-score-reference.mjs > /tmp/moo-playerscore-node.txt
+          lua5.4 server-lua/tests/player-score-reference.lua > /tmp/moo-playerscore-lua.txt
+          diff -u /tmp/moo-playerscore-node.txt /tmp/moo-playerscore-lua.txt
+          test "$(wc -l < /tmp/moo-playerscore-node.txt)" -eq 28
+          echo 'PASS 28 verificacoes de variant/score'
       - name: Construtor Player identidade e inventario Node vs Lua
         run: |
           set -euo pipefail
