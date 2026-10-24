@@ -6,8 +6,13 @@ const pos=source.indexOf(marker);
 if(pos<0)throw Error("original AccountStore class not found");
 const periods={day:()=>"2026-10-24",week:()=>"2026-10-19",month:()=>"2026-10"};
 const defaults={friendNotifs:true,friendRequests:true,clanInvites:true,clanChat:true,whispers:true};
-const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude",
- "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(periods,defaults,()=>false);
+const objectIdStart=source.indexOf("function objectId(");
+const objectIdEnd=source.indexOf("\n}",objectIdStart)+2;
+if(objectIdStart<0||objectIdEnd<2)throw Error("original ObjectId source changed");
+const {randomBytes}=await import("node:crypto");
+const objectId=new Function("randomBytes","return ("+source.slice(objectIdStart,objectIdEnd)+")")(randomBytes);
+const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude","objectId",
+ "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(periods,defaults,()=>false,objectId);
 const id="abc123";
 const base=()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,
  gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}});
@@ -87,3 +92,26 @@ out("CLAN_LEAVE",leave.status,n(creator.clan),store.data.clans.DEF.members.lengt
 let disband=store.clanAction(joiner,"disband",{});
 out("CLAN_DISBAND",disband.status,!!store.data.clans.DEF,n(joiner.clan));
 out("CLAN_EVENTS",log.length,log[0],log[1]);
+
+for(const who of ["one","two","three"]){
+ store.data.accounts[who]={id:who,name:who,clan:null,stats:base()};
+ store.data.names[who]=who;
+}
+let r1=store.createFriendRequest("one","two");
+out("FRIEND_CREATE",r1.status,/^[a-f0-9]{24}$/.test(r1.request?.id),
+ /\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z/.test(r1.request?.createdAt));
+out("FRIEND_PENDING",store.requestsFor("two").length,store.requestsFrom("one").length);
+out("FRIEND_DUPLICATE",store.createFriendRequest("one","two").status);
+out("FRIEND_ANSWER",!!store.answerFriendRequest("two",r1.request.id,true),
+ store.friendsOf("one").length,store.friendsOf("two").length);
+out("FRIEND_ALREADY",store.createFriendRequest("one","two").status);
+let reverse=store.createFriendRequest("three","two");
+out("FRIEND_REVERSE_PENDING",reverse.status);
+let merged=store.createFriendRequest("two","three");
+out("FRIEND_REVERSE_MERGE",merged.status,merged.friends,store.areFriends("two","three"));
+let canceled=store.createFriendRequest("one","three");
+out("FRIEND_CANCEL",store.cancelFriendRequest("one",canceled.request.id),
+ store.cancelFriendRequest("one",canceled.request.id),store.requestsFor("three").length);
+out("FRIEND_REMOVE",store.removeFriend("one","two"),
+ store.removeFriend("one","two"),store.friendsOf("one").length);
+out("FRIEND_MISSING",store.createFriendRequest("one","missing").status);
