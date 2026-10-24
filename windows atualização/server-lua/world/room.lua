@@ -51,8 +51,13 @@ function Room.new(opts)
     local plan=config.server and config.server.animalSpawnPlan or {}
     for _,entry in ipairs(plan) do
       if entry.index==11 then
-        assert(type(animals.boss)=="function",
-          "Crab King requires original dive and raid implementation before enabling native AI")
+        assert(type(animals.boss)=="function"
+          and type(animals.onCrabKingKilled)=="function"
+          and type(animals.score)=="function"
+          and type(animals.send)=="function",
+          "Crab King requires original AI, victory rewards, scoring and packet callbacks")
+        assert(opts.crabKillers and opts.crabKillers==animals.crabKillers,
+          "Crab King winners must update the same Game.crabKillers table")
       end
     end
   end
