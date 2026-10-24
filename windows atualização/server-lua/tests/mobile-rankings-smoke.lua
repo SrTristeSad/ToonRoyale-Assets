@@ -21,14 +21,15 @@ same(Ranking.build(players,viewer,"gold"),{4,"P4",100,8,"P8",40})
 same(Ranking.build(players,viewer,"kills"),{4,"P4",5,8,"P8",1})
 same(Ranking.build(players,viewer,"health"),{4,"P4",99,8,"P8",50})
 assert(not Ranking.valid("invalid"))
-local ctx={items={weapons={},list={}},players=players,wallTimeMs=2000}
+local now=2000
+local ctx={items={weapons={},list={}},players=players,wallTimeMs=function() return now end}
 Input.handle(ctx,viewer,"Y",{"gold"})
 assert(#packets==1 and packets[1][1]=="n" and packets[1][2]=="gold")
 same(packets[1][3],{4,"P4",100,8,"P8",40})
-ctx.wallTimeMs=2500
+now=2500
 Input.handle(ctx,viewer,"Y",{"gold"})
 assert(#packets==1,"cooldown must suppress response")
-ctx.wallTimeMs=3000
+now=3000
 Input.handle(ctx,viewer,"Y",{"kills"})
 assert(#packets==2 and packets[2][2]=="kills")
 Input.handle(ctx,viewer,"Y",{"invalid"})
@@ -36,7 +37,7 @@ assert(#packets==3 and packets[3][2]=="ranking category")
 Input.handle(ctx,viewer,"Y",{"gold","extra"})
 assert(#packets==4 and packets[4][2]=="ranking category")
 viewer.alive=false
-ctx.wallTimeMs=5000
+now=5000
 Input.handle(ctx,viewer,"Y",{"gold"})
 assert(#packets==4,"dead player cannot request ranking")
 print("PASS 10 verificacoes ranking Y, cooldown, filtro e validacao")
