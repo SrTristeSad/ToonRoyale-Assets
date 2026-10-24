@@ -75,14 +75,14 @@ jobs:
           diff -u /tmp/moo-social-node.txt /tmp/moo-social-lua.txt
           test "$(wc -l < /tmp/moo-social-node.txt)" -eq 12
           echo "PASS 12 snapshots dos servicos Game de animais e ranking"
-      - name: Entrada do cliente - packets essenciais Node vs Lua
+      - name: Entrada cliente e marcacoes do mapa Node vs Lua
         run: |
           set -euo pipefail
           node server-lua/tests/input-reference.mjs > /tmp/moo-input-node.txt
           lua5.4 server-lua/tests/input-reference.lua > /tmp/moo-input-lua.txt
           diff -u /tmp/moo-input-node.txt /tmp/moo-input-lua.txt
-          test "$(wc -l < /tmp/moo-input-node.txt)" -eq 24
-          echo "PASS 24 pacotes gameplay comparados com Node"
+          test "$(wc -l < /tmp/moo-input-node.txt)" -eq 33
+          echo "PASS 33 cenarios de pacotes gameplay comparados com Node"
       - name: Sala Lua integrada - Player Projectile Structures Snapshots
         run: |
           set -euo pipefail
