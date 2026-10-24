@@ -5,7 +5,7 @@ local Econ=require("server-lua.world.economy")
 local names={
   "wood","food-auto","stone-spend","gold","gold-auto","weapon-xp",
   "age-xp","age-up","item-count","has-cost","not-enough",
-  "consume","build","build-limit","sandbox","sandbox-build",
+  "consume","build","build-limit","sandbox","sandbox-build","sandbox-no-limit",
   "unlimited-spend","round-cost"
 }
 local function fmt(x) return string.format("%.3f",x or 0) end
@@ -55,6 +55,7 @@ for _,name in ipairs(names) do
   elseif name=="build-limit" then p.itemCounts[1]=30;result=Econ.canBuild(p,p.item,opts)
   elseif name=="sandbox" then Econ.useRes(p,p.item,nil,opts)
   elseif name=="sandbox-build" then p.wood=0;result=Econ.canBuild(p,p.item,opts)
+  elseif name=="sandbox-no-limit" then p.item.group.limit=nil;result=Econ.canBuild(p,p.item,opts)
   elseif name=="unlimited-spend" then Econ.addResource(p,0,-25,false,opts)
   elseif name=="round-cost" then Econ.useRes(p,p.item,1.25,opts)
   end
