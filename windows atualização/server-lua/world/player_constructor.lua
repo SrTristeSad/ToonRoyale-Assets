@@ -80,8 +80,11 @@ function Player.new(id,sid,opts)
    self.bossMode=(data[12]~=nil and data[12]~=false and data[12]~=0
      and data[12]~=Pack.null)
    local clan=data[13]
-   self.clan=(clan==Pack.null or clan==nil or clan==false
-     or clan==0 or clan=="") and nil or clan
+   if clan==Pack.null or clan==nil or clan==false or clan==0 or clan=="" then
+     self.clan=nil
+   else
+     self.clan=clan
+   end
  end
  -- First original instance methods that do not depend on unported game services.
  p.resetMoveDir=function(self)self.moveDir=nil end
