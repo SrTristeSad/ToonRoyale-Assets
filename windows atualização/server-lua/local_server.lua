@@ -12,6 +12,7 @@ local Transport=require("server-lua.net.room_transport")
 local Host=require("server-lua.net.host")
 local Accounts=require("server-lua.world.account_store")
 local Moderation=require("server-lua.anticheat.moderation_store")
+local Chat=require("server-lua.world.local_chat")
 local Local={}
 Local.__index=Local
 local function stamp()return math.floor(Socket.gettime()*1000)end
@@ -96,6 +97,10 @@ function Local.new(opts)
  rooms.LC=addWorld("LC",Config.maxPlayers,opts.botCount or 0,
   accounts,moderation,now,log)
  rooms.MB=addWorld("MB",80,0,accounts,moderation,now,log)
+ local chat=Chat.new(opts.dataDir.."/chat.json",{nowMs=now,store=accounts})
+ rooms.LC.room.chat=chat
+ rooms.MB.room.chat=chat
+ accounts.onClanEvent=function(name,message)return chat:clanSystem(name,message)end
  local function serverList()
   local result={}
   for _,key in ipairs({"LC","MB"}) do
