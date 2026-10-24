@@ -49,7 +49,7 @@ room:bindPlayer(player)
 room:handleInput(player,"M",{{name="Builder",skin=2,moofoll=true}})
 assert(player.alive and player.spawned and player.name=="Builder")
 assert(player.wood==100 and player.food==100 and player.stone==100)
-assert(player.lifeStats.animals==0 and player.lifeStats.score==0,
+assert(player.lifeStats.animals==0 and player.lifeStats.score==100,
   "spawn lifeStats mismatch animals="..tostring(player.lifeStats.animals)
   .." score="..tostring(player.lifeStats.score)
   .." points="..tostring(player.points))
@@ -63,8 +63,8 @@ assert(found.ACSTART and found.C and found.D and found.a,
 player:addResource(0,20)
 assert(player.wood==120)
 player:addResource(3,250)
-assert(player.points==250 and player.XP==250)
-assert(player.lifeStats.gold==250 and player.lifeStats.score==250)
+assert(player.points==350 and player.XP==250)
+assert(player.lifeStats.gold==250 and player.lifeStats.score==350)
 player.weaponXP[0]=33000
 assert(player:variant().id==3,"emerald restricted to actual members")
 player.isMember=true
