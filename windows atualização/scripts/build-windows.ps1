@@ -32,7 +32,7 @@ if (Test-Path $OutputDir) { Remove-Item $OutputDir -Recurse -Force }
 New-Item -ItemType Directory -Force $OutputDir | Out-Null
 # Windows PowerShell Copy-Item can be extremely slow for server/node_modules.
 # Robocopy processes the package dependencies in parallel, excluding junctions.
-foreach ($folder in @('src','shared','assets','scripts','server')) {
+foreach ($folder in @('src','shared','assets','scripts','server','server-lua')) {
   $from = Join-Path $root $folder
   $to = Join-Path $OutputDir $folder
   New-Item -ItemType Directory -Path $to -Force | Out-Null
@@ -57,6 +57,10 @@ if (-not (Test-Path $nodeLicense -PathType Leaf)) {
 }
 Copy-Item $nodeLicense (Join-Path $nodeTarget 'LICENSE') -Force
 # Runtime data, sessions and account files must never be copied from a dev PC.
+# Server Lua gets an independent data area; never ship development accounts.
+$luaData = Join-Path $OutputDir 'server-lua\data'
+if (Test-Path $luaData) { Remove-Item $luaData -Recurse -Force }
+New-Item -ItemType Directory -Force $luaData | Out-Null
 $data = Join-Path $OutputDir 'server\data'
 if (Test-Path $data) { Remove-Item $data -Recurse -Force }
 New-Item -ItemType Directory -Force $data | Out-Null
