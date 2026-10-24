@@ -265,6 +265,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/mobile-rankings-smoke.lua
+      - name: Game.sendProfile para convidados anonimos e contas
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/profile-service-smoke.lua
       - name: Consulta de perfil V e falha fechada sem servico persistente
         run: |
           set -euo pipefail
