@@ -40,7 +40,7 @@ function M.digest(input)
       local s1=bx(bx(ror(b,17),ror(b,19)),rr(b,10))
       w[i]=add(w[i-16],s0,w[i-7],s1)
     end
-    local a,b,c,d,e,f,g,h=table.unpack(H)
+    local a,b,c,d,e,f,g,h=(table.unpack or unpack)(H)
     for i=1,64 do
       local S1=bx(bx(ror(e,6),ror(e,11)),ror(e,25))
       local ch=bx(band(e,f),band(bnot(e),g))
