@@ -67,6 +67,16 @@ function Registry.new(room,opts)
    })
   end
  end
+ -- Original ObjectManager removes every owned item before player splice.
+ if not opts.removeItems and room.object_manager then
+   opts.removeItems=function(sid)
+     assert(type(room.object_manager.removeAllItems)=="function",
+       "ObjectManager.removeAllItems required for disconnect")
+     return room.object_manager:removeAllItems(sid,{
+       broadcast=assert(room.broadcast,"Node server.broadcast required")
+     })
+   end
+ end
  if room.tribes then
    opts.clanList=opts.clanList or function()return room.tribes:list()end
    opts.leaveTribe=opts.leaveTribe or function(p)return room.tribes:leaveTribe(p)end
