@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Vida dano morte e recompensas Node vs Lua (16 cenarios)
+        run: |
+          set -euo pipefail
+          node server-lua/tests/health-reference.mjs > /tmp/moo-health-node.txt
+          lua5.4 server-lua/tests/health-reference.lua > /tmp/moo-health-lua.txt
+          diff -u /tmp/moo-health-node.txt /tmp/moo-health-lua.txt
+          test "$(wc -l < /tmp/moo-health-node.txt)" -eq 16
+          echo 'PASS 16 cenarios de vida morte e recompensa'
       - name: Regeneracao e efeitos periodicos Node vs Lua
         run: |
           set -euo pipefail
