@@ -68,6 +68,9 @@ function Player:variant()
  end
  error("original weapon variant zero missing")
 end
+function Player:addItem(id)
+  return Identity.addItem(self,id,self.room.items)
+end
 function Player:score(amount)
  return self.room:score(self,amount)
 end
