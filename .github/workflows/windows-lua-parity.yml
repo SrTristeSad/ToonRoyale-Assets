@@ -265,6 +265,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/mobile-rankings-smoke.lua
+      - name: Persistencia do fechamento de vida e contas
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/life-persistence-smoke.lua
       - name: Game.sendProfile para convidados anonimos e contas
         run: |
           set -euo pipefail
