@@ -145,4 +145,38 @@ function World:generate()
   return self.objects
 end
 
+-- ObjectManager.getGridArrays: same nine-cell order and edge checks.
+-- This is called once per player's collision-substep during game updates.
+function World:getGridArrays(xPos,yPos,scale)
+  local cfg=self.config
+  local cellSize=cfg.mapScale/cfg.colGrid
+  local col=math.floor(xPos/cellSize)
+  local row=math.floor(yPos/cellSize)
+  local result={}
+  local function push(x,y)
+    local group=self.grids[x.."_"..y]
+    if group then result[#result+1]=group end
+  end
+  push(col,row)
+  if xPos+scale>=(col+1)*cellSize then
+    push(col+1,row)
+    if row~=0 and yPos-scale<=row*cellSize then
+      push(col+1,row-1)
+    elseif yPos+scale>=(row+1)*cellSize then
+      push(col+1,row+1)
+    end
+  end
+  if col~=0 and xPos-scale<=col*cellSize then
+    push(col-1,row)
+    if row~=0 and yPos-scale<=row*cellSize then
+      push(col-1,row-1)
+    elseif yPos+scale>=(row+1)*cellSize then
+      push(col-1,row+1)
+    end
+  end
+  if yPos+scale>=(row+1)*cellSize then push(col,row+1) end
+  if row~=0 and yPos-scale<=row*cellSize then push(col,row-1) end
+  return result
+end
+
 return World
