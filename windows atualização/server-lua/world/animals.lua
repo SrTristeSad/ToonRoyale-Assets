@@ -4,6 +4,8 @@
 local AI=require("server-lua.world.ai")
 local Health=require("server-lua.world.animal_health")
 local Rewards=require("server-lua.world.animal_rewards")
+local Crab=require("server-lua.world.crab_king")
+local CrabRewards=require("server-lua.world.crab_rewards")
 local Types=require("server-lua.world.animal_types")
 local Config=require("src.game.config")
 local Animals={}
@@ -17,6 +19,15 @@ function Animals.new(opts)
    and type(opts.world.canPlace)=="function",
    "real generated ObjectManager required")
  assert(type(opts.random)=="function","source Math.random-compatible generator required")
+ local crabKilled=opts.onCrabKingKilled
+ if not crabKilled and opts.crabKillers and opts.broadcast then
+   crabKilled=function(ai,doer)
+     return CrabRewards.onKill(ai,doer,{
+       crabKillers=opts.crabKillers,broadcast=opts.broadcast,
+       event=opts.event,key=opts.key
+     })
+   end
+ end
  local self=setmetatable({
    config=cfg,world=opts.world,players=opts.players or {},
    ais=opts.ais or {},random=opts.random,
@@ -26,11 +37,12 @@ function Animals.new(opts)
    collision=opts.collision,send=opts.send,
    score=opts.score,
    onKill=opts.onKill or function(ai,doer)
-     return Rewards.onKill(ai,doer,{onCrabKingKilled=opts.onCrabKingKilled})
+     return Rewards.onKill(ai,doer,{onCrabKingKilled=crabKilled})
    end,
    killScore=opts.killScore or Rewards.killScore,
    dropAmount=opts.dropAmount or Rewards.dropAmount,
-   health=opts.health,boss=opts.boss
+   health=opts.health,boss=opts.boss or Crab.attach,
+   onCrabKingKilled=crabKilled
  },Animals)
  if not self.health and type(self.score)=="function" and type(self.send)=="function" then
    self.health=function(actor,amount,doer,runFrom)
@@ -61,6 +73,7 @@ function Animals:spawn(x,y,angle,index,overrides)
      config=self.config,players=self.players,world=self.world,
      randInt=function(min,max)return self:randomInt(min,max)end,
      randFloat=function(min,max)return self:randomFloat(min,max)end,
+     random=self.random,
      respawnAt=self.respawnAt,hit=self.hit,disable=self.disable,
      collision=self.collision,send=self.send,score=self.score,
      onKill=self.onKill,killScore=self.killScore,dropAmount=self.dropAmount
