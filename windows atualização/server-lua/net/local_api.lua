@@ -150,12 +150,23 @@ function API:handle(method,target,headers,raw,ip)
   ["/api/account"]=true,["/api/account/prefs"]=true,
   ["/api/account/look"]=true,["/api/name"]=true,
   ["/api/account/socials"]=true,["/api/discord/link"]=true,
-  ["/api/friends/allow"]=true,["/api/top"]=true
+  ["/api/friends/allow"]=true,["/api/top"]=true,
+  ["/api/mod/role"]=true,["/api/mod/clan"]=true
  }
  local clanAction=path:match("^/api/clan/([%w]+)$")
  if not authPaths[path] and not clanAction then return nil end
  local account=self:authenticated(body)
  if not account then return invalid("auth") end
+ if path=="/api/mod/role" then
+  if account.role~="admin" then return invalid("rank") end
+  if not store:setRole(body.name,body.role) then return invalid("no player",404) end
+  return response(200,{})
+ end
+ if path=="/api/mod/clan" then
+  if account.role~="admin" and account.role~="mod" then return invalid("rank") end
+  if not store:setClanShadow(body.clan,body.shadow) then return invalid("not found",404) end
+  return response(200,{})
+ end
  if path=="/api/account" then return response(200,store:accountInfo(account)) end
  if path=="/api/account/prefs" then
   return response(200,{prefs=store:setPrefs(account,body.prefs)})
