@@ -8,10 +8,11 @@ local Sync={}
 
 local function fix(value,places)
   -- Node UTILS.fixTo: parseFloat(n.toFixed(places)).
-  -- Coordinates are rounded at the same wire precision.
-  local m=10^places
-  if value<0 then return -math.floor(-value*m+0.5)/m end
-  return math.floor(value*m+0.5)/m
+  -- Multiplying by 10^places before rounding introduces *extra* binary
+  -- rounding; e.g. 101.675 should become 101.67, not 101.68.
+  -- C printf rounds the original binary float directly at the target
+  -- decimal precision, matching JS toFixed for places 1/2/3.
+  return tonumber(string.format("%."..places.."f",value))
 end
 local function round(v) return math.floor(v+0.5) end
 local function nullable(v) return v==nil and MP.null or v end
