@@ -12,10 +12,11 @@ if(objectIdStart<0||objectIdEnd<2)throw Error("original ObjectId source changed"
 const {randomBytes}=await import("node:crypto");
 const objectId=new Function("randomBytes","return ("+source.slice(objectIdStart,objectIdEnd)+")")(randomBytes);
 const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude","objectId",
- "SOCIAL_FIELDS","HANDLE_RE",
+ "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes",
  "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(
  periods,defaults,value=>value==="badword",objectId,
- ["youtube","twitch","tiktok","x","discord"],/^[A-Za-z0-9._-]{1,32}$/);
+ ["youtube","twitch","tiktok","x","discord"],/^[A-Za-z0-9._-]{1,32}$/,
+ {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes);
 const id="abc123";
 const base=()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,
  gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}});
@@ -127,3 +128,28 @@ out("SOCIAL_FORMAT",socialResult.status,socialResult.body.field,socialResult.bod
 socialResult=store.setSocials(a,{twitch:"badword"});
 out("SOCIAL_RUDE",socialResult.status,socialResult.body.field,socialResult.body.why);
 out("SOCIAL_UNCHANGED",a.socials.youtube,a.socials.discord);
+
+const legacy="1234567890abcdef",otherLegacy="oldkey";
+const oldAccount={id:legacy,createdAt:1792864800000,name:"Legacy"};
+const otherAccount={id:otherLegacy,createdAt:1792864800000,name:"Other"};
+const oldClan={name:"LEG",members:[{id:legacy}],past:[{id:otherLegacy}],
+ invites:[{id:legacy,by:otherLegacy}],requests:[otherLegacy]};
+const legacyStore=Object.create(Store.prototype);
+legacyStore.file="never-written.json";
+legacyStore.data={accounts:{[legacy]:oldAccount,[otherLegacy]:otherAccount},
+ names:{legacy,other:otherLegacy},emails:{"legacy@example.com":legacy},
+ clans:{LEG:oldClan},legacyIds:{},social:{
+ friends:{[legacy]:[{id:otherLegacy}],[otherLegacy]:[{id:legacy}]},
+ requests:[{senderId:legacy,recipientId:otherLegacy}]}};
+const remapped=legacyStore.migrateIds();
+const aId=remapped[legacy],bId=remapped[otherLegacy];
+out("MIGRATE",/^[a-f0-9]{24}$/.test(aId),aId.endsWith(legacy),
+ /^[a-f0-9]{24}$/.test(bId),Object.keys(legacyStore.data.accounts).length);
+out("MIGRATE_RELATIONS",
+ legacyStore.data.names.legacy===aId,legacyStore.data.emails["legacy@example.com"]===aId,
+ oldClan.members[0].id===aId,oldClan.past[0].id===bId,
+ oldClan.invites[0].by===bId,oldClan.requests[0]===bId);
+out("MIGRATE_SOCIAL",
+ legacyStore.data.social.friends[aId][0].id===bId,
+ legacyStore.data.social.requests[0].recipientId===bId,
+ legacyStore.accountById(otherLegacy)===otherAccount);
