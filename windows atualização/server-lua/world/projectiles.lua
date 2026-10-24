@@ -80,6 +80,12 @@ function Projectiles:addProjectile(x,y,dir,range,speed,index,owner,ignoreObj,lay
   proj.ignoreObj=ignoreObj
   proj.layer=jsOr(layer,data.layer)
   proj.src=data.src
+  -- Node Game.tick iterates Projectile instances and invokes projectile.update.
+  -- Bind the actual manager simulation to each live/reused Lua projectile.
+  proj.manager=self
+  proj.update=function(selfProjectile,delta)
+    return selfProjectile.manager:updateOne(selfProjectile,delta)
+  end
   return proj
 end
 
