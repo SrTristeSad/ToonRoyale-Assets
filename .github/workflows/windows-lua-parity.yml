@@ -467,6 +467,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/local-server-boot-smoke.lua
+      - name: Amigos HTTP Node local - Bearer, pedido, aceite e remoção
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/local-social-smoke.lua
       - name: HTTP local de contas e ingressos - AccountStore real
         run: |
           set -euo pipefail
