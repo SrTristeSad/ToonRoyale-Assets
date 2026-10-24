@@ -2,6 +2,7 @@
 -- Same gameplay inputs as the unchanged Node handlePacket reference.
 local MP=require("src.protocol.msgpack")
 local Input=require("server-lua.world.input")
+local Config=require("src.game.config")
 local items={
  weapons={
    [0]={id=0,type=0}
@@ -33,6 +34,15 @@ local cases={
  {id="toggle-lock",packet="K",args={0}},
  {id="toggle-invalid",packet="K",args={5}},
  {id="ping",packet="0",args={}},
+ {id="map-self",packet="S",args={}},
+ {id="map-ally",packet="S",args={},team="RED",allyTeam="RED"},
+ {id="map-cooldown",packet="S",args={},pingCooldown=500},
+ {id="map-tap",packet="U",args={200.5,100.25}},
+ {id="map-tap-ally",packet="U",args={210.25,120.25},team="RED",allyTeam="RED"},
+ {id="map-negative",packet="U",args={-5,120}},
+ {id="map-nonnumeric",packet="U",args={"bad",120}},
+ {id="map-extra",packet="U",args={15,25,35}},
+ {id="map-dead",packet="S",args={},alive=false},
  {id="dead-dir",packet="D",args={2.2},alive=false},
  {id="dead-attack",packet="F",args={true,0.5},alive=false}
 }
@@ -49,6 +59,7 @@ for _,s in ipairs(cases) do
  local player={
    id="guest",sid=7,alive=s.alive==nil and true or s.alive,
    name="Old",dir=0.25,moveDir=0.8,mouseState=0,hits=0,
+   x=125.5,y=200.5,team=s.team,pingCooldown=s.pingCooldown or 0,
    buildIndex=s.buildIndex or -1,weaponIndex=0,
    autoGather=0,lockDir=false,
    itemCounts={},items={0,3,6,10},weapons={[0]=0},
@@ -78,14 +89,20 @@ for _,s in ipairs(cases) do
    for i=1,select("#",...) do args[i]=g(select(i,...)) end
    events[#events+1]="SEND:"..name..":"..table.concat(args,",")
  end
- local ctx={items=items,gameKey="LC",
+ local ally={id="ally",team=s.allyTeam,alive=true}
+ ally.send=function(_,name,...)
+   local args={}
+   for i=1,select("#",...) do args[i]=g(select(i,...)) end
+   events[#events+1]="ALLY:"..name..":"..table.concat(args,",")
+ end
+ local ctx={items=items,gameKey="LC",players={player,ally},config=Config,
    log=function(message)events[#events+1]="LOG:"..message end}
  Input.handle(ctx,player,s.packet,s.args)
  local cache=0
  for _ in pairs(player.attrCache) do cache=cache+1 end
  print(table.concat({"INPUT",s.id,player.alive and 1 or 0,g(player.dir),g(player.moveDir),
    g(player.mouseState),player.hits,player.buildIndex,player.weaponIndex,
-   g(player.autoGather),g(player.lockDir),cache,table.concat(events,";")},"|"))
+   g(player.autoGather),g(player.lockDir),cache,g(player.pingCooldown),table.concat(events,";")},"|"))
 end
 assert(not pcall(function()
  Input.handle({items=items},{alive=true},"6",{})
