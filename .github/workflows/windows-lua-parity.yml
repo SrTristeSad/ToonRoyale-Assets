@@ -265,6 +265,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/mobile-rankings-smoke.lua
+      - name: AccountStore Lua com leitura gravacao e retorno do accounts.json
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/account-store-smoke.lua
       - name: Ciclo de desconexao com recordLife nativo
         run: |
           set -euo pipefail
