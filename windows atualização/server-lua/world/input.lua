@@ -9,6 +9,7 @@ local TribeInput=require("server-lua.world.tribe_input")
 local Chat=require("server-lua.world.chat_input")
 local Anonymous=require("server-lua.world.anon_input")
 local Ranking=require("server-lua.world.mobile_rankings")
+local Reports=require("server-lua.world.report_input")
 local Input={}
 local function truthy(v)
   return v~=nil and v~=false and v~=0 and v~=MP.null
@@ -154,6 +155,8 @@ function Input.handle(ctx,player,name,args)
       end
     end
     return
+  elseif name=="R" then
+    return Reports.handle(ctx,player,args)
   elseif name=="Y" then
     local category=args[1]
     if #args~=1 or type(category)~="string" or not Ranking.valid(category) then
