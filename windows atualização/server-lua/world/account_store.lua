@@ -72,7 +72,8 @@ function Store.open(path,opts)
   local self=setmetatable({file=path,data=data,
     nowMs=opts.nowMs or function() return os.time()*1000 end,
     isRude=opts.isRude,
-    randomBytes=opts.randomBytes or SecureRandom.bytes},Store)
+    randomBytes=opts.randomBytes or SecureRandom.bytes,
+    tickets={},devices={}},Store)
   self.migratedIds=self:migrateIds()
   return self
 end
@@ -739,6 +740,45 @@ function Store:migrateIds()
   return remap
 end
 
+-- AccountStore.issueTicket / recentDevice / consumeTicket from Node store.js.
+local function hexBytes(value,n)
+  assert(type(value)=="string" and #value==n,
+    "cryptographically secure random bytes unavailable")
+  return (value:gsub(".",function(ch)
+    return string.format("%02x",ch:byte())
+  end))
+end
+function Store:issueTicket(options)
+  options=assert(options,"ticket options required")
+  local account,did,server=options.account,options.did,options.server
+  local ticket=hexBytes(self.randomBytes(18),18)
+  local validDid=type(did)=="string" and #did>=16 and #did<=64
+    and did:match("^[a-f0-9]+$")~=nil
+  local deviceId=validDid and did or hexBytes(self.randomBytes(12),12)
+  self.tickets[ticket]={
+    accountId=truth(account) and account.id or json.null,
+    did=deviceId,server=truth(server) and server or json.null,
+    at=self.nowMs()
+  }
+  self.devices[deviceId]=self.nowMs()
+  return {ticket=ticket,did=deviceId}
+end
+function Store:recentDevice(did)
+  local key=truth(did) and tostring(did) or ""
+  local at=self.devices[key]
+  return at~=nil and at~=0 and self.nowMs()-at<15*60*1000 or false
+end
+function Store:consumeTicket(ticket,maxAgeMs)
+  local entry=self.tickets[ticket]
+  if not entry then return json.null end
+  self.tickets[ticket]=nil
+  if type(maxAgeMs)=="number" and self.nowMs()-entry.at>maxAgeMs then
+    return json.null
+  end
+  local account=truth(entry.accountId) and self.data.accounts[entry.accountId] or nil
+  return {account=account or json.null,did=entry.did,server=entry.server}
+end
+
 -- Node uses dot-method calls; this wrapper retains that shape for existing Lua ports.
 function Store:callbacks()
   return {
@@ -770,7 +810,11 @@ function Store:callbacks()
     cancelFriendRequest=function(a,b) return self:cancelFriendRequest(a,b) end,
     removeFriend=function(a,b) return self:removeFriend(a,b) end,
     accountByEmail=function(email) return self:accountByEmail(email) end,
-    accountById=function(id) return self:accountById(id) end
+    accountById=function(id) return self:accountById(id) end,
+    issueTicket=function(opts) return self:issueTicket(opts) end,
+    recentDevice=function(did) return self:recentDevice(did) end,
+    consumeTicket=function(ticket,maxAgeMs)
+      return self:consumeTicket(ticket,maxAgeMs) end
   }
 end
 return Store
