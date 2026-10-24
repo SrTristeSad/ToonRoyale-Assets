@@ -107,7 +107,7 @@ function Local.new(opts)
   roomCode=assert(opts.roomCode,"MOO_IO_ROOM_CODE required"),
   rooms={LC={capacity=Config.maxPlayers,membersOnly=false},
     MB={capacity=80,membersOnly=true}},
-  maxPeers=120,guiHost=opts.guiHost==true,
+  maxPeers=120,guiHost=opts.guiHost==true,botCount=opts.botCount or 0,
   accounts=accounts,moderation=moderation,servers=serverList,
   nowMs=now,
   onConnect=function(peer,ticket,key)
