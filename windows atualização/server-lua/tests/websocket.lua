@@ -1,0 +1,31 @@
+-- SPDX-License-Identifier: AGPL-3.0-only
+local SHA=require("server-lua.net.sha1")
+local WS=require("server-lua.net.websocket")
+local C=require("src.protocol.original_crypto")
+local function hex(s) return (s:gsub(".",function(c)return string.format("%02x",c:byte())end)) end
+assert(hex(SHA.digest("abc"))=="a9993e364706816aba3e25717850c26c9cd0d89d")
+assert(WS.acceptKey("dGhlIHNhbXBsZSBub25jZQ==")=="s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
+assert(WS.acceptKey("invalid")==nil)
+local function masked(payload)
+  local mask=string.char(0x37,0xfa,0x21,0x3d)
+  local buf={}
+  for i=1,#payload do buf[i]=string.char(C.bxor(payload:byte(i),mask:byte((i-1)%4+1))) end
+  return string.char(0x82,0x80+#payload)..mask..table.concat(buf)
+end
+local raw=masked("hello")
+local frame,remain=WS.decode(raw:sub(1,4))
+assert(frame==nil and remain==raw:sub(1,4))
+frame,remain=WS.decode(raw)
+assert(frame.opcode==2 and frame.payload=="hello" and remain=="")
+local multi=masked("hello")..masked("world")
+frame,remain=WS.decode(multi)
+assert(frame.payload=="hello")
+frame,remain=WS.decode(remain)
+assert(frame.payload=="world")
+assert(WS.decode(string.char(0x82,0x05).."hello")==nil)
+assert(select(3,WS.decode(string.char(0x82,0x05).."hello"))=="unmasked client frame")
+local outgoing=WS.encode("abc")
+assert(hex(outgoing)=="8203616263")
+local large=WS.encode(string.rep("x",126))
+assert(large:byte(1)==130 and large:byte(2)==126 and #large==130)
+print("OK: SHA-1 / RFC6455 handshake / masking / frame buffering / rejection")
