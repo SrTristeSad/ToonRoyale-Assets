@@ -14,6 +14,15 @@ local C = {
   maxPlayers = 40,
   maxPlayersHard = 50,
   maxNameLength = 15, -- shared/config.js, original Player.setUserData
+  -- Exact shared/config.js [Co] weapon variants; Lua indices are 1-based.
+  weaponVariants = {
+    {id=0,src="",xp=0,val=1},
+    {id=1,src="_g",xp=3000,val=1.1},
+    {id=2,src="_d",xp=7000,val=1.18},
+    {id=3,src="_r",poison=true,xp=12000,val=1.18},
+    {id=4,src="_e",poison=true,lifesteal=0.15,membersOnly=true,xp=30000,val=1.18}
+  },
+
   skinColors = {"#bf8f54","#cbb091","#896c4b","#fadadc","#ececec",
     "#c37373","#4c4c4c","#ecaff7","#738cc3","#8bc373"},
   gatherAngle = math.pi/2.6,
