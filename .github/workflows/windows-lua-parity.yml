@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Construtor Player identidade e inventario Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/player-identity-reference.mjs > /tmp/moo-playeridentity-node.txt
+          lua5.4 server-lua/tests/player-identity-reference.lua > /tmp/moo-playeridentity-lua.txt
+          diff -u /tmp/moo-playeridentity-node.txt /tmp/moo-playeridentity-lua.txt
+          test "$(wc -l < /tmp/moo-playeridentity-node.txt)" -eq 18
+          echo 'PASS 18 snapshots Player constructor original'
       - name: Crab King nativo integrado ao Game.tick e rewards
         run: |
           set -euo pipefail
