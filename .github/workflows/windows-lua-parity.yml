@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Armas recarga e projeteis - Player.update Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/weapon-reference.mjs > /tmp/moo-weapon-node.txt
+          lua5.4 server-lua/tests/weapon-reference.lua > /tmp/moo-weapon-lua.txt
+          diff -u /tmp/moo-weapon-node.txt /tmp/moo-weapon-lua.txt
+          test "$(wc -l < /tmp/moo-weapon-node.txt)" -eq 45
+          echo "PASS 45 ticks de armas e recarga"
       - name: Economia recursos e experiencia Node vs Lua (19 cenarios)
         run: |
           set -euo pipefail
