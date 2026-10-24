@@ -181,7 +181,10 @@ function Host:request(peer,req)
     if room.membersOnly and not (t.account and t.account~=Json.null) then
       return bad(peer,403,"members-only server")
     end
-    if (self.activeByRoom[key] or 0)>=room.capacity then return bad(peer,409,"server full") end
+    local staff=account and (account.role=="admin" or account.role=="mod")
+    if (self.activeByRoom[key] or 0)>=room.capacity and not staff then
+      return bad(peer,409,"server full")
+    end
     if h.origin~="http://"..self.bind..":"..self.port
       or h.host~=self.bind..":"..self.port then return bad(peer,403,"origin") end
     if h["sec-websocket-version"]~="13" then return bad(peer,400,"ws version") end
