@@ -5,6 +5,7 @@
 -- Crab King raid boss is NOT treated as a normal animal: it requires
 -- its original dive/raid callbacks rather than an invented behavior.
 local Collision=require("server-lua.world.collision")
+local Angles=require("server-lua.world.atan2")
 local DefaultConfig=require("src.game.config")
 local AI={}
 AI.__index=AI
@@ -13,7 +14,7 @@ local TWO_PI=PI*2
 local function truth(v) return v~=nil and v~=false and v~=0 end
 local function jsOr(v,default)return truth(v) and v or default end
 local function rem(v,divisor) return v-math.modf(v/divisor)*divisor end
-local function dir(x1,y1,x2,y2)return math.atan(y1-y2,x1-x2) end
+local function dir(x1,y1,x2,y2)return Angles.atan2(y1-y2,x1-x2) end
 local function distance(x1,y1,x2,y2)
  local a,b=x1-x2,y1-y2
  return math.sqrt(a*a+b*b)
