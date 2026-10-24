@@ -13,7 +13,7 @@ const roleDef=source.match(/const ROLE_NUMBER = \{[^;]+;/)?.[0];
 const iconDef=source.match(/const iconFor = [^;]+;/)?.[0];
 if(!roleDef||!iconDef)throw Error("Source role and icon definitions changed");
 const real=new Function("UTILS",roleDef+"\n"+iconDef+
-  "\nreturn ({"+["syncAnimals","sendMinimap","updateLeaders","sendLeaderboard","sendStats"]
+  "\nreturn ({"+["syncAnimals","sendMinimap","updateLeaders","sendLeaderboard","sendStats","crownOf"]
   .map(method).join(",\n")+"});")(UTILS);
 const profiles=[
  {name:"normal",staff:false,anon:false,accounts:true},
@@ -60,8 +60,8 @@ for(const profile of profiles){
  ];
  const game={
    players,ais,crabKillers:new Set([1,3]),
-   accounts:profile.accounts?{}:null,
-   crownOf(player){return player.account?(player.sid===1?3:2):0},
+   accounts:profile.accounts?{weeklyCrowns(){return {A1:3,A2:2}}}:null,
+   crownsAt:0,crowns:{},
    ...real
  };
  for(let stage=1;stage<=3;stage++){
