@@ -1,8 +1,8 @@
 local Player=require("server-lua.world.player_constructor")
 -- Original store items with zero price, preserving all IDs and dontSell flags.
 -- The JS reference uses the complete shared/config/store.js catalogue.
-local freeHats={51,50,28,29,30,36,37,38,44,35}
-local freeAccessories={0}
+local freeHats={51,50,28,29,30,36,37,38,44,35,42,43,49}
+local freeAccessories={}
 local function catalog(ids)
  local data={}
  for _,id in ipairs(ids) do data[#data+1]={id=id,price=0} end
