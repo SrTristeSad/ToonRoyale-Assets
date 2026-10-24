@@ -64,8 +64,10 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log)
   nowMs=clock,
   moderation=moderation,
   kickPeer=function(peer,reason)
-   if peer.send then peer:send("B",{reason})end
-   if peer.host then peer.host:drop(peer)end
+   if peer.send and not peer.closed then
+    peer:send("B",{reason})
+    peer.state="closing"
+   elseif peer.host then peer.host:drop(peer)end
   end,
   closePeer=function(peer)
    if peer.host then peer.host:drop(peer)end
