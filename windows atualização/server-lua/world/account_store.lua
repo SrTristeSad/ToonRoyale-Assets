@@ -247,7 +247,7 @@ function Store:setPrefs(account,changes)
   return prefs
 end
 function Store:lookOptions(account)
-  local u=account.unlocks or {}
+  local u=absent(account.unlocks) and {} or account.unlocks
   local hats,accs,weapons=array(),array(),object()
   hats[1]=0;accs[1]=0;weapons["0"]=0
   for _,id in ipairs(u.hats or {}) do hats[#hats+1]=id end
