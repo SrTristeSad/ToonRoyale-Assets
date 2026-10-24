@@ -31,6 +31,7 @@ local room=Room.new({
  services={ensureAnimals=function()end}
 })
 local anti={
+ allow=function()return true end,
  invalid=function(_,name,reason)error("invalid packet "..name..":"..reason)end,
  onGameStart=function()events[#events+1]="ACSTART"end,
  tick=function()end
