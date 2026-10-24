@@ -4,6 +4,7 @@
 -- Account resolution, clan manager, moderation and persistence remain strict
 -- externally owned services; this registry does not manufacture them.
 local Player=require("server-lua.world.player")
+local Bots=require("server-lua.world.bots")
 local AntiCheat=require("server-lua.anticheat.index")
 local SecureRandom=require("src.net.secure_random")
 local NameWords=require("server-lua.world.name_words")
@@ -94,11 +95,55 @@ function Registry.new(room,opts)
    "original maxPlayersHard required")
  local available={}
  for i=0,room.config.maxPlayersHard-1 do available[i]=true end
- return setmetatable({
+ local registry=setmetatable({
    room=room,options=opts,available=available,
    playersById={},pending=setmetatable({},{__mode="k"}),
    animalKinds=kinds()
  },Registry)
+ if opts.botCount~=nil then registry:attachBots(opts.botCount) end
+ return registry
+end
+-- Internal bots follow Game.addPlayer: no fake WebSocket, ticket or client
+-- anticheat. Real Player/Room methods still perform spawn, physics and combat.
+function Registry:addBot(request)
+ assert(type(request)=="table" and type(request.id)=="string"
+   and request.id:match("^mooio%-bot%-%d+$")
+   and request.ip=="internal-bot" and type(request.send)=="function",
+   "RoomBots only accepts internal Node-style bot players")
+ local sid
+ for i=0,self.room.config.maxPlayersHard-1 do
+  if self.available[i] then sid=i;break end
+ end
+ if sid==nil then return nil end
+ assert(not self.playersById[request.id],"original bot ID already in use")
+ local room=self.room
+ local player=Player.new(request.id,sid,room,{
+   hats=self.options.hats,accessories=self.options.accessories,
+   nameWords=self.options.nameWords,ip="internal-bot",
+   internalBot=true,icon=self.options.onDeath,
+   send=request.send
+ })
+ player.ipHash=binHex(Sha.digest("internal-bot")):sub(1,12)
+ player.connectedAt=room.nowMs
+ player.reports=0
+ player.visiblePlayers={}
+ player.visibleAis={}
+ player.attrCache={}
+ self.available[sid]=false
+ room:bindPlayer(player)
+ self.playersById[player.id]=player
+ player:send("A",{teams=self.options.clanList(),animals=self.animalKinds})
+ if self.options.count then self.options.count(room.key,#room.players) end
+ return player
+end
+function Registry:attachBots(count)
+ assert(not self.room.bots,"RoomBots already connected")
+ count=Bots.parseBotCount(count)
+ local room=self.room
+ assert(room.addPlayer==nil,"Game.addPlayer owned by another service")
+ room.addPlayer=function(_,request)return self:addBot(request) end
+ room.bots=Bots.new(room,count)
+ return room.bots
 end
 local function peerIp(peer)
  if type(peer.ip)=="string" and #peer.ip>0 then return peer.ip end
