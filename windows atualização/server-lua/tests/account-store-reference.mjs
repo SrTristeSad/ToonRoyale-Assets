@@ -12,11 +12,11 @@ if(objectIdStart<0||objectIdEnd<2)throw Error("original ObjectId source changed"
 const {randomBytes}=await import("node:crypto");
 const objectId=new Function("randomBytes","return ("+source.slice(objectIdStart,objectIdEnd)+")")(randomBytes);
 const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude","objectId",
- "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes","DEVICE_REJOIN_MS",
+ "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes","DEVICE_REJOIN_MS","CLAN_RE","CLAN_MAX_MEMBERS",
  "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(
  periods,defaults,value=>value==="badword",objectId,
  ["youtube","twitch","tiktok","x","discord"],/^[A-Za-z0-9._-]{1,32}$/,
- {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes,900000);
+ {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes,900000,/^[A-Za-z0-9]{3,4}$/,80);
 const id="abc123";
 const base=()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,
  gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}});
