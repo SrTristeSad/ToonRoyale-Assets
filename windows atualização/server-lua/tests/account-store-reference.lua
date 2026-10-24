@@ -225,3 +225,33 @@ for _,span in ipairs({"all","day","week","month"}) do
 end
 local crowns=leaderboard:weeklyCrowns()
 out("WEEKLY_CROWNS",crowns["id-a"],crowns["id-b"],crowns["id-c"],crowns["id-d"])
+
+local authStore=Store.open("server-lua/tests/.does-not-exist.json",{
+ nowMs=function()return 1792864800000 end,
+ randomBytes=function(n)return string.rep("a",n) end})
+authStore.data={accounts={},emails={},names={},clans={},
+ social={friends={},requests={}},legacyIds={}}
+local authSaves=0
+authStore.save=function()authSaves=authSaves+1 end
+out("ACCOUNT_EMPTY",authStore:accountForEmail("")==Json.null,
+ authStore:accountForEmail(string.rep("x",121))==Json.null)
+local created=authStore:accountForEmail(" A@EXAMPLE.COM ")
+out("ACCOUNT_CREATE",#created.id==24 and created.id:match("^[a-f0-9]+$")~=nil,
+ created.email,created.name==Json.null,created.stats.lives,authSaves)
+out("ACCOUNT_REUSE",authStore:accountForEmail("a@example.com")==created,authSaves)
+local loginFlow=authStore:startLogin("a@example.com")
+out("LOGIN_START",#loginFlow==24 and loginFlow:match("^[a-f0-9]+$")~=nil,
+ authStore.loginFlows[loginFlow]~=nil)
+out("LOGIN_FINISH",authStore:finishLogin(loginFlow)==created,
+ authStore:finishLogin(loginFlow)==Json.null)
+local discord=authStore:createDiscordCode(string.rep("D",40))
+out("DISCORD_CODE",#discord==24 and discord:match("^[a-f0-9]+$")~=nil,
+ #authStore:discordCode(discord).discord)
+out("DISCORD_LINK",authStore:linkDiscord(created,discord).body.error)
+created.name="Permanent"
+local discordResult=authStore:linkDiscord(created,discord)
+out("DISCORD_LINK_OK",discordResult.status,#discordResult.body.discord,
+ authStore:discordCode(discord)==Json.null,#created.discord.name)
+local expired=authStore:createDiscordCode("expired")
+authStore.discordCodes[expired].at=authStore.discordCodes[expired].at-600001
+out("DISCORD_EXPIRE",authStore:discordCode(expired)==Json.null)
