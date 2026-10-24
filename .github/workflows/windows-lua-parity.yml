@@ -287,6 +287,12 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/room-crowns-smoke.lua
+      - name: JWT HS256 conta Node vs Lua - tokens byte a byte
+        run: |
+          set -euo pipefail
+          node server-lua/tests/account-token-reference.mjs > /tmp/moo-token-node.txt
+          lua5.4 server-lua/tests/account-token-reference.lua > /tmp/moo-token-lua.txt
+          diff -u /tmp/moo-token-node.txt /tmp/moo-token-lua.txt
       - name: AccountStore real Node vs Lua - cenarios diferenciais
         run: |
           set -euo pipefail
