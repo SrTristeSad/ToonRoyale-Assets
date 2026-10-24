@@ -6,8 +6,8 @@ const pos=source.indexOf(marker);
 if(pos<0)throw Error("original AccountStore class not found");
 const periods={day:()=>"2026-10-24",week:()=>"2026-10-19",month:()=>"2026-10"};
 const defaults={friendNotifs:true,friendRequests:true,clanInvites:true,clanChat:true,whispers:true};
-const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS",
- "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(periods,defaults);
+const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude",
+ "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(periods,defaults,()=>false);
 const id="abc123";
 const base=()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,
  gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}});
@@ -64,3 +64,24 @@ out("WEEKLY_TOP",store.weeklyTopClan());
 out("PROFILE",store.profile(a).name,store.profile(a).clan.name,
  store.profile(a).periods.week.kills);
 out("SAVES",saves);
+
+const creator={id:"creator",name:"Creator",clan:null,stats:base(),role:null};
+const joiner={id:"joiner",name:"Joiner",clan:null,stats:base(),role:null};
+store.data.accounts.creator=creator;
+store.data.accounts.joiner=joiner;
+store.data.names.creator="creator";
+store.data.names.joiner="joiner";
+const log=[];store.onClanEvent=(name,msg)=>log.push(name+":"+msg);
+let cr=store.clanAction(creator,"create",{name:"DEF"});
+out("CLAN_CREATE",cr.status,creator.clan,store.data.clans.DEF.members[0].role);
+let req=store.clanAction(joiner,"request",{clan:"def"});
+out("CLAN_REQUEST",req.status,store.data.clans.DEF.requests.length);
+let decide=store.clanAction(creator,"decide",{name:"Joiner",accept:true});
+out("CLAN_DECIDE",decide.status,joiner.clan,store.data.clans.DEF.members.length);
+let rank=store.clanAction(creator,"role",{name:"Joiner",role:"owner"});
+out("CLAN_TRANSFER",rank.status,store.data.clans.DEF.members.map(x=>x.role).join(","));
+let leave=store.clanAction(creator,"leave",{});
+out("CLAN_LEAVE",leave.status,n(creator.clan),store.data.clans.DEF.members.length);
+let disband=store.clanAction(joiner,"disband",{});
+out("CLAN_DISBAND",disband.status,!!store.data.clans.DEF,n(joiner.clan));
+out("CLAN_EVENTS",log.length,log[0],log[1]);
