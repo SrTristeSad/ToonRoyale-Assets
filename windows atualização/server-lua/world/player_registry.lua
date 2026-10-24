@@ -187,6 +187,7 @@ function Registry:createPlayer(peer,ticket,room)
    icon=self.options.onDeath,
    send=function(name,...)return sendPeer(peer,name,...)end
  })
+ p.kick=function(reason)return self.options.kickPeer(peer,reason)end
  p.ip=ip
  p.ipHash=binHex(Sha.digest(tostring(ip))):sub(1,12)
  p.connectedAt=room.nowMs
