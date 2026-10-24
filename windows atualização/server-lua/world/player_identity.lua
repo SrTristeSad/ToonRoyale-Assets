@@ -4,11 +4,12 @@
 -- Original name moderation words and store catalogue MUST be injected.
 local Config=require("src.game.config")
 local NameWords=require("server-lua.world.name_words")
+local Pack=require("src.protocol.msgpack")
 local Sync=require("server-lua.world.snapshot")
 local Spawn=require("server-lua.world.spawn")
 local Identity={}
 Identity.__index=Identity
-local function jsTruth(v)return v~=nil and v~=false and v~=0 end
+local function jsTruth(v)return v~=nil and v~=false and v~=0 and v~="" and v~=Pack.null end
 local function bool(v)return jsTruth(v) and true or false end
 local function sliceJS(s,maxLength)
   local out,length={},0
@@ -26,12 +27,17 @@ end
 local function sanitize(raw,maxLength)
   local name=sliceJS(raw,maxLength)
   local list={}
+  local previousInvalid=false
   for _,code in utf8.codes(name) do
-    local value=utf8.char(code)
-    if validChar(value) then list[#list+1]=value
-    else
-      -- JS regex replaces each surrogate as a separate character.
-      list[#list+1]=(code>65535) and "  " or " "
+    local char=utf8.char(code)
+    if validChar(char) then
+      list[#list+1]=char
+      previousInvalid=false
+    elseif not previousInvalid then
+      -- JS /[^\\w:()\\/? -]+/gmi replaces one consecutive invalid
+      -- *run*, not one replacement per Unicode codepoint/surrogate.
+      list[#list+1]=" "
+      previousInvalid=true
     end
   end
   return (table.concat(list):gsub("^%s+",""):gsub("%s+$",""))
@@ -41,6 +47,7 @@ local function replacement(s)
 end
 local function jsString(value)
   if value==nil then return "undefined" end
+  if value==Pack.null then return "null" end
   if value==true then return "true" end
   if value==false then return "false" end
   if type(value)=="table" then return "[object Object]" end
@@ -94,7 +101,7 @@ function Identity:addItem(id,items)
   return true
 end
 function Identity:setUserData(data)
-  if data~=nil and data~=false then
+  if jsTruth(data) then
     self.name="unknown"
     assert(type(self.nameWords)=="table",
       "original NAME_WORDS dictionary required for Player.setUserData")
@@ -110,9 +117,9 @@ function Identity:setUserData(data)
     local index=data.skin
     if type(index)=="number" and index%1==0 and index>=0
       and cfg.skinColors[index+1] then self.skinColor=index end
-    self.anon=bool(data.anon and self.account and self.account.name)
+    self.anon=bool(data.anon and self.account and jsTruth(self.account.name))
   end
-  if self.account and self.account.name then self.name=self.account.name end
+  if self.account and jsTruth(self.account.name) then self.name=self.account.name end
 end
 function Identity:shownName(viewer)
   if self.anon and viewer~=self then return "Anon#"..self.sid end
