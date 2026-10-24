@@ -179,6 +179,10 @@ nunca compartilhe o mesmo arquivo em escrita simultânea com o Node.
 
 `tests/account-store-smoke.lua` valida roundtrip em disco, dados de conta,
 estatísticas, desbloqueios, clãs, arrays/objetos vazios e campos desconhecidos.
+O módulo `world/account_unlocks.lua` agora fornece o `Room.recordUnlocks`
+nativo por padrão. `tests/account-life-integration-smoke.lua` testa a cadeia
+`recordLife → recordUnlocks → stats → accounts.json → reload` com um arquivo
+temporário isolado.
 O teste isolado não comprova paridade integral do `AccountStore` original.
 
 **Ainda NÃO portados ou integrados:** autenticação/JWT/scrypt e tickets de
