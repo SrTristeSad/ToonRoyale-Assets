@@ -78,7 +78,9 @@ function Host.new(options)
   assert(type(code)=="string" and #code>=8 and #code<=64
     and code:match("^[%w%-]+$"),"invalid room code")
   local capacity=options.capacity or 40
-  assert(type(capacity)=="number" and capacity%1==0 and capacity>=1 and capacity<=40,"capacity must be 1..40")
+  assert(type(capacity)=="number" and capacity%1==0 and capacity>=1 and capacity<=80,"capacity must be 1..80")
+  local rooms=options.rooms or {LC={capacity=capacity,membersOnly=false}}
+  assert(rooms.LC and type(rooms.LC.capacity)=="number","LOCAL LC definition required")
   local maxPeers=options.maxPeers or math.max(40,capacity)
   assert(type(maxPeers)=="number" and maxPeers%1==0 and maxPeers>=capacity,"invalid max peers")
   local build=options.build or Build.new()
@@ -92,7 +94,7 @@ function Host.new(options)
     bind=ip,mode=mode,port=port,roomCode=code,build=build,
     onConnect=options.onConnect,onPacket=options.onPacket,onClose=options.onClose,
     accounts=options.accounts,api=api,
-    capacity=capacity,maxPeers=maxPeers,
+    rooms=rooms,activeByRoom={},capacity=capacity,maxPeers=maxPeers,
     tickets={},peers={},listener=nil,active=0
   },Host)
 end
@@ -128,7 +130,8 @@ function Host:request(peer,req)
   local upgrade=(h.upgrade or ""):lower()=="websocket"
   if upgrade then
     local key,build=req.target:match("^/s/(%w+)%?b=([%w]+)")
-    if not key or key~="LC" or build~=self.build.buildId then return bad(peer,403,"build") end
+    local room=key and self.rooms[key]
+    if not room or build~=self.build.buildId then return bad(peer,403,"build") end
     local token=req.target:match("[?&]token=tk:([0-9a-f]+)")
     local t
     if self.accounts then
@@ -146,7 +149,10 @@ function Host:request(peer,req)
       end
     end
     if not t then return bad(peer,403,"ticket") end
-    if self.active>=self.capacity then return bad(peer,409,"server full") end
+    if room.membersOnly and not (t.account and t.account~=Json.null) then
+      return bad(peer,403,"members-only server")
+    end
+    if (self.activeByRoom[key] or 0)>=room.capacity then return bad(peer,409,"server full") end
     if h.origin~="http://"..self.bind..":"..self.port
       or h.host~=self.bind..":"..self.port then return bad(peer,403,"origin") end
     if h["sec-websocket-version"]~="13" then return bad(peer,400,"ws version") end
@@ -157,13 +163,15 @@ function Host:request(peer,req)
     local response="HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: "..accept.."\r\n\r\n"
     addOutput(peer,response)
     peer.state="websocket";peer.upgraded=true;self.active=self.active+1
+    peer.roomKey=key
+    self.activeByRoom[key]=(self.activeByRoom[key] or 0)+1
     function peer:send(name,args)
       local frame,err=self.session:encode(name,args or {})
       if not frame then return false,err end
       return addOutput(self,WS.encode(frame,2))
     end
     addOutput(peer,WS.encode(peer.session:handshakeFrame(),2))
-    local ok,err=pcall(self.onConnect,peer,t)
+    local ok,err=pcall(self.onConnect,peer,t,key)
     if not ok then self:drop(peer);error("Lua onConnect: "..tostring(err)) end
     return
   end
