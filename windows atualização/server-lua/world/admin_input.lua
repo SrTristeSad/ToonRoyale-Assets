@@ -77,7 +77,13 @@ function Admin.handle(ctx,admin,args)
   local target=targetFor(game,admin,c)
   local weapon=ctx.items.weapons[a]
   local variants=assert(ctx.config.weaponVariants,"weapon variants required")
-  local variant=variants[b] or variants[0]
+  -- Node config.weaponVariants is zero-based; Lua's config array is one-based.
+  local index
+  if integer(b) and b>=0 then index=b
+  elseif type(b)=="string" and b:match("^(0|[1-9][0-9]*)$") then
+   index=tonumber(b)
+  end
+  local variant=(index and variants[index+1]) or variants[1]
   if not target or not weapon then return end
   target.weapons[weapon.type]=weapon.id
   target.weaponXP[weapon.id]=variant.xp
