@@ -103,6 +103,14 @@ jobs:
           diff -u /tmp/moo-crab-rewards-node.txt /tmp/moo-crab-rewards-lua.txt
           test "$(wc -l < /tmp/moo-crab-rewards-node.txt)" -eq 12
           echo 'PASS 12 cenarios de vitoria e Crab Shell'
+      - name: Construtor inicial Player Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/player-constructor-reference.mjs > /tmp/moo-playerconstructor-node.txt
+          lua5.4 server-lua/tests/player-constructor-reference.lua > /tmp/moo-playerconstructor-lua.txt
+          diff -u /tmp/moo-playerconstructor-node.txt /tmp/moo-playerconstructor-lua.txt
+          test "$(wc -l < /tmp/moo-playerconstructor-node.txt)" -eq 3
+          echo "PASS 3 estados de Player antes do spawn"
       - name: Crab King movimentos e ataques Node vs Lua
         run: |
           set -euo pipefail
