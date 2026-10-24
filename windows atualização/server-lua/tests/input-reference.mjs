@@ -1,7 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Call the original server/src/network/packets.js handlePacket unchanged.
-import { handlePacket } from "../../server/src/network/packets.js";
+import fs from "node:fs";
+import { UTILS } from "../../server/src/moomoo/libs/utils.js";
+import { config } from "../../server/src/moomoo/config.js";
 import { items } from "../../server/src/moomoo/modules/items.js";
+// Importing the handler's whole module would also import the production chat
+// dependency. Execute its actual unchanged function from the source instead;
+// none of these packet cases calls the filtered-chat or account handlers.
+const source=fs.readFileSync(new URL("../../server/src/network/packets.js",import.meta.url),"utf8");
+const start=source.indexOf("export function handlePacket(");
+const end=source.indexOf("\\nfunction handleAdmin(",start);
+if(start<0||end<0)throw Error("Original packet handler marker changed");
+const original=source.slice(start,end).trim().replace(/^export /,"");
+const handlePacket=new Function("UTILS","items","config",
+ "const isNum=UTILS.isNumber;const isInt=Number.isInteger;return ("+original+");")(
+ UTILS,items,config);
+
 const cases=[
  {id:"spawn",packet:"M",args:[{name:"Test",skin:0,moofoll:false}],alive:false},
  {id:"spawn-invalid",packet:"M",args:["bad"],alive:false},
