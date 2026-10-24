@@ -117,6 +117,13 @@ function Room:updateLeaders() return Social.updateLeaders(self) end
 function Room:sendLeaderboard() return Social.sendLeaderboard(self) end
 function Room:sendMinimap(viewer) return Social.sendMinimap(self,viewer) end
 function Room:sendStats(viewer,sid) return Social.sendStats(self,viewer,sid) end
+function Room:sendProfile(viewer,sid)
+  -- Persistent account/profile presentation is owned by the account service.
+  -- This callback must preserve the original privacy/anonymous rules.
+  assert(type(self.services.sendProfile)=="function",
+    "real profile service required for Game.sendProfile")
+  return self.services.sendProfile(self,viewer,sid)
+end
 
 function Room:hitObject(object,dir)
   -- Exact observer notifications from ObjectManager.hitObj.
