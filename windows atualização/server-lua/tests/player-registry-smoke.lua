@@ -32,6 +32,7 @@ local registry=Registry.new(room,{
  end,
  anticheatFactory=function(id,sid,ip,account)
    return {
+     allow=function()return true end,
      invalid=function()end,
      onGameStart=function()end,
      tick=function()end
