@@ -10,6 +10,7 @@ local Session=require("server-lua.protocol.session")
 local WS=require("server-lua.net.websocket")
 local Json=require("server-lua.vendor.dkjson")
 local LocalAPI=require("server-lua.net.local_api")
+local Control=require("server-lua.net.control")
 local Host={}
 Host.__index=Host
 local function hex(s) return (s:gsub(".",function(c)return string.format("%02x",c:byte())end)) end
@@ -95,6 +96,7 @@ function Host.new(options)
     onConnect=options.onConnect,onPacket=options.onPacket,onClose=options.onClose,
     accounts=options.accounts,api=api,
     rooms=rooms,activeByRoom={},capacity=capacity,maxPeers=maxPeers,
+    guiHost=options.guiHost==true,controller=nil,shutdownRequested=false,
     tickets={},peers={},listener=nil,active=0
   },Host)
 end
@@ -104,6 +106,15 @@ function Host:start()
   if not sock then return false,err end
   sock:settimeout(0)
   self.listener=sock
+  if self.guiHost then
+    self.controller=Control.new({port=self.port,roomCode=self.roomCode,
+      host=self.bind,mode=self.mode})
+    local ok,why=self.controller:start()
+    if not ok then
+      self.listener:close();self.listener=nil;self.controller=nil
+      return false,why
+    end
+  end
   return true
 end
 function Host:drop(peer)
@@ -119,6 +130,7 @@ function Host:drop(peer)
   end
 end
 function Host:close()
+  if self.controller then self.controller:close();self.controller=nil end
   if self.listener then self.listener:close();self.listener=nil end
   for _,p in ipairs(self.peers) do self:drop(p) end
   self.peers={};self.tickets={};self.active=0;self.activeByRoom={}
@@ -240,7 +252,7 @@ function Host:processPeer(peer)
   if #chunk>0 then peer.input=peer.input..chunk end
   if #peer.input>65536 then self:drop(peer);return end
   if peer.state=="http" then
-    if #peer.input>16384 then self:drop(peer);return end
+    if #peer.input>34816 then self:drop(peer);return end
     local req,rest=parseHead(peer.input)
     if req==false then self:drop(peer);return end
     if req then
@@ -280,6 +292,10 @@ function Host:processPeer(peer)
 end
 function Host:update()
   if not self.listener then return end
+  if self.controller and self.controller:update() then
+    self.shutdownRequested=true
+    return
+  end
   for _=1,12 do
     local tcp=self.listener:accept()
     if not tcp then break end
