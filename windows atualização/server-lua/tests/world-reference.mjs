@@ -46,6 +46,14 @@ try {
     const allowed=manager.checkItemLocation(x,y,s,m,i,w);
     console.log(["PLACE",x,y,s,m,i??"-",w?1:0,allowed?1:0].join("|"));
   }
+  for (const [x,y,scale] of [
+    [0,0,35],[14300,14300,80],[1000,1425,80],[1440,1440,150],
+    [7200,7200,200],[-2500,7200,50],[15000,15000,50],
+    [1440,7200,200],[35,35,500],[1439,1439,200]
+  ]) {
+    const nearby=manager.getGridArrays(x,y,scale);
+    console.log(["GRID",x,y,scale,nearby.map(group=>group.map(o=>o.sid).join(",")).join(";")].join("|"));
+  }
 } finally {
   Math.random=origRandom;
 }
