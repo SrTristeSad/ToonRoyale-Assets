@@ -48,23 +48,22 @@ function Reports.handle(ctx,player,args)
   end
   if action==2 then
     local ban=service(ctx,"ban")
-    -- Validate the account dependency before persisting the sanction.
+    -- Node packets.js only persists verdict when an account store exists.
     local account=target.account
-    local accounts=ctx.accounts
-    if account then
-      assert(accounts and type(accounts.setVerdict)=="function",
-        "real account verdict service required for persistent ban")
-    end
     ban({ip=target.ip,accountId=account and account.id or nil,name=target.name},player)
-    if account then accounts.setVerdict(account.name,"ban") end
+    if account and ctx.accounts then
+      assert(type(ctx.accounts.setVerdict)=="function",
+        "original AccountStore.setVerdict required when accounts is supplied")
+      ctx.accounts.setVerdict(account.name,"ban")
+    end
     if type(target.kick)=="function" then target:kick("kicked") end
   elseif action==1 then
-    if target.account then
-      assert(ctx.accounts and type(ctx.accounts.setVerdict)=="function",
-        "real account verdict service required for persistent shadow")
-    end
     target.shadowed=true
-    if target.account then ctx.accounts.setVerdict(target.account.name,"shadow") end
+    if target.account and ctx.accounts then
+      assert(type(ctx.accounts.setVerdict)=="function",
+        "original AccountStore.setVerdict required when accounts is supplied")
+      ctx.accounts.setVerdict(target.account.name,"shadow")
+    end
   end
 end
 return Reports
