@@ -185,10 +185,10 @@ nativo por padrão. `tests/account-life-integration-smoke.lua` testa a cadeia
 temporário isolado.
 O teste isolado não comprova paridade integral do `AccountStore` original.
 
-**Ainda NÃO portados ou integrados:** autenticação/JWT/scrypt, emissão e
-validação HTTP de tickets no host, métodos restantes de conta, painel/rotas HTTP de conta,
-salvamento das sanções, serialização de produção no inicializador,
-e os testes de ponta a ponta com cliente Windows. A ordenação de empates
+**Ainda NÃO portados ou integrados:** credenciais V2/scrypt, emissão e
+validação HTTP de tickets no host, painel/rotas HTTP de conta,
+salvamento das sanções, integração do inicializador Windows e testes
+de ponta a ponta com o cliente real. A ordenação de empates
 de rankings entre objetos JSON também requer prova diferencial contra Node.
 O AccountStore Lua agora também replica `migrateIds`, preferências, cosméticos,
 operações de clãs e amizades, `setSocials` e emissão/consumo de tickets.
@@ -196,5 +196,15 @@ operações de clãs e amizades, `setSocials` e emissão/consumo de tickets.
 `tests/account-store-reference.lua` compara a saída dos mesmos cenários
 na CI. A serialização de perfis `p` já usa JSON real, mas o host Lua e a
 autenticação completa ainda precisam ser integrados e validados.
+
+`AccountStore.claimName` utiliza o mesmo `PlayerIdentity.gameName` do jogo,
+reproduzindo comprimento, censura, linguagem inadequada, conflito e nomes
+imutáveis. `world/account_token.lua` reproduz `issueToken` e
+`verifyToken` em JWT HS256, incluindo `secureAuth` do modo senha,
+expiração e integridade. `Store:loadSecret()` conserva o arquivo
+`secret.key` original junto do `accounts.json` da cópia Lua.
+`tests/account-token-reference.mjs/.lua` comparam os tokens por bytes,
+e `tests/account-secret-smoke.lua` verifica a chave após reabrir o
+armazenamento. O pacote `R` tem teste diferencial direto do handler Node.
 
 O servidor Node continua sendo o padrão até os marcos de aceitação concluírem.
