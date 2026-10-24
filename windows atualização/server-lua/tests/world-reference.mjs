@@ -31,7 +31,7 @@ try {
     config.riverWidth,config.snowBiomeTop,config.colGrid,
     config.server.cactusDamage].join("|"));
   for (const o of objects) {
-    console.log(["OBJ",o.sid,o.x,o.y,o.scale,o.type,o.name||"-",
+    console.log(["OBJ",o.sid,o.x.toFixed(6),o.y.toFixed(6),o.scale,o.type,o.name||"-",
       o.dmg||0,o.layer,o.gridLocations.length].join("|"));
   }
   for (const [x,y,s,m,i,w] of [
