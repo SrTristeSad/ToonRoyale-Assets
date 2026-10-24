@@ -103,6 +103,14 @@ jobs:
           diff -u /tmp/moo-crab-rewards-node.txt /tmp/moo-crab-rewards-lua.txt
           test "$(wc -l < /tmp/moo-crab-rewards-node.txt)" -eq 12
           echo 'PASS 12 cenarios de vitoria e Crab Shell'
+      - name: Metodos iniciais de Player Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/player-methods-reference.mjs > /tmp/moo-playermethod-node.txt
+          lua5.4 server-lua/tests/player-methods-reference.lua > /tmp/moo-playermethod-lua.txt
+          diff -u /tmp/moo-playermethod-node.txt /tmp/moo-playermethod-lua.txt
+          test "$(wc -l < /tmp/moo-playermethod-node.txt)" -eq 10
+          echo 'PASS 10 cenarios de Player methods'
       - name: Construtor inicial Player Node vs Lua
         run: |
           set -euo pipefail
