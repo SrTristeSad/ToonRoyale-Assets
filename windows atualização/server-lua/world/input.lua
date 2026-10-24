@@ -114,6 +114,11 @@ function Input.handle(ctx,player,name,args)
     elseif args[1]==0 then player.lockDir=not truthy(player.lockDir)
     else return bad(player,name,"toggle") end
     return
+  elseif name=="T" then
+    -- Node handlePacket calls anticheat.onTelemetry(args) after allow("T").
+    assert(player.anticheat and type(player.anticheat.onTelemetry)=="function",
+      "original authenticated T packet requires anticheat.onTelemetry")
+    return player.anticheat:onTelemetry(args)
   elseif name=="S" or name=="U" then
     if not player.alive or player.pingCooldown>0 then return end
     local x,y=player.x,player.y
