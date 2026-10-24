@@ -695,7 +695,7 @@ function Store:migrateIds()
   local remap=object()
   for old,account in pairs(self.data.accounts) do
     if not (#old==24 and old:match("^[a-f0-9]+$")) then
-      local seconds=math.floor(((account.createdAt and account.createdAt~=0)
+      local seconds=math.floor(((type(account.createdAt)=="number" and account.createdAt~=0)
           and account.createdAt or self.nowMs())/1000)
       local suffix=(#old==16 and old:match("^[a-f0-9]+$")) and old
           or (self.randomBytes(8):gsub(".",function(ch)
