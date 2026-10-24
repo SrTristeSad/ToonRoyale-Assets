@@ -42,7 +42,7 @@ function Sync.playerData(player,viewer)
     player.id,player.sid,shownName,fix(player.x,2),fix(player.y,2),fix(player.dir,3),
     player.health,player.maxHealth,player.scale,player.skinColor,
     powers.aura and 1 or 0,powers.boss and 1 or 0,
-    nullable(hidden and nil or player.clanTag),nullable(player.morph),nullable(player.dive),
+    hidden and MP.null or nullable(player.clanTag),nullable(player.morph),nullable(player.dive),
     powers.invisible and 1 or 0,(player.disguised and not hidden) and 1 or 0
   }
 end
