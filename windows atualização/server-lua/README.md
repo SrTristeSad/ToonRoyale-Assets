@@ -26,6 +26,10 @@ Implementações independentes no diretório `world/`:
 - `economy.lua`: port de `addResource`, `addWeaponXP`, `earnXP`, `changeItemCount`, `hasRes`, `useRes` e `canBuild`. Os valores vêm de `src/game/config.lua` transcrito de `shared/config.js`, sem inventar novos custos.
 - `weapon_tick.lua`: parte de armas/ferramentas do `Player.update`, incluindo golpe pendente, autocoleta, recarga, consumo de munição, modificadores de alcance e velocidade, recuo de mosquete, geração de projéteis e acionamento do Turret Gear. Precisa de `Player.gather`, `hasRes`, `useRes` e `ProjectileManager.addProjectile` reais, injetados como dependências; não simula disparos por conta própria.
 - `gather.lua`: port integral da lógica de `Player.gather`: coleta de árvores, pedra, arbustos, ouro, bônus de capas, demolição de construções, ressarcimento de recursos, combate corpo a corpo, escudos, empurrão, roubos, efeitos de veneno, sangramento, reflexão de dano e vampirismo. Exige os callbacks autoritativos `hitObject`, `disableObject`, `sendAnimation`, `changeHealth`, `addResource` e `earnXP`; não implementa inventário ou IA artificial substitutos.
+- `build.lua`: port de `Player.buildItem`, com posicionamento real no mapa, limites, bloqueios, construções, cura por alimentos, penalização de vergonha, gastos de recursos e geração de objetos. `objects.lua` agora possui `addDynamic`, reutilizando SIDs e indexação espacial do `ObjectManager.add` original.
+- `projectiles.lua`: port de `Projectile` e `ProjectileManager`, com ciclo de vida, quadro inicial, alcance, colisão de segmento/retângulo (`UTILS.lineInRect`), dano a jogadores e estruturas, defesa de escudos, reutilização de projéteis e pacotes `X`, `L`, `Q` e `Y`.
+- `structures.lua`: port de `Game.updateStructures`, `Game.turretTarget` e `GameObject.update`: atualização de moinhos, temporizador de torretas, seleção de alvo, proteção por tribo, invisibilidade, disparo em direção ao inimigo e atualização visual `M`. Estruturas destruídas são retiradas de `updateObjects` como no Node.
+
 
 
 
@@ -42,15 +46,19 @@ As novas suítes diferenciais também comparam:
 - `weapon-reference.mjs/.lua`: 15 cenários × 3 ticks = **45 comparações** do trecho real de armas no `Player.update` Node.
 - `gather-reference.mjs/.lua`: **36 cenários** com a função real `Player.gather`, `ObjectManager` e `GameObject` Node, incluindo ataques contra animais, efeitos, edifícios, colher recursos e ausência de duplicação em múltiplas células de colisão. Os valores das armas utilizados nos fixtures são conferidos com `shared/config/items.js` original.
 
+- `build-reference.mjs/.lua`: **16 cenários** com a função original `Player.buildItem`, inclusive estruturas, comida, rio, colisões e reciclagem de objetos.
+- `projectile-reference.mjs/.lua`: **20 cenários × 3 ticks (60 snapshots)** executando `Projectile`/`ProjectileManager` originais, verificando estado, colisões e pacotes de rede.
+- `structures-reference.mjs/.lua`: **20 cenários × 3 ticks (60 snapshots)** com `Game.updateStructures`, `Game.turretTarget` e `GameObject.update` reais.
+
 Testes novos executam as funções originais do Node.js, comparando os mesmos efeitos na implementação Lua: `spawn-reference` (8 cenários), `vitals-reference` (12 cenários com múltiplos ticks), `health-reference` (16 cenários de danos, morte e recompensas) e `economy-reference` (19 cenários de recursos, XP e custos). A suíte GitHub Actions roda automaticamente na branch `main` do ToonRoyale-Assets.
 
-**Ainda não está conectado ao jogo:** integração autoritativa do ciclo completo do jogador, construção, física completa dos projéteis após disparo, IA dos NPCs, objetos edificáveis, bots, tribos e endpoints de autenticação seguem pendentes. Até eles serem portados e testados, **o servidor local funcional continua sendo Node.js**.
+**Ainda não está conectado ao jogo:** o loop autoritativo precisa unir os módulos de jogador, objetos, projéteis e torretas; também faltam IA de animais, bots, tribos, handlers completos de pacotes, autenticação e outros endpoints. Até eles serem portados e testados, **o servidor local funcional continua sendo Node.js**.
 
 ## Limites — NÃO é o servidor completo
 
 A infraestrutura de rede Lua funciona isoladamente, mas **a lógica de partida ainda precisa ser portada**. Não existe equivalência 1:1 do mundo neste estágio.
 
-Pendente: contas/autorização V2, outros endpoints HTTP, simulação do mundo, conexão do spawn e dos demais módulos ao loop de partida, construções, coleta, economia, armas, tiros, PvP, animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
+Pendente: contas/autorização V2, outros endpoints HTTP, integração da simulação Lua completa e seus callbacks autoritativos ao host, handlers de entrada, animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
