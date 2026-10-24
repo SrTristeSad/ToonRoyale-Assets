@@ -71,6 +71,7 @@ local C = {
   serverUpdateRate = 9,
   minimapRate = 3000, -- shared/config.js, authoritative Game.tick interval
   mapPingTime = 2200, -- shared/config.js, tactical ping cooldown
+  chatCooldown = 500, -- shared/config.js [Md], original game chat delay
   clientSendRate = 5,
   resourceTypes = {"wood","food","stone","points"},
   secretPool = {
