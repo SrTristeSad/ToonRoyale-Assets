@@ -169,3 +169,22 @@ out("MIGRATE_SOCIAL",
  legacyStore.data.social.friends[aId][1].id==bId,
  legacyStore.data.social.requests[1].recipientId==bId,
  legacyStore:accountById(otherLegacy)==otherAccount)
+
+local ticketNow=1792864800000
+local ticketStore=Store.open("server-lua/tests/.does-not-exist.json",{
+ nowMs=function()return ticketNow end,
+ randomBytes=function(n)return string.rep("a",n) end})
+ticketStore.data={accounts={[id]=a}}
+local trustedDid=string.rep("f",16)
+local t1=ticketStore:issueTicket({account=a,did=trustedDid,server="LC"})
+out("TICKET_ISSUE",#t1.ticket==36 and t1.ticket:match("^[a-f0-9]+$")~=nil,
+ t1.did==trustedDid,ticketStore:recentDevice(t1.did))
+local admission=ticketStore:consumeTicket(t1.ticket,60000)
+out("TICKET_CONSUME",admission.account==a,admission.did==trustedDid,
+ admission.server=="LC",ticketStore:consumeTicket(t1.ticket,60000)==Json.null)
+local t2=ticketStore:issueTicket({account=Json.null,did="invalid",server=Json.null})
+ticketStore.tickets[t2.ticket].at=ticketStore.tickets[t2.ticket].at-900001
+out("TICKET_EXPIRED",#t2.did==24 and t2.did:match("^[a-f0-9]+$")~=nil,
+ ticketStore:consumeTicket(t2.ticket,60000)==Json.null)
+ticketStore.devices[trustedDid]=ticketNow-900001
+out("TICKET_DEVICE_EXPIRED",ticketStore:recentDevice(trustedDid))
