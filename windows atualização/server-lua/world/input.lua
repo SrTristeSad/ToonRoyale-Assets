@@ -5,6 +5,7 @@
 -- accepted. Original Player methods and anticheat strike accounting required.
 local MP=require("src.protocol.msgpack")
 local Equipment=require("server-lua.world.equipment_input")
+local TribeInput=require("server-lua.world.tribe_input")
 local Input={}
 local function truthy(v)
   return v~=nil and v~=false and v~=0 and v~=MP.null
@@ -111,6 +112,8 @@ function Input.handle(ctx,player,name,args)
     return
   elseif name=="H" or name=="c" then
     return Equipment.handle(ctx,player,name,args)
+  elseif name=="L" or name=="N" or name=="b" or name=="P" or name=="Q" then
+    return TribeInput.handle(ctx,player,name,args)
   elseif name=="K" then
     if not player.alive then return end
     if args[1]==1 then player.autoGather=not truthy(player.autoGather)
