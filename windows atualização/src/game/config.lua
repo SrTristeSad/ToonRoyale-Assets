@@ -13,6 +13,9 @@ local C = {
   unlimitedAmount = 1000000,
   maxPlayers = 40,
   maxPlayersHard = 50,
+  maxNameLength = 15, -- shared/config.js, original Player.setUserData
+  skinColors = {"#bf8f54","#cbb091","#896c4b","#fadadc","#ececec",
+    "#c37373","#4c4c4c","#ecaff7","#738cc3","#8bc373"},
   gatherAngle = math.pi/2.6,
   shieldAngle = math.pi/3, -- shared/config.js [qd], original shield arc
   colGrid = 10,
