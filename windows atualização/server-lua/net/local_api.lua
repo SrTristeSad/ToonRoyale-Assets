@@ -53,7 +53,7 @@ function API:handle(method,target,headers,raw,ip)
  if not path or path:sub(1,5)~="/api/" then return nil end
  local store=self.store
  local body={}
- if method=="POST" then
+ if method=="POST" or method=="DELETE" then
   if type(raw)~="string" or #raw>32768 then return response(413,{error="too large"}) end
   if raw~="" then
    local decoded,pos,why=Json.decode(raw,1,Json.null)
@@ -62,6 +62,9 @@ function API:handle(method,target,headers,raw,ip)
    end
    body=decoded
   end
+ end
+ if path:match("^/api/social/friends/") then
+  return self.social:handle(method,path,headers,body)
  end
  if path=="/api/join" and method=="POST" then
   if headers["x-mooio-code"]~=self.roomCode then
