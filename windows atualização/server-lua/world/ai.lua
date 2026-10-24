@@ -86,8 +86,12 @@ function AI:update(delta)
        local spot=opts.respawnAt(self)
        self.x=spot.x;self.y=spot.y
      else
-       self.x=jsOr(self.startX,randInt(opts,0,cfg.mapScale))
-       self.y=jsOr(self.startY,randInt(opts,0,cfg.mapScale))
+       -- JS `startX || randInt(...)` short circuits: never advance RNG
+       -- for a fixed, nonzero spawn coordinate.
+       if truth(self.startX) then self.x=self.startX
+       else self.x=randInt(opts,0,cfg.mapScale) end
+       if truth(self.startY) then self.y=self.startY
+       else self.y=randInt(opts,0,cfg.mapScale) end
      end
    end
    return
