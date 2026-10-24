@@ -61,7 +61,7 @@ function Input.handle(ctx,player,name,args)
       return bad(player,name,"moveDir")
     end
     if player.alive then
-      player.moveDir=(value==MP.null) and nil or value
+      if value==MP.null then player.moveDir=nil else player.moveDir=value end
     end
     return
   elseif name=="e" then
