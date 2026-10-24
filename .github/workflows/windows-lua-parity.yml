@@ -277,6 +277,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/account-migrate-file-smoke.lua
+      - name: Coroas semanais e ciclo de morte do Room Node para Lua
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/room-crowns-smoke.lua
       - name: AccountStore real Node vs Lua - cenarios diferenciais
         run: |
           set -euo pipefail
