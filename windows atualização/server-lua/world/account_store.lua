@@ -664,6 +664,31 @@ function Store:removeFriend(id,friendId)
   return true
 end
 
+-- AccountStore.setSocials: same five permitted fields and validation order.
+function Store:setSocials(account,socials)
+  local fields={"youtube","twitch","tiktok","x","discord"}
+  local result=object()
+  for _,field in ipairs(fields) do
+    local raw=type(socials)=="table" and socials[field] or nil
+    local value=type(raw)=="string" and raw:match("^%s*(.-)%s*$") or ""
+    if value~="" then
+      if #value<1 or #value>32 or value:find("[^A-Za-z0-9._%-]") then
+        return {status=400,body={field=field,why="format"}}
+      end
+      assert(type(self.isRude)=="function",
+        "original nameFilter.isRude required for social handles")
+      local spaced=value:gsub("[._%-]+"," ")
+      if self.isRude(value) or self.isRude(spaced) then
+        return {status=400,body={field=field,why="rude"}}
+      end
+      result[field]=value
+    end
+  end
+  account.socials=result
+  self:save()
+  return {status=200,body={socials=result}}
+end
+
 -- Node uses dot-method calls; this wrapper retains that shape for existing Lua ports.
 function Store:callbacks()
   return {
@@ -680,6 +705,7 @@ function Store:callbacks()
     setLook=function(a,look) return self:setLook(a,look) end,
     prefsOf=function(a) return self:prefsOf(a) end,
     setPrefs=function(a,prefs) return self:setPrefs(a,prefs) end,
+    setSocials=function(a,socials) return self:setSocials(a,socials) end,
     accountInfo=function(a) return self:accountInfo(a) end,
     clanView=function(clan) return self:clanView(clan) end,
     myClan=function(a) return self:myClan(a) end,
