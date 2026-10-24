@@ -4,16 +4,9 @@
 -- Pure state-to-packets module; game simulation and join are NOT implemented here.
 local Config=require("src.game.config")
 local MP=require("src.protocol.msgpack")
+local Fixed=require("server-lua.world.js_fixed")
 local Sync={}
-
-local function fix(value,places)
-  -- Node UTILS.fixTo: parseFloat(n.toFixed(places)).
-  -- Multiplying by 10^places before rounding introduces *extra* binary
-  -- rounding; e.g. 101.675 should become 101.67, not 101.68.
-  -- C printf rounds the original binary float directly at the target
-  -- decimal precision, matching JS toFixed for places 1/2/3.
-  return tonumber(string.format("%."..places.."f",value))
-end
+local fix=Fixed.toFloat
 local function round(v) return math.floor(v+0.5) end
 local function nullable(v) return v==nil and MP.null or v end
 
