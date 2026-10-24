@@ -41,9 +41,11 @@ function Sync.playerData(player,viewer)
   return {
     player.id,player.sid,shownName,fix(player.x,2),fix(player.y,2),fix(player.dir,3),
     player.health,player.maxHealth,player.scale,player.skinColor,
-    powers.aura and 1 or 0,powers.boss and 1 or 0,
+    (powers.aura~=nil and powers.aura~=false and powers.aura~=0) and 1 or 0,
+    (powers.boss~=nil and powers.boss~=false and powers.boss~=0) and 1 or 0,
     hidden and MP.null or nullable(player.clanTag),nullable(player.morph),nullable(player.dive),
-    powers.invisible and 1 or 0,(player.disguised and not hidden) and 1 or 0
+    (powers.invisible~=nil and powers.invisible~=false and powers.invisible~=0) and 1 or 0,
+    (player.disguised and not hidden) and 1 or 0
   }
 end
 
