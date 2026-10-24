@@ -1,0 +1,23 @@
+local M=require("server-lua.anticheat.moderation_store")
+local C=require("server-lua.net.control")
+local dir="server-lua/tests/.moderation-check"
+assert(os.execute("mkdir -p "..dir))
+local now=1792864800000
+local m=M.open(dir,{nowMs=function()return now end})
+m:ban({ip="10.0.0.3",accountId="id1",name="Tester"},nil)
+assert(m:isBanned("10.0.0.3",nil,nil))
+m:unbanIp("10.0.0.3")
+assert(not m:isBanned("10.0.0.3",nil,nil))
+m:lock({ip="10.0.0.4"},15)
+assert(m:lockedFor("10.0.0.4",nil,nil)==15)
+now=now+15001
+assert(m:lockedFor("10.0.0.4",nil,nil)==0)
+local c=C.new({port=18943,roomCode="testing42",mode="lan",host="10.0.0.1"})
+local status,stop=c:request("GET /status HTTP/1.1\r\nHost: local\r\n\r\n")
+assert(status:find("200 OK",1,true) and not stop)
+status,stop=c:request("POST /shutdown HTTP/1.1\r\nX-MooIO-Code: testing42\r\n\r\n")
+assert(status:find("200 OK",1,true) and stop)
+os.remove(dir.."/bans.json")
+os.remove(dir.."/moderation.json")
+os.execute("rmdir "..dir)
+print("PASS LOCAL moderation and shutdown control")
