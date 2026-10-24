@@ -69,7 +69,8 @@ function Store.open(path,opts)
     and type(data.names)=="table" and type(data.social)=="table",
     "invalid account store structure")
   local self=setmetatable({file=path,data=data,
-    nowMs=opts.nowMs or function() return os.time()*1000 end},Store)
+    nowMs=opts.nowMs or function() return os.time()*1000 end,
+    isRude=opts.isRude},Store)
   return self
 end
 function Store:save()
@@ -347,6 +348,223 @@ function Store:accountById(id)
   return self.data.accounts[resolved]
 end
 
+-- Persistent clans: direct port of AccountStore.clanView, myClan and clanAction.
+local ranks={member=0,officer=1,owner=2}
+local function findById(list,id)
+  for i,m in ipairs(list or {}) do if m.id==id then return m,i end end
+end
+local function exclude(list,predicate)
+  local result=array()
+  for _,value in ipairs(list or {}) do
+    if not predicate(value) then result[#result+1]=value end
+  end
+  return result
+end
+function Store:clanView(clan)
+  local function nameOf(id)
+    local account=self.data.accounts[id]
+    return account and truth(account.name) and account.name or "unknown"
+  end
+  local members,past=array(),array()
+  for _,member in ipairs(clan.members) do
+    members[#members+1]={name=nameOf(member.id),role=member.role,
+      stint=truth(member.stint) and member.stint or 1,
+      stats={kills=truth(member.kills) and member.kills or 0,
+        periods=self:currentPeriods(member.periods)}}
+  end
+  local history=clan.past or {}
+  for i=math.max(1,#history-19),#history do
+    local entry=history[i]
+    past[#past+1]={name=nameOf(entry.id),
+      stint=truth(entry.stint) and entry.stint or 1,
+      left=entry.left,kicked=truth(entry.kicked),
+      stats={kills=truth(entry.kills) and entry.kills or 0}}
+  end
+  return {name=clan.name,closed=truth(clan.closed),members=members,past=past,
+    stats={kills=clan.stats.kills,raidKills=clan.stats.raidKills,
+      periods=self:currentPeriods(clan.stats.periods)}}
+end
+function Store:myClan(account)
+  local clan=truth(account.clan) and self.data.clans[account.clan] or nil
+  if not clan then
+    local invites=array()
+    for _,c in pairs(self.data.clans) do
+      for _,invite in ipairs(c.invites or {}) do
+        if invite.id==account.id then
+          local sender=self.data.accounts[invite.by]
+          invites[#invites+1]={clan=c.name,by=sender and sender.name or "unknown"}
+        end
+      end
+    end
+    return {clan=json.null,invites=invites}
+  end
+  local member=findById(clan.members,account.id)
+  local role=member and member.role or "member"
+  local requests,invited=array(),array()
+  if role~="member" then
+    for _,id in ipairs(clan.requests) do
+      local person=self.data.accounts[id]
+      requests[#requests+1]=person and person.name or "unknown"
+    end
+    for _,entry in ipairs(clan.invites or {}) do
+      local person=self.data.accounts[entry.id]
+      if person and truth(person.name) then invited[#invited+1]=person.name end
+    end
+  end
+  return {clan=self:clanView(clan),role=role,requests=requests,invited=invited}
+end
+function Store:clanAction(account,action,body)
+  body=body or {}
+  local function err(message,status)
+    return {status=status or 400,body={error=message}}
+  end
+  local function ok(result)
+    return {status=200,body=result or object()}
+  end
+  if not truth(account.name) then return err("no name") end
+  local clans=self.data.clans
+  local mine=truth(account.clan) and clans[account.clan] or nil
+  local me=mine and findById(mine.members,account.id) or nil
+  local rank=me and ranks[me.role] or -1
+  local target=truth(body.name) and self:nameOwner(body.name) or nil
+  local function clanEvent(clan,message)
+    if type(self.onClanEvent)=="function" and #clan.members>0 then
+      self.onClanEvent(clan.name,message)
+    end
+  end
+  local function leave(clan,id,kicked)
+    local m,index=findById(clan.members,id)
+    if not m then return end
+    table.remove(clan.members,index)
+    clan.past=clan.past or array()
+    clan.past[#clan.past+1]={id=id,stint=truth(m.stint) and m.stint or 1,
+      left=self.nowMs(),kicked=kicked,kills=truth(m.kills) and m.kills or 0}
+    local who=self.data.accounts[id]
+    if who then who.clan=json.null end
+    clanEvent(clan,(who and who.name or "Someone")..
+      (kicked and " was removed from the clan" or " left the clan"))
+  end
+  local function join(clan,id)
+    local prev=0
+    for _,p in ipairs(clan.past or {}) do if p.id==id then prev=prev+1 end end
+    clan.members[#clan.members+1]={id=id,role="member",stint=prev+1,
+      joinedAt=self.nowMs(),kills=0,periods=object()}
+    clan.requests=exclude(clan.requests,function(r)return r==id end)
+    clan.invites=exclude(clan.invites,function(i)return i.id==id end)
+    self.data.accounts[id].clan=clan.name
+    if type(self.onClanEvent)=="function" and #clan.members>1 then
+      self.onClanEvent(clan.name,self.data.accounts[id].name.." joined the clan")
+    end
+  end
+  if action=="mine" then
+    return ok(self:myClan(account))
+  elseif action=="create" then
+    local name=type(body.name)=="string" and body.name:match("^%s*(.-)%s*$") or ""
+    if not name:match("^[A-Za-z0-9]+$") or #name<3 or #name>4 then return err("invalid") end
+    assert(type(self.isRude)=="function",
+      "original nameFilter.isRude required for clan creation")
+    if self.isRude(name) then return err("unclean") end
+    if mine then return err("in a clan") end
+    for existing in pairs(clans) do
+      if existing:lower()==name:lower() then return err("taken",409) end
+    end
+    clans[name]={name=name,createdAt=self.nowMs(),members=array(),past=array(),
+      invites=array(),requests=array(),shadowed=false,
+      stats={kills=0,raidKills=0,periods=object()}}
+    join(clans[name],account.id)
+    clans[name].members[1].role="owner"
+  elseif action=="request" then
+    local clan
+    local name=tostring(body.clan or ""):lower()
+    for _,c in pairs(clans) do if c.name:lower()==name then clan=c;break end end
+    if not clan then return err("not found",404) end
+    if mine then return err("in a clan") end
+    if truth(clan.closed) then return err("closed",403) end
+    if #clan.members>=80 then return err("full") end
+    if has(clan.requests,account.id) then return err("asked",409) end
+    clan.requests[#clan.requests+1]=account.id
+  elseif action=="uninvite" then
+    if rank<1 then return err("rank",403) end
+    local before=#(mine.invites or {})
+    mine.invites=exclude(mine.invites,function(entry)
+      return not target or entry.id==target.id
+    end)
+    if #mine.invites==before then return err("no player",404) end
+  elseif action=="requests" then
+    if not mine then return err("not found",404) end
+    if rank<2 then return err("rank",403) end
+    mine.closed=not truth(body.open)
+    if mine.closed then mine.requests=array() end
+  elseif action=="answer" then
+    local clan=clans[body.clan]
+    if not clan then return err("not found",404) end
+    local invited=false
+    for _,inv in ipairs(clan.invites or {}) do
+      if inv.id==account.id then invited=true;break end
+    end
+    if not invited then return err("not found",404) end
+    if truth(body.accept) then
+      if mine then return err("in a clan") end
+      if #clan.members>=80 then return err("full") end
+      join(clan,account.id)
+    else
+      clan.invites=exclude(clan.invites,function(i)return i.id==account.id end)
+    end
+  elseif action=="invite" then
+    if rank<1 then return err("rank",403) end
+    if not target then return err("no player",404) end
+    if truth(target.clan) then return err("in a clan") end
+    if not truth(self:prefsOf(target).clanInvites) then return err("no invites",403) end
+    for _,entry in ipairs(mine.invites or {}) do
+      if entry.id==target.id then return err("invited",409) end
+    end
+    mine.invites=mine.invites or array()
+    mine.invites[#mine.invites+1]={id=target.id,by=account.id}
+  elseif action=="decide" then
+    if rank<1 then return err("rank",403) end
+    if not target or not has(mine.requests,target.id) then
+      return err("no player",404)
+    end
+    if truth(body.accept) then
+      if truth(target.clan) then return err("in a clan") end
+      if #mine.members>=80 then return err("full") end
+      join(mine,target.id)
+    else
+      mine.requests=exclude(mine.requests,function(id)return id==target.id end)
+    end
+  elseif action=="kick" then
+    local them=target and mine and findById(mine.members,target.id) or nil
+    if not them then return err("no member",404) end
+    if rank<1 or rank<=ranks[them.role] then return err("rank",403) end
+    leave(mine,target.id,true)
+  elseif action=="role" then
+    local them=target and mine and findById(mine.members,target.id) or nil
+    if not them then return err("no member",404) end
+    if rank<2 then return err("rank",403) end
+    if body.role=="owner" then
+      them.role="owner";me.role="officer"
+    elseif body.role=="officer" or body.role=="member" then
+      them.role=body.role
+    else return err("invalid") end
+  elseif action=="leave" then
+    if not mine then return err("not found",404) end
+    if me.role=="owner" and #mine.members>1 then return err("owner") end
+    leave(mine,account.id,false)
+    if #mine.members==0 then clans[mine.name]=nil end
+  elseif action=="disband" then
+    if not mine then return err("not found",404) end
+    if rank<2 then return err("rank",403) end
+    local ids={}
+    for _,m in ipairs(mine.members) do ids[#ids+1]=m.id end
+    for _,id in ipairs(ids) do leave(mine,id,false) end
+    clans[mine.name]=nil
+  else
+    return err("not found",404)
+  end
+  self:save()
+  return ok(object())
+end
+
 -- Node uses dot-method calls; this wrapper retains that shape for existing Lua ports.
 function Store:callbacks()
   return {
@@ -364,6 +582,9 @@ function Store:callbacks()
     prefsOf=function(a) return self:prefsOf(a) end,
     setPrefs=function(a,prefs) return self:setPrefs(a,prefs) end,
     accountInfo=function(a) return self:accountInfo(a) end,
+    clanView=function(clan) return self:clanView(clan) end,
+    myClan=function(a) return self:myClan(a) end,
+    clanAction=function(a,action,body) return self:clanAction(a,action,body) end,
     friendsOf=function(id) return self:friendsOf(id) end,
     areFriends=function(a,b) return self:areFriends(a,b) end,
     requestsFor=function(id) return self:requestsFor(id) end,
