@@ -47,7 +47,7 @@ for _,profile in ipairs(profiles) do
    return p
  end
  local viewer=create(0,100,100,{
-   team=profile.name=="guest" and nil or "RED",
+   team=profile.name~="guest" and "RED" or nil,
    role=profile.staff and "mod" or nil,points=50,kills=0
  })
  local ally=create(1,180,120,{
