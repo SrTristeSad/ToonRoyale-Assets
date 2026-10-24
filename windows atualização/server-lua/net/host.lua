@@ -51,7 +51,7 @@ local function parseHead(buffer)
     body=buffer:sub(at+4,endAt)},buffer:sub(endAt+1)
 end
 local responses={
-  [200]="OK",[101]="Switching Protocols",[400]="Bad Request",
+  [200]="OK",[101]="Switching Protocols",[204]="No Content",[400]="Bad Request",
   [403]="Forbidden",[404]="Not Found",[409]="Conflict",
   [413]="Payload Too Large",[429]="Too Many Requests",[503]="Service Unavailable"
 }
@@ -97,7 +97,7 @@ function Host.new(options)
     accounts=options.accounts,api=api,
     rooms=rooms,activeByRoom={},activeByIp={},capacity=capacity,maxPeers=maxPeers,
     guiHost=options.guiHost==true,controller=nil,shutdownRequested=false,
-    botCount=options.botCount or 0,
+    botCount=tonumber(options.botCount) or 0,
     tickets={},peers={},listener=nil,active=0
   },Host)
 end
