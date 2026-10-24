@@ -1,0 +1,27 @@
+name: Testar paridade Node Lua do mapa
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-world-parity.yml'
+permissions:
+  contents: read
+jobs:
+  world-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua
+        run: sudo apt-get update -qq && sudo apt-get install -y lua5.4
+      - name: Compare original world generation and placement, object by object
+        working-directory: windows atualização
+        shell: bash
+        run: |
+          set -euo pipefail
+          for seed in 1 42 12345 4294967295; do
+            node server-lua/tests/world-reference.mjs "$seed" > "/tmp/world-node-$seed.txt"
+            lua5.4 server-lua/tests/world-reference.lua "$seed" > "/tmp/world-lua-$seed.txt"
+            if ! diff -u "/tmp/world-node-$seed.txt" "/tmp/world-lua-$seed.txt"; then
+              echo "FAILED seed=$seed"; exit 1
+            fi
+            echo "PASS world seed=$seed, $(grep -c '^OBJ|' "/tmp/world-node-$seed.txt") objects, $(grep -c '^PLACE|' "/tmp/world-node-$seed.txt") placement checks"
+          done
