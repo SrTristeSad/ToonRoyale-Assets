@@ -257,6 +257,12 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/admin-input-smoke.lua
+      - name: Pacote R - comparar handler Node original com Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/report-reference.mjs > /tmp/moo-report-node.txt
+          lua5.4 server-lua/tests/report-reference.lua > /tmp/moo-report-lua.txt
+          diff -u /tmp/moo-report-node.txt /tmp/moo-report-lua.txt
       - name: Denuncias R e permissoes de moderacao
         run: |
           set -euo pipefail
