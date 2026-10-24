@@ -292,6 +292,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/life-persistence-smoke.lua
+      - name: Perfil p com serializacao JSON de producao
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/profile-json-smoke.lua
       - name: Game.sendProfile para convidados anonimos e contas
         run: |
           set -euo pipefail
