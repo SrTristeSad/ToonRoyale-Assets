@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Construcao estruturas e consumo - Player.buildItem Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/build-reference.mjs > /tmp/moo-build-node.txt
+          lua5.4 server-lua/tests/build-reference.lua > /tmp/moo-build-lua.txt
+          diff -u /tmp/moo-build-node.txt /tmp/moo-build-lua.txt
+          test "$(wc -l < /tmp/moo-build-node.txt)" -eq 16
+          echo "PASS 16 cenarios de construcao"
       - name: Coleta e combate corpo a corpo - Player.gather Node vs Lua
         run: |
           set -euo pipefail
