@@ -22,7 +22,8 @@ local callbacks={
  -- Explicit fixture ONLY. Do not replace production original NAME_WORDS.
  nameWords={"qweir","discord"},
  anticheatFactory=function()
-   return {invalid=function()error("invalid packet")end,
+   return {allow=function()return true end,
+     invalid=function()error("invalid packet")end,
      onGameStart=function()end,tick=function()end}
  end,
  onDeath=function()end,
