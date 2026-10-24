@@ -31,7 +31,8 @@ Implementações independentes no diretório `world/`:
 - `structures.lua`: port de `Game.updateStructures`, `Game.turretTarget` e `GameObject.update`: atualização de moinhos, temporizador de torretas, seleção de alvo, proteção por tribo, invisibilidade, disparo em direção ao inimigo e atualização visual `M`. Estruturas destruídas são retiradas de `updateObjects` como no Node.
 - `game_loop.lua`: transcrição da ordem de atualização de `Game.tick`: bots, cooldowns, jogadores, projéteis, estruturas, IA, spawn de animais, líderes, placar, minimapa, estatísticas e sincronização por observador. Usa o relógio monotônico injetado e exige serviços reais para módulos ainda não portados.
 - `player_update.lua`: conecta `vitals.lua`, `movement.lua` e `weapon_tick.lua` na mesma ordem de `Player.update`, incluindo a verificação de morte após dano periódico e antes da física.
-- `room.lua`: **motor de sala Lua integrado (ainda não conectado ao cliente)**: instancia mundo e `ProjectileManager`; executa `Game.tick`, `Player.update`, `Structures.update`, `Snapshot.syncPlayers`/`syncObjects`, e envia eventos de colisão `L`/`Q` pelo `hitObject`. Serviços não portados (IA, placar, minimapa, stats e sincronização dos animais) são explicitamente obrigatórios. O bind do Player recebe seus métodos reais; não inventa o construtor de jogador.
+- `room.lua`: **motor de sala Lua integrado (ainda sem conexão do host ao jogador)**: instancia mundo e `ProjectileManager`; executa `Game.tick`, `Player.update`, `Structures.update`, `Snapshot.syncPlayers`/`syncObjects`, e envia eventos de colisão `L`/`Q` pelo `hitObject`. `handleInput` entrega comandos validados somente a um jogador pertencente àquela sala. Serviços não portados (IA, placar, minimapa, stats e sincronização dos animais) são explicitamente obrigatórios. O bind do Player recebe seus métodos reais; não inventa o construtor de jogador.
+- `input.lua`: port parcial da função real `server/src/network/packets.js::handlePacket` para `M` (spawn), `D` (direção), `9` (movimento e parada), `e` (reset), `F` (ataque/construção), `z` (troca arma/item), `K` (alternâncias), `0` (ping). Valida números e índices; usa métodos e anticheat reais. **Outros pacotes requerem obrigatoriamente um handler de produção**, não são aceitos silenciosamente.
 
 
 
@@ -55,6 +56,7 @@ As novas suítes diferenciais também comparam:
 - `structures-reference.mjs/.lua`: **20 cenários × 3 ticks (60 snapshots)** com `Game.updateStructures`, `Game.turretTarget` e `GameObject.update` reais.
 
 - `game-loop-reference.mjs/.lua`: **4 perfis de sala × 6 ticks = 24 snapshots**, extraídos diretamente do método original `Game.tick`.
+- `input-reference.mjs/.lua`: **24 cenários de entrada** comparados com a função verdadeira `handlePacket` do Node, com rejeição de pacotes inválidos e parada via `null` MessagePack.
 - `player-update-reference.mjs/.lua`: **18 situações × 3 ticks = 54 snapshots**, executando o método `Player.update` **inteiro**, incluindo a parada por morte durante efeitos periódicos.
 - `room-smoke.lua`: valida o encadeamento de um jogador, um projétil e uma construção pela sala Lua, com emissão de pacotes reais `D`/`a`/`H`/`X`, avanço de física e clocks, e rejeição de serviços ainda não implementados.
 
@@ -66,7 +68,7 @@ Testes novos executam as funções originais do Node.js, comparando os mesmos ef
 
 A infraestrutura de rede e um núcleo de sala Lua funcionam isoladamente, com testes de paridade contra o Node. **Ainda não existe uma sala Lua completa de ponta a ponta para substituir o Node.js**, porque o despachante dos pacotes, a construção integral do Player e os serviços de animal/conta/tribo continuam faltando.
 
-Pendente: contas/autorização V2, endpoints HTTP restantes, conexão do `room.lua` e do jogador real ao host, handlers de pacotes de entrada, animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
+Pendente: contas/autorização V2, endpoints HTTP restantes, ligação do host a `room.lua` e ao construtor real de jogadores, **handlers restantes de entrada** (upgrades, loja, clãs, chat, rankings, moderação), animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
