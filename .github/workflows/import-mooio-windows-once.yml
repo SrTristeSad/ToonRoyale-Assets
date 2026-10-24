@@ -1,0 +1,53 @@
+name: Importar Moo-IO Windows para pasta isolada (uma vez)
+
+on:
+  push:
+    paths:
+      - '.github/workflows/import-mooio-windows-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório de destino
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Copiar somente windows/ do Moo-IO
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/SrTristeSad/Moo-IO.git "$tmp/mooio"
+          git -C "$tmp/mooio" sparse-checkout set windows
+          test -f "$tmp/mooio/windows/main.lua"
+          source_sha="$(git -C "$tmp/mooio" rev-parse HEAD)"
+          mkdir -p 'windows atualização'
+          cp -a "$tmp/mooio/windows/." 'windows atualização/'
+          cat > 'windows atualização/ORIGEM.md' <<EOF
+          # Origem da versão Windows
+
+          Cópia de [Moo-IO/windows](https://github.com/SrTristeSad/Moo-IO/tree/main/windows).
+
+          Commit da origem: \`$source_sha\`.
+
+          Esta pasta é independente do repositório Moo-IO original. Inclui os arquivos de licença, cliente Lua, servidor local, scripts, testes e artes, sem modificar outras pastas de ToonRoyale-Assets.
+          EOF
+          test -f 'windows atualização/main.lua'
+          test -f 'windows atualização/server/src/index.js'
+          test -f 'windows atualização/LICENSE'
+          actual="$(find 'windows atualização' -type f | wc -l)"
+          echo "Importados: $actual arquivos (incluindo documentação de origem)"
+          test "$actual" -ge 312
+          git add -- 'windows atualização'
+          if git diff --cached --quiet; then
+            echo "Nenhum arquivo novo para importar"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Importar versão Windows completa do Moo-IO"
+          git push origin HEAD:main
