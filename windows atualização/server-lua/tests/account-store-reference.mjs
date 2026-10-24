@@ -76,6 +76,8 @@ let cr=store.clanAction(creator,"create",{name:"DEF"});
 out("CLAN_CREATE",cr.status,creator.clan,store.data.clans.DEF.members[0].role);
 let req=store.clanAction(joiner,"request",{clan:"def"});
 out("CLAN_REQUEST",req.status,store.data.clans.DEF.requests.length);
+let cv=store.myClan(creator);
+out("CLAN_MINE",cv.role,cv.requests.join(","),cv.clan.members[0].role);
 let decide=store.clanAction(creator,"decide",{name:"Joiner",accept:true});
 out("CLAN_DECIDE",decide.status,joiner.clan,store.data.clans.DEF.members.length);
 let rank=store.clanAction(creator,"role",{name:"Joiner",role:"owner"});
