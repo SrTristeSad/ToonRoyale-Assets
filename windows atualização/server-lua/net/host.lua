@@ -301,7 +301,7 @@ function Host:processPeer(peer)
           self:drop(peer)
           return
         end
-        local ok,e=pcall(self.onPacket,peer,msg.name,msg.args)
+        local ok,e=pcall(self.onPacket,peer,msg.name,msg.args,peer.roomKey)
         if not ok then self:drop(peer);error("Lua onPacket: "..tostring(e)) end
       end
     end
