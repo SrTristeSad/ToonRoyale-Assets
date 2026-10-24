@@ -67,6 +67,10 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Crab King nativo integrado ao Game.tick e rewards
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/room-crab-smoke.lua
       - name: Vitoria Crab King e Crab Shell Node vs Lua
         run: |
           set -euo pipefail
