@@ -75,6 +75,9 @@ function Registry.new(room,opts)
  opts.recordLife=opts.recordLife or function(player,died)
    return room:recordLife(player,died)
  end
+ opts.onDeath=opts.onDeath or function(player)
+   return room:onPlayerDeath(player)
+ end
  opts.hats=opts.hats or Catalogue.hats
  opts.accessories=opts.accessories or Catalogue.accessories
  assert(room and type(room.bindPlayer)=="function"
