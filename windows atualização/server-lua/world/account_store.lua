@@ -72,6 +72,7 @@ function Store.open(path,opts)
   local self=setmetatable({file=path,data=data,
     nowMs=opts.nowMs or function() return os.time()*1000 end,
     isRude=opts.isRude,
+    gameName=opts.gameName,
     randomBytes=opts.randomBytes or SecureRandom.bytes,
     tickets={},devices={},loginFlows={},discordCodes={}},Store)
   self.migratedIds=self:migrateIds()
@@ -108,6 +109,51 @@ function Store:nameOwner(name)
   local id=self.data.names[name:match("^%s*(.-)%s*$"):lower()]
   return id and self.data.accounts[id] or nil
 end
+-- AccountStore.claimName: preserve the identical validation order and codes.
+local function utf16Length(value)
+  local size=0
+  for _,code in utf8.codes(value) do
+    size=size+(code>65535 and 2 or 1)
+  end
+  return size
+end
+function Store:claimName(account,rawName)
+  if not absent(account.name) and account.name~=false and account.name~="" then
+    return {status=200,body={name=account.name}}
+  end
+  local requested
+  if rawName==nil or rawName==json.null then requested=""
+  elseif type(rawName)=="string" then requested=rawName
+  elseif type(rawName)=="table" then requested="[object Object]"
+  else requested=tostring(rawName) end
+  requested=requested:match("^%s*(.-)%s*$")
+  local length=utf16Length(requested)
+  if length<3 or length>15 then
+    return {status=400,body={error="invalid"}}
+  end
+  local gameName=assert(self.gameName or
+    require("server-lua.world.player_identity").gameName,
+    "original gameName filter required")
+  local shown=gameName(requested,15)
+  if utf16Length(shown.name)<3 then
+    return {status=400,body={error="invalid"}}
+  end
+  if shown.profane then
+    return {status=400,body={error="unclean"}}
+  end
+  if shown.name~=requested then
+    return {status=400,body={error="censored",shown=shown.name}}
+  end
+  local owner=self:nameOwner(requested)
+  if owner and owner.id~=account.id then
+    return {status=409,body={error="taken"}}
+  end
+  account.name=requested
+  self.data.names[requested:lower()]=account.id
+  self:save()
+  return {status=200,body={name=requested}}
+end
+
 function Store:setVerdict(name,level)
   local account=self:nameOwner(name)
   if not account then return false end
@@ -943,6 +989,7 @@ function Store:callbacks()
     removeFriend=function(a,b) return self:removeFriend(a,b) end,
     accountByEmail=function(email) return self:accountByEmail(email) end,
     accountById=function(id) return self:accountById(id) end,
+    claimName=function(a,name) return self:claimName(a,name) end,
     accountForEmail=function(email) return self:accountForEmail(email) end,
     startLogin=function(email) return self:startLogin(email) end,
     finishLogin=function(flow) return self:finishLogin(flow) end,
