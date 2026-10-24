@@ -273,6 +273,13 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/account-unlocks-smoke.lua
+      - name: AccountStore real Node vs Lua - cenarios diferenciais
+        run: |
+          set -euo pipefail
+          node server-lua/tests/account-store-reference.mjs > /tmp/account-store-node.txt
+          lua5.4 server-lua/tests/account-store-reference.lua > /tmp/account-store-lua.txt
+          diff -u /tmp/account-store-node.txt /tmp/account-store-lua.txt
+          echo 'PASS AccountStore comparado ao codigo Node original'
       - name: AccountStore Lua com leitura gravacao e retorno do accounts.json
         run: |
           set -euo pipefail
