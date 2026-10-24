@@ -190,6 +190,12 @@ function World:disableObject(obj)
       for i=#arr,1,-1 do if arr[i]==obj then table.remove(arr,i) end end
     end
   end
+  -- ObjectManager.disableObj removes dynamic structures from updateObjects.
+  if self.updateObjects then
+    for i=#self.updateObjects,1,-1 do
+      if self.updateObjects[i]==obj then table.remove(self.updateObjects,i);break end
+    end
+  end
   return true
 end
 
