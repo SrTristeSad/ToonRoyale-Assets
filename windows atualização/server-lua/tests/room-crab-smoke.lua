@@ -29,6 +29,7 @@ local hunter={
    packets[#packets+1]=name
  end,
  canSee=function()return true end,
+ variant=function()return {id=0,val=1} end,
  shownName=function(self)return self.name end,
  update=function()end,
  addResource=function()end,
