@@ -217,6 +217,8 @@ function Host:request(peer,req)
     end
     local body=assert(Json.encode({status="ok",build=self.build.buildId,servers=listed}))
     addOutput(peer,reply(200,body))
+  elseif req.method=="GET" and ((path=="/s/LC/ping" and self.rooms.LC) or (path=="/s/MB/ping" and self.rooms.MB)) then
+    addOutput(peer,reply(200,"ok","text/plain"))
   elseif req.method=="GET" and path=="/mooio/protocol" then
     addOutput(peer,reply(200,publicBuild(self.build)))
   elseif req.method=="GET" and path=="/mooio/status" then
