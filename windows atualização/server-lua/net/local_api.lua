@@ -6,6 +6,8 @@ local Social=require("server-lua.net.local_social")
 local AntiCheatConfig=require("server-lua.anticheat.config")
 local API={}
 API.__index=API
+local function array()return setmetatable({},{__jsontype="array"})end
+local function object()return setmetatable({},{__jsontype="object"})end
 local function truth(v) return v~=nil and v~=false and v~=0 and v~="" and v~=Json.null end
 local function str(v)
  if v==nil or v==Json.null then return "" end
@@ -126,7 +128,7 @@ function API:handle(method,target,headers,raw,ip)
   local span=query(qs,"span")
   if span~="week" and span~="month" and span~="all" then span="week" end
   local board=store:top(span)
-  local players,clans={},{}
+  local players,clans=array(),array()
   for _,p in ipairs(board.players) do if not p.shadowed then players[#players+1]=p end end
   for _,c in ipairs(board.clans) do if not c.shadowed then clans[#clans+1]=c end end
   return response(200,{players=players,clans=clans})
@@ -169,12 +171,12 @@ function API:handle(method,target,headers,raw,ip)
  if path=="/api/mod/role" then
   if account.role~="admin" then return invalid("rank") end
   if not store:setRole(body.name,body.role) then return invalid("no player",404) end
-  return response(200,{})
+  return response(200,object())
  end
  if path=="/api/mod/clan" then
   if account.role~="admin" and account.role~="mod" then return invalid("rank") end
   if not store:setClanShadow(body.clan,body.shadow) then return invalid("not found",404) end
-  return response(200,{})
+  return response(200,object())
  end
  if path=="/api/mod/verdict" then
   if account.role~="admin" and account.role~="mod" then return invalid("rank") end
@@ -197,7 +199,7 @@ function API:handle(method,target,headers,raw,ip)
    elseif truth(body.ip) then
     self.moderation:unbanIp(guest.ip,guest.did)
    end
-   return response(200,{})
+   return response(200,object())
   end
   local target=store:nameOwner(body.name)
   if not target then return invalid("no player",404) end
@@ -221,7 +223,7 @@ function API:handle(method,target,headers,raw,ip)
   end
   if level=="ban" then game.kickAccount(target.id,"kicked") end
   game.setShadow(target.id,level=="shadow")
-  return response(200,{})
+  return response(200,object())
  end
  if path=="/api/mod/player" or path=="/api/mod/kick" then
   if account.role~="admin" and account.role~="mod" then return invalid("rank") end
@@ -249,7 +251,7 @@ function API:handle(method,target,headers,raw,ip)
    kicked=game.kickAccount(target.id,"kicked")
   end
   if kicked==0 then return invalid("not online",404) end
-  return response(200,{})
+  return response(200,object())
  end
  if path=="/api/account" then return response(200,store:accountInfo(account)) end
  if path=="/api/account/prefs" then
