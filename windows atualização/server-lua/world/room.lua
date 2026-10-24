@@ -227,6 +227,19 @@ function Room:handleInput(player,name,args)
   },player,name,args)
 end
 
+-- Game.announceShutdown/closeAll from the original LOCAL Node server.
+function Room:announceShutdown(seconds)
+ local now=assert(self.wallTimeMs,"original wall clock required")
+ self.restartAt=seconds>=0 and now()+seconds*1000 or 0
+ assert(type(self.broadcast)=="function","original Game.server.broadcast required")
+ self.broadcast("Z",seconds)
+end
+function Room:closeAll()
+ for _,player in ipairs(self.players) do
+  if player.kick then player.kick("Server is restarting - pick another") end
+ end
+end
+
 function Room:tick(nowMs)
   -- GameLoop now calls bound Player.update, the real projectile update,
   -- object updates and snapshot functions, plus mandatory external services.
