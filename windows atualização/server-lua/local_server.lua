@@ -177,8 +177,20 @@ end
 function Local:start()return self.host:start()end
 function Local:update()
  self.host:update()
- if self.host.shutdownRequested then self:close();return false end
  local now=self.clock()
+ if self.host.shutdownRequested and not self.shutdownAt then
+  self.shutdownAt=now+1500
+  self.kickAt=now+1100
+  for _,key in ipairs({"LC","MB"}) do self.rooms[key].room:announceShutdown(3) end
+ end
+ if self.kickAt and now>=self.kickAt then
+  self.kickAt=nil
+  for _,key in ipairs({"LC","MB"}) do self.rooms[key].room:closeAll() end
+ end
+ if self.shutdownAt and now>=self.shutdownAt then
+  self:close()
+  return false
+ end
  local ticks=0
  while now-self.nextTick>=self.step and ticks<5 do
   self.nextTick=self.nextTick+self.step
