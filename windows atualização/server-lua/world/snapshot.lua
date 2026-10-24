@@ -22,7 +22,9 @@ function Sync.canSee(viewer,other,cfg)
   if other.skin and other.skin.invisTimer and other.noMovTimer>=other.skin.invisTimer then
     return false
   end
-  if other.isPlayer and other.powers and other.powers.invisible
+  if other.isPlayer and other.powers
+     and other.powers.invisible~=nil and other.powers.invisible~=false
+     and other.powers.invisible~=0
      and viewer~=other and not viewer.role then return false end
   local dx=math.abs(other.x-viewer.x)-other.scale
   local dy=math.abs(other.y-viewer.y)-other.scale
