@@ -171,3 +171,28 @@ out("TICKET_EXPIRED",/^[a-f0-9]{24}$/.test(t2.did),
  ticketStore.consumeTicket(t2.ticket,60000)===null);
 ticketStore.devices.set(trustedDid,Date.now()-900001);
 out("TICKET_DEVICE_EXPIRED",ticketStore.recentDevice(trustedDid));
+
+const rankedStats=(total,weekly)=>({...base(),kills:total,
+ periods:{week:{key:"2026-10-19",kills:weekly,bestScore:30},
+ day:{key:"2026-10-24",kills:Math.floor(weekly/2),bestScore:30},
+ month:{key:"2026-10",kills:weekly,bestScore:30}}});
+const rankedAccounts={
+ "id-a":{id:"id-a",name:"A",stats:rankedStats(25,12),clan:"ABC"},
+ "id-b":{id:"id-b",name:"B",stats:rankedStats(20,7),verdict:"shadow"},
+ "id-c":{id:"id-c",name:"C",stats:rankedStats(15,4)},
+ "id-d":{id:"id-d",name:"D",stats:rankedStats(10,2)}
+};
+const rankedClans={
+ ABC:{name:"ABC",stats:rankedStats(10,9),members:[{id:"id-a"}]},
+ DEF:{name:"DEF",stats:rankedStats(8,5),members:[{id:"id-b"}],shadowed:true}
+};
+const leaderboard=Object.create(Store.prototype);
+leaderboard.data={accounts:rankedAccounts,clans:rankedClans};
+for(const span of ["all","day","week","month"]){
+ const result=leaderboard.top(span);
+ out("TOP_"+span.toUpperCase(),
+ result.players.map(p=>p.name+":"+p.kills+":"+(p.shadowed?1:0)).join(","),
+ result.clans.map(p=>p.name+":"+p.kills+":"+(p.shadowed?1:0)).join(","));
+}
+const crowns=leaderboard.weeklyCrowns();
+out("WEEKLY_CROWNS",crowns["id-a"],crowns["id-b"],crowns["id-c"],crowns["id-d"]);
