@@ -11,12 +11,19 @@ const objectIdEnd=source.indexOf("\n}",objectIdStart)+2;
 if(objectIdStart<0||objectIdEnd<2)throw Error("original ObjectId source changed");
 const {randomBytes}=await import("node:crypto");
 const objectId=new Function("randomBytes","return ("+source.slice(objectIdStart,objectIdEnd)+")")(randomBytes);
+const nameFilterSource=fs.readFileSync(new URL("../../server/src/moomoo/libs/nameFilter.js",import.meta.url),"utf8");
+const nameFilterStart=nameFilterSource.indexOf("export function gameName(");
+const nameFilterEnd=nameFilterSource.indexOf("\n}",nameFilterStart)+2;
+if(nameFilterStart<0||nameFilterEnd<2)throw Error("original gameName source changed");
+const gameName=new Function("NAME_WORDS",
+ "return ("+nameFilterSource.slice(nameFilterStart,nameFilterEnd).replace(/^export /,"")+")")(
+ ["qweir"]);
 const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude","objectId",
- "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes","DEVICE_REJOIN_MS","CLAN_RE","CLAN_MAX_MEMBERS","emptyStats","DISCORD_CODE_MS",
+ "SOCIAL_FIELDS","HANDLE_RE","fs","randomBytes","DEVICE_REJOIN_MS","CLAN_RE","CLAN_MAX_MEMBERS","emptyStats","DISCORD_CODE_MS","gameName",
  "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(
  periods,defaults,value=>value==="badword",objectId,
  ["youtube","twitch","tiktok","x","discord"],/^[A-Za-z0-9._-]{1,32}$/,
- {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes,900000,/^[A-Za-z0-9]{3,4}$/,80,()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}}),600000);
+ {writeFileSync(){ /* isolated differential fixture, no production writes */ }},randomBytes,900000,/^[A-Za-z0-9]{3,4}$/,80,()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}}),600000,gameName);
 const id="abc123";
 const base=()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,
  gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}});
@@ -223,3 +230,19 @@ out("DISCORD_LINK_OK",discordResult.status,discordResult.body.discord.length,
 const expired=authStore.createDiscordCode("expired");
 authStore.discordCodes.get(expired).at-=600001;
 out("DISCORD_EXPIRE",authStore.discordCode(expired)===null);
+
+const claim=authStore.accountForEmail("claim@example.com");
+let nameResult=authStore.claimName(claim,"ab");
+out("CLAIM_SHORT",nameResult.status,nameResult.body.error);
+nameResult=authStore.claimName(claim,"Bad+Name");
+out("CLAIM_CENSORED",nameResult.status,nameResult.body.error,nameResult.body.shown);
+nameResult=authStore.claimName(claim,"qweir");
+out("CLAIM_UNCLEAN",nameResult.status,nameResult.body.error);
+nameResult=authStore.claimName(claim,"PlayerOne");
+out("CLAIM_VALID",nameResult.status,nameResult.body.name,
+ authStore.nameOwner("playerone")===claim);
+const another=authStore.accountForEmail("another@example.com");
+nameResult=authStore.claimName(another,"playerone");
+out("CLAIM_TAKEN",nameResult.status,nameResult.body.error);
+nameResult=authStore.claimName(claim,"OtherName");
+out("CLAIM_IMMUTABLE",nameResult.status,nameResult.body.name);
