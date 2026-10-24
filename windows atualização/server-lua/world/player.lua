@@ -25,8 +25,16 @@ function Player.new(id,sid,room,opts)
   assert(type(opts.icon)=="function","real Game.onPlayerDeath callback required")
   assert(type(opts.nameWords)=="table" and #opts.nameWords>0,
     "full authoritative NAME_WORDS dictionary required")
-  assert(opts.anticheat or type(opts.anticheatFactory)=="function",
-    "authoritative anticheat or real Player anticheatFactory required")
+  -- Node Game.addPlayer creates internal room bots without any network session.
+  local internalBot=opts.internalBot==true
+  if internalBot then
+    assert(id:match("^mooio%-bot%-%d+$") and opts.ip=="internal-bot"
+      and opts.account==nil,
+      "bot bypass may only be used by the original internal RoomBots")
+  else
+    assert(opts.anticheat or type(opts.anticheatFactory)=="function",
+      "authoritative anticheat or real Player anticheatFactory required")
+  end
   local p=Identity.new(id,sid,{
     hats=opts.hats,accessories=opts.accessories,config=room.config,
     nameWords=opts.nameWords
@@ -42,12 +50,14 @@ function Player.new(id,sid,room,opts)
   -- Construct the anticheat with the *actual* Player, not a proxy with
   -- incomplete identity or a different packet/skin state.
   setmetatable(p,Player)
-  p.anticheat=opts.anticheatFactory and opts.anticheatFactory(p) or opts.anticheat
-  assert(p.anticheat and type(p.anticheat.invalid)=="function"
-    and type(p.anticheat.allow)=="function"
-    and type(p.anticheat.onGameStart)=="function"
-    and type(p.anticheat.tick)=="function",
-    "complete anti-cheat allow/invalid/onGameStart/tick required")
+  if not internalBot then
+    p.anticheat=opts.anticheatFactory and opts.anticheatFactory(p) or opts.anticheat
+    assert(p.anticheat and type(p.anticheat.invalid)=="function"
+      and type(p.anticheat.allow)=="function"
+      and type(p.anticheat.onGameStart)=="function"
+      and type(p.anticheat.tick)=="function",
+      "complete anti-cheat allow/invalid/onGameStart/tick required")
+  end
   return p
 end
 function Player:sendTo(id,name,...)
