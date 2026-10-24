@@ -7,6 +7,7 @@ local MP=require("src.protocol.msgpack")
 local Equipment=require("server-lua.world.equipment_input")
 local TribeInput=require("server-lua.world.tribe_input")
 local Chat=require("server-lua.world.chat_input")
+local Anonymous=require("server-lua.world.anon_input")
 local Input={}
 local function truthy(v)
   return v~=nil and v~=false and v~=0 and v~=MP.null
@@ -121,6 +122,8 @@ function Input.handle(ctx,player,name,args)
     elseif args[1]==0 then player.lockDir=not truthy(player.lockDir)
     else return bad(player,name,"toggle") end
     return
+  elseif name=="I" then
+    return Anonymous.handle(ctx,player,args)
   elseif name=="6" then
     return Chat.handle(ctx,player,args)
   elseif name=="T" then
