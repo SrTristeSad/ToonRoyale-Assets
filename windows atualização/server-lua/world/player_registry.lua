@@ -71,6 +71,10 @@ function Registry.new(room,opts)
    opts.leaveTribe=opts.leaveTribe or function(p)return room.tribes:leaveTribe(p)end
    opts.forget=opts.forget or function(p)return room.tribes:forget(p)end
  end
+ -- Bind the native Room lifecycle by default; explicit test callbacks remain supported.
+ opts.recordLife=opts.recordLife or function(player,died)
+   return room:recordLife(player,died)
+ end
  opts.hats=opts.hats or Catalogue.hats
  opts.accessories=opts.accessories or Catalogue.accessories
  assert(room and type(room.bindPlayer)=="function"
