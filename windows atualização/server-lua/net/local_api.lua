@@ -2,6 +2,7 @@
 -- HTTP handlers from the Windows LOCAL server/src/api/routes.js.
 -- This is the original non-V2 AccountStore flow, not a new login service.
 local Json=require("server-lua.vendor.dkjson")
+local Social=require("server-lua.net.local_social")
 local AntiCheatConfig=require("server-lua.anticheat.config")
 local API={}
 API.__index=API
@@ -38,7 +39,8 @@ function API.new(opts)
   game=opts.game,
   servers=assert(opts.servers,"original local LC and MB server list required"),
   nowMs=opts.nowMs or function()return os.time()*1000 end,
-  friendRate={}},API)
+  friendRate={},social=Social.new({store=opts.store,
+    friendshipChanged=opts.friendshipChanged})},API)
 end
 function API:authenticated(body)
  local account=self.store:verifyToken(body.auth)
