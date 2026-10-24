@@ -4,6 +4,8 @@
 -- Account resolution, clan manager, moderation and persistence remain strict
 -- externally owned services; this registry does not manufacture them.
 local Player=require("server-lua.world.player")
+local AntiCheat=require("server-lua.anticheat.index")
+local SecureRandom=require("src.net.secure_random")
 local NameWords=require("server-lua.world.name_words")
 local Catalogue=require("server-lua.world.catalogue")
 local Types=require("server-lua.world.animal_types")
@@ -39,6 +41,31 @@ end
 function Registry.new(room,opts)
  opts=opts or {}
  opts.nameWords=opts.nameWords or NameWords
+ if not opts.anticheatFactory then
+  for _,name in ipairs({"nowMs","kickPeer","closePeer","log"}) do
+   assert(type(opts[name])=="function",
+     "native anticheat requires original service: "..name)
+  end
+  opts.anticheatFactory=function(id,sid,ip,account,player,peer)
+   assert(peer.session and peer.session.pinned~=nil,
+     "real keyed ProtocolSession required for native anticheat")
+   local saltFn=opts.randomSalt or function()
+    local raw=SecureRandom.bytes(4)
+    assert(type(raw)=="string" and #raw==4,
+      "fresh OS-backed 32-bit challenge salt required")
+    local a,b,c,d=raw:byte(1,4)
+    return a+b*256+c*65536+d*16777216
+   end
+   return AntiCheat.new({
+     player=player,nowMs=opts.nowMs,session=peer.session,
+     store=opts.moderation,randomSalt=saltFn,
+     sendProbes=function(salt,probes)return player:send("q",salt,probes)end,
+     log=function(msg)return opts.log(player,msg)end,
+     kick=function(reason)return opts.kickPeer(peer,reason)end,
+     close=function(code)return opts.closePeer(peer,code)end
+   })
+  end
+ end
  opts.hats=opts.hats or Catalogue.hats
  opts.accessories=opts.accessories or Catalogue.accessories
  assert(room and type(room.bindPlayer)=="function"
@@ -86,8 +113,10 @@ function Registry:createPlayer(peer,ticket,room)
    self.options.accountForTicket(ticket,peer) or nil
  local p=Player.new(id,sid,room,{
    hats=self.options.hats,accessories=self.options.accessories,
-   nameWords=self.options.nameWords,
-   anticheat=self.options.anticheatFactory(id,sid,ip,account),
+   nameWords=self.options.nameWords,ip=ip,did=ticket.did,account=account,
+   anticheatFactory=function(player)
+     return self.options.anticheatFactory(id,sid,ip,account,player,peer)
+   end,
    icon=self.options.onDeath,
    send=function(name,...)return sendPeer(peer,name,...)end
  })
