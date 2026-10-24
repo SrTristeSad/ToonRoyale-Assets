@@ -7,7 +7,11 @@ const end=src.indexOf("export const BOT_LIMIT");
 if(parsed<0||classAt<0||end<0)throw Error("LOCAL bots.js layout changed");
 const parseBotCount=new Function("return ("+src.slice(parsed,classAt).trim().replace(/^export /,"")+")")();
 const items={list:{0:{id:0}},weapons:{0:{range:70}}};
-const RoomBots=new Function("items","parseBotCount","return ("+
+// Evaluate the class with the REAL constants/helpers declared above it.
+const constantsAt=src.indexOf("const MAX_BOTS");
+if(constantsAt<0||constantsAt>=parsed)throw Error("original bot helpers changed");
+const helpers=src.slice(constantsAt,parsed);
+const RoomBots=new Function("items","parseBotCount",helpers+"return ("+
  src.slice(classAt,end).trim().replace(/^export /,"")+")")(items,parseBotCount);
 const originalRandom=Math.random;Math.random=()=>0.5;
 const number=x=>x===undefined||x===null?"nil":Number(x).toFixed(6);
