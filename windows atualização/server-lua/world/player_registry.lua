@@ -4,6 +4,7 @@
 -- Account resolution, clan manager, moderation and persistence remain strict
 -- externally owned services; this registry does not manufacture them.
 local Player=require("server-lua.world.player")
+local NameWords=require("server-lua.world.name_words")
 local Catalogue=require("server-lua.world.catalogue")
 local Types=require("server-lua.world.animal_types")
 local Sha=require("server-lua.protocol.sha256")
@@ -37,6 +38,7 @@ local function kinds()
 end
 function Registry.new(room,opts)
  opts=opts or {}
+ opts.nameWords=opts.nameWords or NameWords
  opts.hats=opts.hats or Catalogue.hats
  opts.accessories=opts.accessories or Catalogue.accessories
  assert(room and type(room.bindPlayer)=="function"
