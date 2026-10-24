@@ -107,6 +107,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: Sala integrada dois jogadores loja tribos chat tick real
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/gameplay-final-smoke.lua
       - name: Chat 6 filtro original e shadowban Node vs Lua
         run: |
           set -euo pipefail
