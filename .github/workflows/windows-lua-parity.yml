@@ -103,6 +103,14 @@ jobs:
           diff -u /tmp/moo-crab-rewards-node.txt /tmp/moo-crab-rewards-lua.txt
           test "$(wc -l < /tmp/moo-crab-rewards-node.txt)" -eq 12
           echo 'PASS 12 cenarios de vitoria e Crab Shell'
+      - name: Inventario recursos e wire-data Player Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/player-inventory-reference.mjs > /tmp/moo-playerinventory-node.txt
+          lua5.4 server-lua/tests/player-inventory-reference.lua > /tmp/moo-playerinventory-lua.txt
+          diff -u /tmp/moo-playerinventory-node.txt /tmp/moo-playerinventory-lua.txt
+          test "$(wc -l < /tmp/moo-playerinventory-node.txt)" -eq 46
+          echo 'PASS 46 cenarios de inventario e identidade via wire'
       - name: Metodos iniciais de Player Node vs Lua
         run: |
           set -euo pipefail
