@@ -107,6 +107,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: Anticheat nativo integrado a Host Player e sala Lua
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/anticheat-transport-smoke.lua
       - name: Anticheat rate-limits strikes e telemetria Node vs Lua
         run: |
           set -euo pipefail
