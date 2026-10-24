@@ -13,7 +13,8 @@ local clan={name="ABC",members={{id=id,role="officer",kills=1,periods={}}},
  requests={"someone"},invites={},stats={kills=0,raidKills=0,periods={}}}
 local store=Store.open("server-lua/tests/.does-not-exist.json",{
  nowMs=function()return 1792864800000 end,
- isRude=function() return false end})
+ isRude=function() return false end,
+ randomBytes=function(n) assert(n==8); return "abcdefgh" end})
 store.data={accounts={[id]=a},names={tester=id},emails={["a@example.com"]=id},
  clans={ABC=clan},social={friends={[id]={{id="friend"}}},
  requests={{id="r1",senderId="friend",recipientId=id}}},legacyIds={legacy=id}}
@@ -100,3 +101,27 @@ out("CLAN_LEAVE",leave.status,creator.clan,#store.data.clans.DEF.members)
 local disband=store:clanAction(joiner,"disband",{})
 out("CLAN_DISBAND",disband.status,store.data.clans.DEF~=nil,joiner.clan)
 out("CLAN_EVENTS",#log,log[1],log[2])
+
+for _,who in ipairs({"one","two","three"}) do
+ store.data.accounts[who]={id=who,name=who,clan=Json.null,stats=base()}
+ store.data.names[who]=who
+end
+local r1=store:createFriendRequest("one","two")
+out("FRIEND_CREATE",r1.status,
+ #r1.request.id==24 and r1.request.id:match("^[a-f0-9]+$")~=nil,
+ #r1.request.createdAt==24 and r1.request.createdAt:sub(-1)=="Z")
+out("FRIEND_PENDING",#store:requestsFor("two"),#store:requestsFrom("one"))
+out("FRIEND_DUPLICATE",store:createFriendRequest("one","two").status)
+out("FRIEND_ANSWER",store:answerFriendRequest("two",r1.request.id,true)~=false,
+ #store:friendsOf("one"),#store:friendsOf("two"))
+out("FRIEND_ALREADY",store:createFriendRequest("one","two").status)
+local reverse=store:createFriendRequest("three","two")
+out("FRIEND_REVERSE_PENDING",reverse.status)
+local merged=store:createFriendRequest("two","three")
+out("FRIEND_REVERSE_MERGE",merged.status,merged.friends,store:areFriends("two","three"))
+local canceled=store:createFriendRequest("one","three")
+out("FRIEND_CANCEL",store:cancelFriendRequest("one",canceled.request.id),
+ store:cancelFriendRequest("one",canceled.request.id),#store:requestsFor("three"))
+out("FRIEND_REMOVE",store:removeFriend("one","two"),
+ store:removeFriend("one","two"),#store:friendsOf("one"))
+out("FRIEND_MISSING",store:createFriendRequest("one","missing").status)
