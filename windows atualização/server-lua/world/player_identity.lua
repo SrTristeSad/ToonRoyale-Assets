@@ -3,6 +3,7 @@
 -- setUserData, shownName, getData, applyPowers and displaySkin.
 -- Original name moderation words and store catalogue MUST be injected.
 local Config=require("src.game.config")
+local NameWords=require("server-lua.world.name_words")
 local Sync=require("server-lua.world.snapshot")
 local Spawn=require("server-lua.world.spawn")
 local Identity={}
@@ -73,7 +74,7 @@ function Identity.new(id,sid,options)
     if item.price<=0 and not jsTruth(item.dontSell) then p.skins[item.id]=1 end
   end
   p.config=options.config or Config
-  p.nameWords=options.nameWords
+  p.nameWords=options.nameWords or NameWords
   return setmetatable(p,Identity)
 end
 function Identity:resetMoveDir()self.moveDir=nil end
