@@ -51,7 +51,8 @@ for _,tc in ipairs(scenarios) do
     score=function(who,amount)events[#events+1]="SCORE:"..who.id..":"..repr(amount)end,
     icon=function(who)events[#events+1]="ICON:"..who.id end
   }
-  local doer=tc.noDoer and nil or (tc.self and p or attacker)
+  local doer
+  if tc.noDoer then doer=nil elseif tc.self then doer=p else doer=attacker end
   local src=tc.spikes and {group={name="spikes"}} or nil
   local projectile=tc.projectile and {} or nil
   local ok=Health.change(p,tc.amount,doer,src,projectile,opts)
