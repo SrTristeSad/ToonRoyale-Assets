@@ -8,6 +8,7 @@ local Projectiles=require("server-lua.world.projectiles")
 local Structures=require("server-lua.world.structures")
 local Snapshot=require("server-lua.world.snapshot")
 local PlayerUpdate=require("server-lua.world.player_update")
+local Input=require("server-lua.world.input")
 local Loop=require("server-lua.world.game_loop")
 local Room={}
 Room.__index=Room
@@ -44,7 +45,7 @@ function Room.new(opts)
     players=players,ais=ais,projectiles=projectileManager.projectiles,
     game_objects=world.objects,
     object_manager=world,projectile_manager=projectileManager,
-    config=config,items=items,services=callbacks,
+    config=config,items=items,services=callbacks,key=opts.key or "LC",
     lastTick=now,nowMs=now,
     bots=opts.bots,
     spawnTimer=0,leaderboardTimer=0,minimapTimer=0,statsTimer=0
@@ -120,6 +121,19 @@ function Room:bindPlayer(player)
     })
   end
   return player
+end
+
+function Room:handleInput(player,name,args)
+  local present=false
+  for _,p in ipairs(self.players) do
+    if p==player then present=true;break end
+  end
+  assert(present,"cannot route client packets to a player outside this room")
+  return Input.handle({
+    items=self.items,gameKey=self.key,
+    unhandled=self.services.onUnportedPacket,
+    log=self.services.log
+  },player,name,args)
 end
 
 function Room:tick(nowMs)
