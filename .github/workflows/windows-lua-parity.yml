@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Torretas e animacao de construcoes - Game Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/structures-reference.mjs > /tmp/moo-structures-node.txt
+          lua5.4 server-lua/tests/structures-reference.lua > /tmp/moo-structures-lua.txt
+          diff -u /tmp/moo-structures-node.txt /tmp/moo-structures-lua.txt
+          test "$(wc -l < /tmp/moo-structures-node.txt)" -eq 60
+          echo "PASS 60 snapshots de torretas e estruturas"
       - name: Fisica dos projeteis e colisoes - Projectile Node vs Lua
         run: |
           set -euo pipefail
