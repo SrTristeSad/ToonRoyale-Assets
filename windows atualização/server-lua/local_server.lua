@@ -101,7 +101,8 @@ function Local.new(opts)
   end
   return result
  end
- local host=Host.new({bind=assert(opts.bind,"LAN/VPN binding required"),
+ local host
+ host=Host.new({bind=assert(opts.bind,"LAN/VPN binding required"),
   port=opts.port or 8080,mode=opts.mode or "lan",
   roomCode=assert(opts.roomCode,"MOO_IO_ROOM_CODE required"),
   rooms={LC={capacity=Config.maxPlayers,membersOnly=false},
