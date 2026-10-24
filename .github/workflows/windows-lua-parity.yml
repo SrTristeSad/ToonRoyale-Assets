@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Crab King movimentos e ataques Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/crab-reference.mjs > /tmp/moo-crab-node.txt
+          lua5.4 server-lua/tests/crab-reference.lua > /tmp/moo-crab-lua.txt
+          diff -u /tmp/moo-crab-node.txt /tmp/moo-crab-lua.txt
+          test "$(wc -l < /tmp/moo-crab-node.txt)" -eq 48
+          echo 'PASS 48 ticks do Crab King'
       - name: Vida animal real integrada ao motor da sala Lua
         run: |
           set -euo pipefail
