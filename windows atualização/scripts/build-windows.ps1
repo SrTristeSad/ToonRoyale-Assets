@@ -39,7 +39,7 @@ foreach ($folder in @('src','shared','assets','scripts','server','server-lua')) 
   & robocopy.exe $from $to /E /XJ /R:2 /W:1 /MT:16 /NP /NJH /NJS /NFL /NDL | Out-Null
   if ($LASTEXITCODE -ge 8) { throw "Falha ao copiar $($folder): codigo $LASTEXITCODE" }
 }
-foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','README.md','LICENSE','NOTICE.md')) {
+foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','MOO-IO-Lua-Teste.vbs','README.md','LICENSE','NOTICE.md')) {
   Copy-Item (Join-Path $root $file) (Join-Path $OutputDir $file) -Force
 }
 if (Test-Path (Join-Path $root 'licenses')) {
