@@ -107,6 +107,15 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: NAME_WORDS completo e nomes de jogadores Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/name-words-reference.mjs > /tmp/moo-names-node.txt
+          lua5.4 server-lua/tests/name-words-reference.lua > /tmp/moo-names-lua.txt
+          diff -u /tmp/moo-names-node.txt /tmp/moo-names-lua.txt
+          test "$(grep -c '^WORD|' /tmp/moo-names-node.txt)" -eq 986
+          test "$(grep -c '^NAME|' /tmp/moo-names-node.txt)" -eq 24
+          echo 'PASS 986 palavras e 24 nomes originais'
       - name: Catalago integral no player e ciclo real Host Room
         run: |
           set -euo pipefail
