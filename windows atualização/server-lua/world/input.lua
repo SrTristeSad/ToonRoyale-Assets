@@ -6,6 +6,7 @@
 local MP=require("src.protocol.msgpack")
 local Equipment=require("server-lua.world.equipment_input")
 local TribeInput=require("server-lua.world.tribe_input")
+local Chat=require("server-lua.world.chat_input")
 local Input={}
 local function truthy(v)
   return v~=nil and v~=false and v~=0 and v~=MP.null
@@ -120,6 +121,8 @@ function Input.handle(ctx,player,name,args)
     elseif args[1]==0 then player.lockDir=not truthy(player.lockDir)
     else return bad(player,name,"toggle") end
     return
+  elseif name=="6" then
+    return Chat.handle(ctx,player,args)
   elseif name=="T" then
     -- Node handlePacket calls anticheat.onTelemetry(args) after allow("T").
     assert(player.anticheat and type(player.anticheat.onTelemetry)=="function",
