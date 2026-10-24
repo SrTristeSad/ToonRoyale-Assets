@@ -25,21 +25,30 @@ function Player.new(id,sid,room,opts)
   assert(type(opts.icon)=="function","real Game.onPlayerDeath callback required")
   assert(type(opts.nameWords)=="table" and #opts.nameWords>0,
     "full authoritative NAME_WORDS dictionary required")
-  assert(opts.anticheat and type(opts.anticheat.invalid)=="function"
-    and type(opts.anticheat.onGameStart)=="function"
-    and type(opts.anticheat.tick)=="function",
-    "real anticheat state/handlers required")
+  assert(opts.anticheat or type(opts.anticheatFactory)=="function",
+    "authoritative anticheat or real Player anticheatFactory required")
   local p=Identity.new(id,sid,{
     hats=opts.hats,accessories=opts.accessories,config=room.config,
     nameWords=opts.nameWords
   })
   p.room=room
-  p.anticheat=opts.anticheat
+  p.ip=opts.ip
+  p.did=opts.did
+  p.account=opts.account
   p._icon=opts.icon
   p.send=function(_,name,...)return opts.send(name,...) end
   p.animRatio=0;p.animIndex=0
   p.sentTo={}
-  return setmetatable(p,Player)
+  -- Construct the anticheat with the *actual* Player, not a proxy with
+  -- incomplete identity or a different packet/skin state.
+  setmetatable(p,Player)
+  p.anticheat=opts.anticheatFactory and opts.anticheatFactory(p) or opts.anticheat
+  assert(p.anticheat and type(p.anticheat.invalid)=="function"
+    and type(p.anticheat.allow)=="function"
+    and type(p.anticheat.onGameStart)=="function"
+    and type(p.anticheat.tick)=="function",
+    "complete anti-cheat allow/invalid/onGameStart/tick required")
+  return p
 end
 function Player:sendTo(id,name,...)
  return self.room:sendId(id,name,...)
