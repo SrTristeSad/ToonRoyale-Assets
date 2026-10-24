@@ -31,6 +31,7 @@ Implementações independentes no diretório `world/`:
 - `projectiles.lua`: port de `Projectile` e `ProjectileManager`, com ciclo de vida, quadro inicial, alcance, colisão de segmento/retângulo (`UTILS.lineInRect`), dano a jogadores e estruturas, defesa de escudos, reutilização de projéteis e pacotes `X`, `L`, `Q` e `Y`.
 - `structures.lua`: port de `Game.updateStructures`, `Game.turretTarget` e `GameObject.update`: atualização de moinhos, temporizador de torretas, seleção de alvo, proteção por tribo, invisibilidade, disparo em direção ao inimigo e atualização visual `M`. Estruturas destruídas são retiradas de `updateObjects` como no Node.
 - `game_loop.lua`: transcrição da ordem de atualização de `Game.tick`: bots, cooldowns, jogadores, projéteis, estruturas, IA, spawn de animais, líderes, placar, minimapa, estatísticas e sincronização por observador. Usa o relógio monotônico injetado e exige serviços reais para módulos ainda não portados.
+- `player_constructor.lua`: port inicial do construtor `new Player` do Node, com estado da sessão pré-spawn, poderes, campos de autenticação, inventário gratuito derivado de `shared/config/store.js` e métodos `shownName`, `canSee`, `applyPowers`, `displaySkin` e `resetMoveDir`. **Ainda não substitui sozinho o Player completo**: métodos de inventário, combate, geração de nickname e operações do host continuam em integração.
 - `player_update.lua`: conecta `vitals.lua`, `movement.lua` e `weapon_tick.lua` na mesma ordem de `Player.update`, incluindo a verificação de morte após dano periódico e antes da física.
 - `player_identity.lua`: transcrição do preâmbulo do construtor `Player`, com IDs, equipamentos iniciais, poderes, permissões, nomes, personalização e métodos `resetMoveDir`, `addItem`, `setUserData`, `shownName`, `getData`, `applyPowers` e `displaySkin`. A filtragem exige o vocabulário integral `NAME_WORDS` original, fornecido externamente; os testes diferenciais usam um dicionário reduzido explícito apenas para verificar a lógica.
 - `player.lua`: monta o jogador a partir de `Identity`, `Spawn`, `Economy`, `Health`, `Gather`, `Build`, `Snapshot` e `PlayerUpdate`, incluindo seleção de variantes, torreta, animação de ataque e pacotes. Exige mundo e configuração originais, catálogo de lojas, anticheat, emissor de pacotes e callback real de morte.
@@ -91,6 +92,8 @@ As novas suítes diferenciais também comparam:
 - `player-registry-smoke.lua`: verifica `Host`/`RoomTransport` → construtor Lua real → welcome `A` → spawn e comandos → saída, metadados de conta, hash IP, ordem de limpeza, reutilização de SID e pacote `E`.
 
 
+- `player-constructor-reference.mjs/.lua`: **3 estados pré-spawn** extraídos do trecho original do construtor Node. Compara campos, poderes, chapéus e acessórios gratuitos.
+- `player-methods-reference.mjs/.lua`: **10 cenários** executam diretamente cinco métodos do `Player` original, comparando visão, poderes, privacidade, chapéus e direção com Lua.
 - `player-update-reference.mjs/.lua`: **18 situações × 3 ticks = 54 snapshots**, executando o método `Player.update` **inteiro**, incluindo a parada por morte durante efeitos periódicos.
 - `room-smoke.lua`: valida uma sala integrada com jogador, animal, projétil e construção; emite `D`/`a`/`H`/`X`/`I`/`7`/`G`/`F`, recebe comandos da sala e mantém obrigatórios os serviços ainda não portados.
 
