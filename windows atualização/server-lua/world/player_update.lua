@@ -26,6 +26,8 @@ function PlayerUpdate.step(player,delta,ctx)
   -- Effect timer runs *before* movement, and damage during effect ticks
   -- does not abort the remainder of the current Player.update in Node.
   Vitals.step(player,delta)
+  -- Player.update has CHECK KILL immediately after periodic effects.
+  if not player.alive then return true end
   Movement.step(player,delta,world,players,{
     config=cfg,nowMs=ctx.nowMs,weapon=weapon,
     disable=ctx.disable,hit=ctx.hit,
