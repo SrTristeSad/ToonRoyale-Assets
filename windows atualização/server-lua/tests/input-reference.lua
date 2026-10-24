@@ -34,6 +34,7 @@ local cases={
  {id="toggle-lock",packet="K",args={0}},
  {id="toggle-invalid",packet="K",args={5}},
  {id="ping",packet="0",args={}},
+ {id="telemetry",packet="T",args={0,0,0,"seal",7,4,100}},
  {id="map-self",packet="S",args={}},
  {id="map-ally",packet="S",args={},team="RED",allyTeam="RED"},
  {id="map-cooldown",packet="S",args={},pingCooldown=500},
@@ -66,7 +67,12 @@ for _,s in ipairs(cases) do
    attrCache={old=1},
    anticheat={
      invalid=function(_,name,why)events[#events+1]="INVALID:"..name..":"..why end,
-     onGameStart=function()events[#events+1]="ACSTART" end
+     onGameStart=function()events[#events+1]="ACSTART" end,
+     onTelemetry=function(_,args)
+       local vals={}
+       for _,v in ipairs(args) do vals[#vals+1]=g(v) end
+       events[#events+1]="TELEMETRY:"..table.concat(vals,",")
+     end
    }
  }
  player.setUserData=function(self,data)
