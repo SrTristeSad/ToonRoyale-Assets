@@ -344,6 +344,12 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/room-bots-smoke.lua
+      - name: Remocao de construcoes Node versus Lua no disconnect
+        run: |
+          set -euo pipefail
+          node server-lua/tests/object-cleanup-reference.mjs > /tmp/moo-cleanup-node.txt
+          lua5.4 server-lua/tests/object-cleanup-reference.lua > /tmp/moo-cleanup-lua.txt
+          diff -u /tmp/moo-cleanup-node.txt /tmp/moo-cleanup-lua.txt
       - name: Bots originais LOCAL Node versus Lua - comportamento e spawn
         run: |
           set -euo pipefail
