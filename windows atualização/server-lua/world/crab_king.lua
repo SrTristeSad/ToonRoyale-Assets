@@ -1,3 +1,4 @@
+local Angles=require("server-lua.world.atan2")
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Port of the original Crab King methods in modules/ai.js (keepInSecret,
 -- setState, dive, updateDive, telegraph, bossTarget, raiders, landAttack,
@@ -14,7 +15,7 @@ local function truth(v)return v~=nil and v~=false and v~=0 end
 local function rem(x,m)return x-math.modf(x/m)*m end
 local function dist(x,y,x2,y2)return math.sqrt((x-x2)^2+(y-y2)^2)end
 local function round(x)return math.floor(x+0.5)end
-local function direction(x1,y1,x2,y2)return math.atan(y1-y2,x1-x2)end
+local function direction(x1,y1,x2,y2)return Angles.atan2(y1-y2,x1-x2)end
 local function segment(px,py,x1,y1,x2,y2)
  local dx,dy=x2-x1,y2-y1
  local len=dx*dx+dy*dy
