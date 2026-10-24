@@ -4,6 +4,7 @@
 -- Opt-in, separate LOCAL Lua server process. The normal Windows client is
 -- completely unchanged unless its launcher explicitly sets this variable.
 if os.getenv("MOO_IO_LUA_SERVER")=="1" then
+  if not utf8 then utf8=require("utf8") end
   local instance
   function love.load()
     if love.window then love.window.setMode(1,1,{visible=false}) end
