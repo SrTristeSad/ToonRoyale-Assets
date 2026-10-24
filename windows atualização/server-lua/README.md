@@ -32,15 +32,18 @@ Implementações independentes no diretório `world/`:
 - `structures.lua`: port de `Game.updateStructures`, `Game.turretTarget` e `GameObject.update`: atualização de moinhos, temporizador de torretas, seleção de alvo, proteção por tribo, invisibilidade, disparo em direção ao inimigo e atualização visual `M`. Estruturas destruídas são retiradas de `updateObjects` como no Node.
 - `game_loop.lua`: transcrição da ordem de atualização de `Game.tick`: bots, cooldowns, jogadores, projéteis, estruturas, IA, spawn de animais, líderes, placar, minimapa, estatísticas e sincronização por observador. Usa o relógio monotônico injetado e exige serviços reais para módulos ainda não portados.
 - `player_update.lua`: conecta `vitals.lua`, `movement.lua` e `weapon_tick.lua` na mesma ordem de `Player.update`, incluindo a verificação de morte após dano periódico e antes da física.
-- `room.lua`: **motor de sala Lua integrado (ainda sem conexão de rede ao Player real)**: executa `Game.tick`, `Player.update`, projéteis, estruturas, snapshots de jogadores/objetos/animais, líderes, placar, minimapa e estatísticas. `handleInput` entrega comandos validados somente a um jogador daquela sala. O spawn de animais ainda exige serviço autoritativo e contas com coroas exigem `crownOf` real.
+- `room.lua`: **motor de sala Lua integrado (ainda sem conexão de rede ao Player real)**: executa `Game.tick`, `Player.update`, projéteis, estruturas, snapshots de jogadores/objetos/animais, líderes, placar, minimapa e estatísticas. `handleInput` entrega comandos validados somente a um jogador daquela sala. O spawn de animais pode usar `animals.lua` nativo; contas com coroas seguem exigindo o `crownOf` real, e a vitória no Crab King exige broadcast e serviços reais.
 - `input.lua`: port parcial de `server/src/network/packets.js::handlePacket` para `M` (spawn), `D` (direção), `9` (movimento/parada), `e` (reset), `F` (ataque/construção), `z` (armas/itens), `K` (alternâncias), `0` (ping da rede), `S` (marcação da posição no mapa) e `U` (posição escolhida no mapa tático Android). Preserva `mapPingTime`, alcance e restrições por tribo, e exige anticheat real. **Demais pacotes exigem um handler autoritativo**, não são aceitos silenciosamente.
 - `social_sync.lua`: ports fiéis de `Game.syncAnimals` (pacote `I`), `sendMinimap` (`7`), `updateLeaders`, `sendLeaderboard` (`G`) e `sendStats` (`F`). Inclui jogadores anônimos, tribos, ocultação de condenados, coroas, permissões administrativas, rastreamento de animais visíveis e estatísticas, com a mesma ordenação e payloads do Node.
 - `animal_types.lua`: todos os **15 tipos de animais** convertidos campo por campo de `server/src/moomoo/modules/aiManager.js::AI_TYPES`; o índice Lua é explicitamente o SID do tipo no cliente.
 - `animal_health.lua`: port de `AI.changeHealth`: dano, imunidade do Crab King submerso, reação a ataques, veneno, registro de dano, morte, pontuação, drops, reaparecimento e desaparecimento de animais administrativos. Depende dos serviços de rede/pontuação reais; não inventa ouro ou recursos.
 - `animal_rewards.lua`: estatísticas de caça e `animalKills` de `Game.onAnimalKilled` e multiplicadores originais da Cow Cape (1,5× pontos e comida ao abater vacas). Exige um callback completo de vitória para o Crab King, sem conceder coroas incompletas.
+- `crab_king.lua`: port completo dos métodos de `AI` exclusivos ao Crab King: contenção no mapa secreto, quatro estados de mergulho, seleção de invasores, movimentação, efeito `W`, impacto `J`, quatro golpes com telegráfico (SPLASH, GEYSER, SLAM, CLAW), tempo de recarga, seleção aleatória e comando administrativo de ataque forçado.
+- `crab_rewards.lua`: port de `Game.onAnimalKilled` para a vitória do chefe, exigindo 5% de participação em danos para recompensar outros jogadores, Crab Shell (chapéu 61), contagem de `bossKills`, `crabKillers`, anúncio `6` e evento interservidores. A ordem das concessões usa a sequência real de `Map` de autores do dano original, e é preservada em `ai.damageOrder`.
 
-- `ai.lua`: port de `AI.init` e da atualização de **animais comuns**, cobrindo temporizadores de reaparecimento, veneno, perseguição, fuga, rotação, subpassos físicos, colisões, golpes e limite do mapa. **O Crab King não usa essa IA como substituta**: seus métodos de mergulho e incursão continuam pendentes.
-- `animals.lua`: port de `AiManager.spawn`, `Game.animalPosition` e `Game.ensureAnimals`, com posições, biomas, reuso de SIDs e densidade de spawn originais. Usa agora a vida/morte Lua nativa quando recebe serviços reais `score` e `send`, com a contabilidade de caça e Cow Cape; também permite um serviço `health` autoritativo externo. O Crab King continua bloqueado na sala sem suas mecânicas de ataque e mergulho.
+
+- `ai.lua`: port de `AI.init` e da atualização de **animais comuns**, cobrindo temporizadores de reaparecimento, veneno, perseguição, fuga, rotação, subpassos físicos, colisões, golpes e limite do mapa. **O Crab King não usa essa IA como substituta**: seus métodos exclusivos são implementados por `crab_king.lua` e incorporados a instâncias reais de `AI`.
+- `animals.lua`: port de `AiManager.spawn`, `Game.animalPosition` e `Game.ensureAnimals`, com posições, biomas, reuso de SIDs e densidade de spawn originais. Usa agora a vida/morte Lua nativa quando recebe serviços reais `score` e `send`, com a contabilidade de caça e Cow Cape; também permite um serviço `health` autoritativo externo. O Crab King é habilitado apenas se a sala possuir os serviços verdadeiros de rede, pontuação, comunicação de vitória e a mesma tabela de vencedores do `Game`; os métodos de combate e mergulho já estão integrados.
 
 
 
@@ -71,6 +74,10 @@ As novas suítes diferenciais também comparam:
 - `animal-manager-reference.mjs/.lua`: valida os **15 tipos** completos do `AI_TYPES`, cálculo de local de nascimento, plano de população, reuso de SIDs e `spawnDelay`.
 - `room-animals-smoke.lua`: executa vaca e lobo nativos no `Room.tick`, sem serviços inventados, e impede o Crab King de entrar sem callbacks reais de mergulho e combate.
 - `animal-health-reference.mjs/.lua`: **19 situações de dano/morte** executadas com `AI.changeHealth` do Node original.
+- `crab-reference.mjs/.lua`: **16 situações × 3 ticks (48 snapshots)** executando `AI.update` original com Crab King, mergulhos, gêiseres, ondas de garra, impacto em área, telegráficos e colisão da área secreta.
+- `crab-rewards-reference.mjs/.lua`: **12 casos** executando `Game.onAnimalKilled` original para comparar elegibilidade de participantes, Crab Shell, estatísticas, notificações e anúncios.
+- `room-crab-smoke.lua`: teste integrado `Room.tick` → spawn boss → `W` → `J` → imunidade no mergulho → morte → Crab Shell/4000 pontos/`bossKills` → anúncio e evento.
+
 - `animals-health-smoke.lua`: testa a rota completa `Room` → `AiManager` → `AI.changeHealth` → recompensas e estatísticas, incluindo o bônus da Cow Cape e a ausência de drops em animais administrativos.
 - `room-transport-smoke.lua`: verifica callbacks do Host com Room real, criação de jogador por serviço obrigatório, envio seguro, alinhamento de campos MessagePack, rejeição de peers desconhecidos e remoção ao desconectar.
 
@@ -79,13 +86,13 @@ As novas suítes diferenciais também comparam:
 
 Testes novos executam as funções originais do Node.js, comparando os mesmos efeitos na implementação Lua: `spawn-reference` (8 cenários), `vitals-reference` (12 cenários com múltiplos ticks), `health-reference` (16 cenários de danos, morte e recompensas) e `economy-reference` (19 cenários de recursos, XP e custos). A suíte GitHub Actions roda automaticamente na branch `main` do ToonRoyale-Assets.
 
-**Integração parcial de sala confirmada:** a sala Lua já processa movimento, projéteis, estruturas, snapshots e IA básica de animais comuns (quando habilitada), ranking, minimapa, estatísticas e comandos diretos da sala no mesmo tick. Ainda não está conectado ao host de rede nem possui implementação completa de IA, bots, clãs, autenticação, entrada/saída ou persistência. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
+**Integração parcial de sala confirmada:** a sala Lua já processa movimento, projéteis, estruturas, snapshots, IA animal e os ataques e recompensas do Crab King, ranking, minimapa, estatísticas e comandos diretos da sala no mesmo tick. O adaptador de sessão Host→Room existe, mas o sistema completo de autenticação, construtor Player, bots, clãs, comandos restantes, entrada/saída e persistência ainda não está ligado ao jogo. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
 
 ## Limites — NÃO é o servidor completo
 
 A infraestrutura de rede e um núcleo de sala Lua funcionam isoladamente, com testes de paridade contra o Node. **Ainda não existe uma sala Lua completa de ponta a ponta para substituir o Node.js**, porque o despachante dos pacotes, a construção integral do Player e os serviços de animal/conta/tribo continuam faltando.
 
-Pendente: contas/autorização V2, endpoints HTTP restantes, ligação do host a `room.lua` e ao construtor real de jogadores, **handlers restantes de entrada** (upgrades, loja, clãs, chat, rankings por categoria, moderação), conexão do construtor completo de Player ao host, ataques e mergulho do Crab King, bots, clãs, loja, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
+Pendente: contas/autorização V2, endpoints HTTP restantes, ligação do host a `room.lua` e ao construtor real de jogadores, **handlers restantes de entrada** (upgrades, loja, clãs, chat, rankings por categoria, moderação), conexão do construtor completo de Player ao host, bots, clãs, loja, persistência, moderação, comandos restantes de rede e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
@@ -99,6 +106,7 @@ lua5.4 server-lua/tests/protocol.lua server-lua/tests/reference-fixtures.txt
 lua5.4 server-lua/tests/websocket.lua
 lua5.4 server-lua/tests/room-smoke.lua
 lua5.4 server-lua/tests/room-animals-smoke.lua
+lua5.4 server-lua/tests/room-crab-smoke.lua
 lua5.4 server-lua/tests/animals-health-smoke.lua
 lua5.4 server-lua/tests/room-transport-smoke.lua
 node server-lua/tests/social-reference.mjs > /tmp/social-node.txt
