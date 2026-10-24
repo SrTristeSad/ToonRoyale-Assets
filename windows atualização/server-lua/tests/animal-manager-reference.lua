@@ -51,7 +51,7 @@ local checks={
 for _,entry in ipairs(checks) do
  local pos=manager:animalPosition(entry)
  print("POS|"..entry.index.."|"..(entry.area or "normal").."|"..
-   pos.x.."|"..pos.y)
+   jsNumber(pos.x).."|"..jsNumber(pos.y))
 end
 manager:ensureAnimals()
 local list=manager.ais
