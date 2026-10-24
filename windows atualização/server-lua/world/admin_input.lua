@@ -11,7 +11,7 @@ local function number(v)
  return type(v)=="number" and v==v and v~=math.huge and v~=-math.huge
 end
 local function integer(v) return number(v) and v%1==0 end
-local function truth(v) return v~=nil and v~=false and v~=0 and v~=MP.null end
+local function truth(v) return v~=nil and v~=false and v~=0 and v~="" and v~=MP.null end
 local function teleport(p,x,y) p.x=x;p.y=y;p.xVel=0;p.yVel=0 end
 local function resend(game,p)
  assert(type(p.sentTo)=="table","Player.sentTo required")
