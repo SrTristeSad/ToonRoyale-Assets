@@ -2,6 +2,8 @@
 -- Ports AiManager.spawn, Game.animalPosition and Game.ensureAnimals.
 -- Types are the 15 original AI_TYPES; boss AI.update remains separately gated.
 local AI=require("server-lua.world.ai")
+local Health=require("server-lua.world.animal_health")
+local Rewards=require("server-lua.world.animal_rewards")
 local Types=require("server-lua.world.animal_types")
 local Config=require("src.game.config")
 local Animals={}
@@ -22,8 +24,19 @@ function Animals.new(opts)
    respawnAt=opts.respawnAt,
    hit=opts.hit,disable=opts.disable,
    collision=opts.collision,send=opts.send,
+   score=opts.score,
+   onKill=opts.onKill or function(ai,doer)
+     return Rewards.onKill(ai,doer,{onCrabKingKilled=opts.onCrabKingKilled})
+   end,
+   killScore=opts.killScore or Rewards.killScore,
+   dropAmount=opts.dropAmount or Rewards.dropAmount,
    health=opts.health,boss=opts.boss
  },Animals)
+ if not self.health and type(self.score)=="function" and type(self.send)=="function" then
+   self.health=function(actor,amount,doer,runFrom)
+     return Health.changeHealth(actor,amount,doer,runFrom,actor.options)
+   end
+ end
  return self
 end
 function Animals:randomInt(min,max)
@@ -49,7 +62,8 @@ function Animals:spawn(x,y,angle,index,overrides)
      randInt=function(min,max)return self:randomInt(min,max)end,
      randFloat=function(min,max)return self:randomFloat(min,max)end,
      respawnAt=self.respawnAt,hit=self.hit,disable=self.disable,
-     collision=self.collision,send=self.send
+     collision=self.collision,send=self.send,score=self.score,
+     onKill=self.onKill,killScore=self.killScore,dropAmount=self.dropAmount
    }
    ai=AI.new(#self.ais,opts)
    self.ais[#self.ais+1]=ai
