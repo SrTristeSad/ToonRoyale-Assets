@@ -53,6 +53,22 @@ local function jsString(value)
   if type(value)=="table" then return "[object Object]" end
   return tostring(value)
 end
+-- Same name normalization used by Node nameFilter.gameName and Player.setUserData.
+-- Used for permanent AccountStore.claimName; do not maintain a second filter.
+function Identity.gameName(raw,maxLength,nameWords)
+  local value
+  if raw==nil or raw==Pack.null then value=""
+  elseif type(raw)=="string" then value=raw
+  else value=jsString(raw) end
+  local name=sanitize(value,maxLength or 15)
+  local normalized=replacement(name)
+  local profane=false
+  for _,word in ipairs(nameWords or NameWords) do
+    if normalized:find(word,1,true) then profane=true;break end
+  end
+  return {name=name,profane=profane}
+end
+
 function Identity.new(id,sid,options)
   options=options or {}
   assert(type(id)=="string" and type(sid)=="number"
