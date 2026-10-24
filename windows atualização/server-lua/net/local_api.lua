@@ -171,6 +171,53 @@ function API:handle(method,target,headers,raw,ip)
   if not store:setClanShadow(body.clan,body.shadow) then return invalid("not found",404) end
   return response(200,{})
  end
+ if path=="/api/mod/verdict" then
+  if account.role~="admin" and account.role~="mod" then return invalid("rank") end
+  local game=assert(self.game,"original gameApi required for staff verdict")
+  local level=(body.level=="ban" or body.level=="shadow" or body.level=="clear")
+    and body.level or "clear"
+  local reason=str(body.reason):sub(1,80)
+  local minutes=tonumber(body.minutes) or 0
+  if minutes==0 then minutes=(tonumber(body.days) or 0)*24*60 end
+  local untilMs=minutes>0 and self.nowMs()+minutes*60*1000 or 0
+  if truth(body.id) and not truth(body.name) then
+   local guest=game.playerBySession(str(body.id))
+   if not guest then return invalid("no player",404) end
+   if level=="ban" then
+    self.moderation:ban({ip=guest.ip,did=guest.did,
+      name=guest.name,reason=reason,until=untilMs},account)
+    if guest.kick then guest.kick("kicked") end
+   elseif level=="shadow" then
+    guest.shadowed=true
+   elseif truth(body.ip) then
+    self.moderation:unbanIp(guest.ip,guest.did)
+   end
+   return response(200,{})
+  end
+  local target=store:nameOwner(body.name)
+  if not target then return invalid("no player",404) end
+  if level=="ban" and untilMs>0 then
+   self.moderation:ban({accountId=target.id,name=target.name,
+      reason=reason,until=untilMs},account)
+   local date=os.date("!%Y-%m-%d %H:%M",math.floor(untilMs/1000))
+   self.moderation:recordVerdict(target,"ban",
+      reason.." (until "..date..")",account,{keepBans=true})
+  else
+   store:setVerdict(target.name,level)
+   self.moderation:recordVerdict(target,level,reason,account)
+  end
+  local last=type(target.lastSeen)=="table" and target.lastSeen or {}
+  if level=="ban" and truth(body.ip) and truth(last.ip) then
+   self.moderation:ban({ip=last.ip,did=last.did,
+     name=target.name,reason=reason,until=untilMs},account)
+  end
+  if level=="clear" and truth(body.ip) and truth(last.ip) then
+   self.moderation:unbanIp(last.ip,last.did)
+  end
+  if level=="ban" then game.kickAccount(target.id,"kicked") end
+  game.setShadow(target.id,level=="shadow")
+  return response(200,{})
+ end
  if path=="/api/mod/player" or path=="/api/mod/kick" then
   if account.role~="admin" and account.role~="mod" then return invalid("rank") end
   local game=assert(self.game,"original gameApi required for staff requests")
