@@ -100,7 +100,7 @@ function Store:save()
 end
 function Store:nameOwner(name)
   if type(name)~="string" then return nil end
-  local id=self.data.names[name:lower()]
+  local id=self.data.names[name:match("^%s*(.-)%s*$"):lower()]
   return id and self.data.accounts[id] or nil
 end
 function Store:setVerdict(name,level)
