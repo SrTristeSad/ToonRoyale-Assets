@@ -14,7 +14,7 @@ local Loop=require("server-lua.world.game_loop")
 local Room={}
 Room.__index=Room
 
-local serviceNames={"ensureAnimals"}
+local serviceNames={"ensureAnimals"} -- required unless native animal manager supplied
 local function round(v,dp)
   local m=10^dp
   if v<0 then return -math.floor(-v*m+0.5)/m end
@@ -24,9 +24,11 @@ end
 function Room.new(opts)
   opts=opts or {}
   local callbacks=assert(opts.services,"missing original game services")
-  for _,name in ipairs(serviceNames) do
-    assert(type(callbacks[name])=="function",
-      "original game subsystem callback required: "..name)
+  if not opts.animalManager then
+    for _,name in ipairs(serviceNames) do
+      assert(type(callbacks[name])=="function",
+        "original game subsystem callback required: "..name)
+    end
   end
   local config=opts.config or Config
   local world=opts.world or World.new({config=config})
@@ -38,6 +40,22 @@ function Room.new(opts)
   local projectileManager=Projectiles.new({
     world=world,players=players,ais=ais,config=config,items=items
   })
+  local animals=opts.animalManager
+  if animals then
+    assert(animals.ais==ais and animals.players==players
+      and animals.world==world,"native animals must share Room actors and world")
+    assert(type(animals.ensureAnimals)=="function"
+      and type(animals.health)=="function"
+      and type(animals.send)=="function",
+      "native AI requires authoritative health and packet callbacks")
+    local plan=config.server and config.server.animalSpawnPlan or {}
+    for _,entry in ipairs(plan) do
+      if entry.index==11 then
+        assert(type(animals.boss)=="function",
+          "Crab King requires original dive and raid implementation before enabling native AI")
+      end
+    end
+  end
   local now=assert(opts.nowMs,"starting authoritative clock required")
   local room=setmetatable({
     players=players,ais=ais,projectiles=projectileManager.projectiles,
@@ -45,7 +63,7 @@ function Room.new(opts)
     object_manager=world,projectile_manager=projectileManager,
     config=config,items=items,services=callbacks,key=opts.key or "LC",
     accounts=opts.accounts,crabKillers=opts.crabKillers or {},
-    crownOf=opts.crownOf,
+    crownOf=opts.crownOf,animal_manager=animals,
     lastTick=now,nowMs=now,
     bots=opts.bots,
     spawnTimer=0,leaderboardTimer=0,minimapTimer=0,statsTimer=0
@@ -68,7 +86,10 @@ function Room:syncObjects(viewer)
   return Snapshot.syncObjects(self,viewer,self.config)
 end
 function Room:syncAnimals(viewer) return Social.syncAnimals(self,viewer) end
-function Room:ensureAnimals() return self.services.ensureAnimals(self) end
+function Room:ensureAnimals()
+  if self.animal_manager then return self.animal_manager:ensureAnimals() end
+  return self.services.ensureAnimals(self)
+end
 function Room:updateLeaders() return Social.updateLeaders(self) end
 function Room:sendLeaderboard() return Social.sendLeaderboard(self) end
 function Room:sendMinimap(viewer) return Social.sendMinimap(self,viewer) end
