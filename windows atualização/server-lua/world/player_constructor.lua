@@ -41,7 +41,7 @@ function Player.new(id,sid,opts)
    if other.skin and other.skin.invisTimer
       and other.noMovTimer>=other.skin.invisTimer then return false end
    if other.isPlayer and other.powers and other.powers.invisible
-      and other~=self and not self.role then return false end
+      and other.powers.invisible~=0 and other~=self and not self.role then return false end
    local cfg=opts.config or Config
    local dx=math.abs(other.x-self.x)-other.scale
    local dy=math.abs(other.y-self.y)-other.scale
