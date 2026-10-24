@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Player.update integral - efeitos movimento armas Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/player-update-reference.mjs > /tmp/moo-playerupdate-node.txt
+          lua5.4 server-lua/tests/player-update-reference.lua > /tmp/moo-playerupdate-lua.txt
+          diff -u /tmp/moo-playerupdate-node.txt /tmp/moo-playerupdate-lua.txt
+          test "$(wc -l < /tmp/moo-playerupdate-node.txt)" -eq 54
+          echo "PASS 54 atualizacoes completas de Player.update"
       - name: Motor principal e agenda Game.tick do Node vs Lua
         run: |
           set -euo pipefail
