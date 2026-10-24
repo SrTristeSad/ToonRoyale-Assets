@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Call the original server/src/network/packets.js handlePacket unchanged.
+import { handlePacket } from "../../server/src/network/packets.js";
+import { items } from "../../server/src/moomoo/modules/items.js";
+const cases=[
+ {id:"spawn",packet:"M",args:[{name:"Test",skin:0,moofoll:false}],alive:false},
+ {id:"spawn-invalid",packet:"M",args:["bad"],alive:false},
+ {id:"spawn-alive",packet:"M",args:[{name:"Test"}]},
+ {id:"dir",packet:"D",args:[0.9]},
+ {id:"dir-invalid",packet:"D",args:["bad"]},
+ {id:"move",packet:"9",args:[2.4]},
+ {id:"stop",packet:"9",args:[null]},
+ {id:"move-invalid",packet:"9",args:[false]},
+ {id:"reset",packet:"e",args:[]},
+ {id:"attack",packet:"F",args:[true,1.2]},
+ {id:"attack-empty",packet:"F",args:[false,null]},
+ {id:"build",packet:"F",args:[1,1.5],buildIndex:3},
+ {id:"build-invalid",packet:"F",args:[1,"bad"]},
+ {id:"weapon-select",packet:"z",args:[0,true],buildIndex:3},
+ {id:"item-select",packet:"z",args:[3,false]},
+ {id:"item-toggle",packet:"z",args:[3,false],buildIndex:3},
+ {id:"item-invalid",packet:"z",args:["bad",false]},
+ {id:"item-unowned",packet:"z",args:[5,false]},
+ {id:"toggle-gather",packet:"K",args:[1]},
+ {id:"toggle-lock",packet:"K",args:[0]},
+ {id:"toggle-invalid",packet:"K",args:[5]},
+ {id:"ping",packet:"0",args:[]},
+ {id:"dead-dir",packet:"D",args:[2.2],alive:false},
+ {id:"dead-attack",packet:"F",args:[true,0.5],alive:false}
+];
+const g=v=>v==null?"~":typeof v==="number"?(Number.isInteger(v)?String(v):v.toFixed(5)):String(v);
+for(const spec of cases){
+ const events=[];
+ const p={
+   id:"guest",sid:7,alive:spec.alive===undefined?true:spec.alive,
+   name:"Old",dir:0.25,moveDir:0.8,mouseState:0,hits:0,
+   buildIndex:spec.buildIndex??-1,weaponIndex:0,
+   autoGather:0,lockDir:false,
+   itemCounts:{},items:[0,3,6,10],weapons:[0],
+   attrCache:new Map([["old",1]]),
+   anticheat:{
+     invalid(name,why){events.push("INVALID:"+name+":"+why)},
+     onGameStart(){events.push("ACSTART")}
+   },
+   setUserData(data){this.name=data.name;events.push("SET:"+this.name)},
+   spawn(v){this.alive=true;events.push("SPAWN:"+g(v))},
+   resetMoveDir(){this.moveDir=undefined;events.push("RESET")},
+   buildItem(item){events.push("BUILD:"+item.id)},
+   send(name,...args){events.push("SEND:"+name+":"+args.map(g).join(","))}
+ };
+ const ctx={game:{key:"LC"},log:s=>events.push("LOG:"+s)};
+ handlePacket(ctx,p,spec.packet,spec.args);
+ console.log(["INPUT",spec.id,p.alive?1:0,g(p.dir),g(p.moveDir),
+   g(p.mouseState),p.hits,p.buildIndex,p.weaponIndex,g(p.autoGather),
+   g(p.lockDir),p.attrCache.size,events.join(";")].join("|"));
+}
