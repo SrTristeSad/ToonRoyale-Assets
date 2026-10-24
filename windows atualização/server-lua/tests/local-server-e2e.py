@@ -35,6 +35,10 @@ assert code==200,(code,raw)
 flow=json.loads(raw)["flow"]
 code,raw=request("POST","/api/auth/verify",{"code":"123456","flow":flow})
 assert code==200,(code,raw)
+jwt=json.loads(raw)["token"]
+code,raw=request("POST","/api/join",{"host":"http://127.0.0.1:"+str(PORT)+"/s/MB","auth":jwt},{"X-MooIO-Code":"testing42"})
+assert code==200,(code,raw)
+member_ticket=json.loads(raw)["ticket"]
 code,raw=request("POST","/shutdown",headers={"X-MooIO-Code":"testing42"},port=PORT+1)
 assert code==200 and json.loads(raw)["ok"]
 print("PASS Lua LOCAL LC HTTP/WebSocket io-init e shutdown")
