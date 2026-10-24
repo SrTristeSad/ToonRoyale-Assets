@@ -10,7 +10,15 @@ local function dist(a,b)
  local x,y=a.x-b.x,a.y-b.y
  return math.sqrt(x*x+y*y)
 end
-local function angle(a,b)return math.atan(b.y-a.y,b.x-a.x)end
+local function angle(a,b)
+ local y,x=b.y-a.y,b.x-a.x
+ if math.atan2 then return math.atan2(y,x) end
+ if x>0 then return math.atan(y/x) end
+ if x<0 then return math.atan(y/x)+(y>=0 and pi or -pi) end
+ if y>0 then return pi/2 end
+ if y<0 then return -pi/2 end
+ return 0
+end
 local function clamp(x,a,b)return math.max(a,math.min(b,x))end
 local function truth(v)return v~=nil and v~=false and v~=0 and v~="" end
 local function nilOr(v,default) return truth(v) and v or default end
