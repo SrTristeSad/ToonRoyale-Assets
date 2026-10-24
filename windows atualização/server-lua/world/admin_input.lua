@@ -80,7 +80,7 @@ function Admin.handle(ctx,admin,args)
   -- Node config.weaponVariants is zero-based; Lua's config array is one-based.
   local index
   if integer(b) and b>=0 then index=b
-  elseif type(b)=="string" and b:match("^(0|[1-9][0-9]*)$") then
+  elseif type(b)=="string" and (b=="0" or b:match("^[1-9]%d*$")) then
    index=tonumber(b)
   end
   local variant=(index and variants[index+1]) or variants[1]
