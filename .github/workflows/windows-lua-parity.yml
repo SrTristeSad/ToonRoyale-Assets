@@ -67,6 +67,13 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Regeneracao e efeitos periodicos Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/vitals-reference.mjs > /tmp/moo-vitals-node.txt
+          lua5.4 server-lua/tests/vitals-reference.lua > /tmp/moo-vitals-lua.txt
+          diff -u /tmp/moo-vitals-node.txt /tmp/moo-vitals-lua.txt
+          echo 'PASS regeneracao, veneno, vergonha e renda dos moinhos'
       - name: Spawn, recursos e pontos de respawn Player Node vs Lua
         run: |
           set -euo pipefail
