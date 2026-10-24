@@ -779,6 +779,69 @@ function Store:consumeTicket(ticket,maxAgeMs)
   return {account=account or json.null,did=entry.did,server=entry.server}
 end
 
+-- Ranked stats: port of AccountStore.top and weeklyCrowns from store.js.
+-- Numeric ties need insertion order to match Object.values; never claim stable
+-- Node/Lua tie parity until the JSON object-order bridge is validated.
+function Store:top(span)
+  local keys=today(self.nowMs())
+  local function periodKills(periods)
+    if span=="all" then return nil end
+    local p=periods and periods[span]
+    local key=keys[span]
+    return p and key and p.key==key and (p.kills or 0) or 0
+  end
+  local players,clans=array(),array()
+  for _,account in pairs(self.data.accounts) do
+    if truth(account.name) then
+      local kills=span=="all" and account.stats.kills or periodKills(account.stats.periods)
+      if kills and kills>0 then
+        local row={name=account.name,kills=kills}
+        if truth(account.clan) then row.clan=account.clan end
+        if account.verdict=="shadow" then row.shadowed=true end
+        players[#players+1]=row
+      end
+    end
+  end
+  for _,clan in pairs(self.data.clans) do
+    local kills=span=="all" and clan.stats.kills or periodKills(clan.stats.periods)
+    if kills and kills>0 then
+      local row={name=clan.name,kills=kills,members=#clan.members}
+      if truth(clan.shadowed) then row.shadowed=true end
+      clans[#clans+1]=row
+    end
+  end
+  local function ranked(left,right)
+    if left.kills~=right.kills then return left.kills>right.kills end
+    return left.name<right.name
+  end
+  table.sort(players,ranked)
+  table.sort(clans,ranked)
+  while #players>10 do table.remove(players) end
+  while #clans>10 do table.remove(clans) end
+  return {players=players,clans=clans}
+end
+function Store:weeklyCrowns()
+  local week=today(self.nowMs()).week
+  local ranked={}
+  for _,account in pairs(self.data.accounts) do
+    if truth(account.name) and account.verdict~="shadow" then
+      local periods=account.stats.periods
+      local p=periods and periods.week
+      local kills=p and p.key==week and (p.kills or 0) or 0
+      if kills>0 then
+        ranked[#ranked+1]={id=account.id,kills=kills}
+      end
+    end
+  end
+  table.sort(ranked,function(left,right)
+    if left.kills~=right.kills then return left.kills>right.kills end
+    return left.id<right.id
+  end)
+  local crowns=object()
+  for i=1,math.min(3,#ranked) do crowns[ranked[i].id]=i end
+  return crowns
+end
+
 -- Node uses dot-method calls; this wrapper retains that shape for existing Lua ports.
 function Store:callbacks()
   return {
@@ -787,6 +850,8 @@ function Store:callbacks()
     recordUnlocks=function(a,u) return self:recordUnlocks(a,u) end,
     recordLife=function(a,l) return self:recordLife(a,l) end,
     weeklyTopClan=function() return self:weeklyTopClan() end,
+    top=function(span) return self:top(span) end,
+    weeklyCrowns=function() return self:weeklyCrowns() end,
     setVerdict=function(name,v) return self:setVerdict(name,v) end,
     setRole=function(name,role) return self:setRole(name,role) end,
     setClanShadow=function(name,shadow) return self:setClanShadow(name,shadow) end,
