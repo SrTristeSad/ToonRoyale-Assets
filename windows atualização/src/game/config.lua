@@ -48,6 +48,7 @@ local C = {
     "Murdoch", "Theo", "Jared", "July", "Sonia", "Mel",
     "Dexter", "Quinn", "Milky"
   },
+  maxAge = 100, -- shared/config.js PLAYER maxAge
   playerScale = 35,
   playerSpeed = 0.0016,
   playerDecel = 0.993,
