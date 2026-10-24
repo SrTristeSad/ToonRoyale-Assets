@@ -11,6 +11,7 @@ local Structures=require("server-lua.world.structures")
 local Snapshot=require("server-lua.world.snapshot")
 local Social=require("server-lua.world.social_sync")
 local Profile=require("server-lua.world.profile")
+local LifePersistence=require("server-lua.world.life_persistence")
 local Score=require("server-lua.world.score")
 local PlayerUpdate=require("server-lua.world.player_update")
 local Input=require("server-lua.world.input")
@@ -81,9 +82,15 @@ function Room.new(opts)
   room.broadcast=opts.broadcast
   room.chat=opts.chat
   room.moderation=opts.moderation
+  room.hooks=opts.hooks
+  room.recordUnlocks=opts.recordUnlocks
   room.tribes=opts.tribes or (type(opts.broadcast)=="function" and
     Tribes.new(players,opts.broadcast) or nil)
   return room
+end
+
+function Room:recordLife(player,died)
+  return LifePersistence.record(self,player,died)
 end
 
 function Room:score(player,amount)
