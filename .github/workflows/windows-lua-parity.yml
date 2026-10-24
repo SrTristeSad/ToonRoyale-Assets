@@ -458,6 +458,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/moderation-control-smoke.lua
+      - name: Inicializacao LOCAL Lua completa com LC MB e GUI controller
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/local-server-boot-smoke.lua
       - name: HTTP local de contas e ingressos - AccountStore real
         run: |
           set -euo pipefail
