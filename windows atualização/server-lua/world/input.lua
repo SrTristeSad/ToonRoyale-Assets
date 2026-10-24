@@ -10,6 +10,7 @@ local Chat=require("server-lua.world.chat_input")
 local Anonymous=require("server-lua.world.anon_input")
 local Ranking=require("server-lua.world.mobile_rankings")
 local Reports=require("server-lua.world.report_input")
+local Admin=require("server-lua.world.admin_input")
 local Input={}
 local function truthy(v)
   return v~=nil and v~=false and v~=0 and v~=MP.null
@@ -155,6 +156,8 @@ function Input.handle(ctx,player,name,args)
       end
     end
     return
+  elseif name=="A" then
+    return Admin.handle(ctx,player,args)
   elseif name=="R" then
     return Reports.handle(ctx,player,args)
   elseif name=="Y" then
