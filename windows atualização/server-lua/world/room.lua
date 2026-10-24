@@ -76,6 +76,8 @@ function Room.new(opts)
     bots=opts.bots,
     spawnTimer=0,leaderboardTimer=0,minimapTimer=0,statsTimer=0
   },Room)
+  room.broadcast=opts.broadcast
+  room.chat=opts.chat
   room.tribes=opts.tribes or (type(opts.broadcast)=="function" and
     Tribes.new(players,opts.broadcast) or nil)
   return room
@@ -171,7 +173,8 @@ function Room:handleInput(player,name,args)
   end
   assert(present,"cannot route client packets to a player outside this room")
   return Input.handle({
-    items=self.items,tribes=self.tribes,accounts=self.accounts,gameKey=self.key,config=self.config,players=self.players,
+    items=self.items,tribes=self.tribes,accounts=self.accounts,
+    broadcast=self.broadcast,chat=self.chat,gameKey=self.key,config=self.config,players=self.players,
     unhandled=self.services.onUnportedPacket,
     log=self.services.log
   },player,name,args)
