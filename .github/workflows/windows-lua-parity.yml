@@ -1,0 +1,78 @@
+name: Windows - Paridade do servidor Lua
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'windows atualização/server-lua/**'
+      - 'windows atualização/src/game/config.lua'
+      - 'windows atualização/server/src/moomoo/**'
+      - 'windows atualização/server/src/protocol/**'
+      - 'windows atualização/shared/config.js'
+      - 'windows atualização/shared/config/items.js'
+      - '.github/workflows/windows-lua-parity.yml'
+  pull_request:
+    paths:
+      - 'windows atualização/server-lua/**'
+      - 'windows atualização/src/game/config.lua'
+      - 'windows atualização/server/src/moomoo/**'
+      - 'windows atualização/server/src/protocol/**'
+      - 'windows atualização/shared/config.js'
+      - 'windows atualização/shared/config/items.js'
+      - '.github/workflows/windows-lua-parity.yml'
+permissions:
+  contents: read
+jobs:
+  differential:
+    name: Node original vs Lua - testes reais
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: windows atualização
+        shell: bash
+    steps:
+      - name: Checkout da cópia
+        uses: actions/checkout@v4
+      - name: Instalar Lua e LuaSocket
+        run: sudo apt-get update -qq && sudo apt-get install -y lua5.4 lua-socket
+      - name: Protocolo de rede, criptografia e WebSocket
+        run: |
+          set -euo pipefail
+          node server-lua/tests/reference.mjs > /tmp/moo-lua-protocol.txt
+          lua5.4 server-lua/tests/protocol.lua /tmp/moo-lua-protocol.txt
+          lua5.4 server-lua/tests/websocket.lua
+      - name: Mundo completo (semente replicável)
+        run: |
+          set -euo pipefail
+          for seed in 1 42 12345 4294967295; do
+            node server-lua/tests/world-reference.mjs "$seed" > /tmp/moo-world-node.txt
+            lua5.4 server-lua/tests/world-reference.lua "$seed" > /tmp/moo-world-lua.txt
+            diff -u /tmp/moo-world-node.txt /tmp/moo-world-lua.txt
+            echo "PASS seed=$seed"
+          done
+      - name: Colisões, bordas e biomas
+        run: |
+          set -euo pipefail
+          node server-lua/tests/collision-reference.mjs > /tmp/moo-collision-node.txt
+          lua5.4 server-lua/tests/collision-reference.lua > /tmp/moo-collision-lua.txt
+          diff -u /tmp/moo-collision-node.txt /tmp/moo-collision-lua.txt
+          node server-lua/tests/environment-reference.mjs > /tmp/moo-env-node.txt
+          lua5.4 server-lua/tests/environment-reference.lua > /tmp/moo-env-lua.txt
+          diff -u /tmp/moo-env-node.txt /tmp/moo-env-lua.txt
+      - name: Movimento Player.update do Node vs Lua (81 snapshots)
+        run: |
+          set -euo pipefail
+          node server-lua/tests/movement-reference.mjs > /tmp/moo-movement-node.txt
+          lua5.4 server-lua/tests/movement-reference.lua > /tmp/moo-movement-lua.txt
+          diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
+          test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
+          echo 'PASS 81 snapshots'
+      - name: Servidor de rede LuaSocket de verdade
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/host-smoke.lua >/tmp/moo-host-smoke.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          sleep 1
+          python3 server-lua/tests/host-smoke.py
+          cat /tmp/moo-host-smoke.log
