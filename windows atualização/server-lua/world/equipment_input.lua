@@ -17,6 +17,7 @@ local function invalid(player,packet,why)
  return player.anticheat:invalid(packet,why)
 end
 local function owns(arr,id)
+ if arr and arr[0]==id then return true end
  for _,value in ipairs(arr or {}) do if value==id then return true end end
  return false
 end
