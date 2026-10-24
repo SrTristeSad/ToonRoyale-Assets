@@ -35,6 +35,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Instalar Lua e LuaSocket
         run: sudo apt-get update -qq && sudo apt-get install -y lua5.4 lua-socket
+      - name: Compilar sintaxe de todos os módulos Lua do servidor local
+        run: |
+          set -euo pipefail
+          find server-lua -type f -name '*.lua' -print0 | xargs -0 -n1 luac5.4 -p
+          echo 'PASS sintaxe dos módulos servidor LOCAL Lua'
       - name: Alvo correto - servidor local Node usado pelo jogo Windows
         run: |
           set -euo pipefail
