@@ -160,7 +160,9 @@ function Input.handle(ctx,player,name,args)
       return bad(player,name,"ranking category")
     end
     if not player.alive then return end
-    local now=assert(ctx.wallTimeMs,"authoritative wall clock required for mobile ranking")
+    local clock=assert(ctx.wallTimeMs,"authoritative wall clock required for mobile ranking")
+    local now=clock()
+    assert(type(now)=="number","wall clock must return milliseconds")
     if now-(player.lastMobileRankingAt or 0)<1000 then return end
     player.lastMobileRankingAt=now
     player:send("n",category,Ranking.build(assert(ctx.players,"room players required"),player,category))
