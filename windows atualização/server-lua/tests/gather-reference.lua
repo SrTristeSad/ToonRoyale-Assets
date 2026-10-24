@@ -6,9 +6,9 @@ local Gather=require("server-lua.world.gather")
 local Config=require("src.game.config")
 local weapons={
  [0]={id=0,dmg=25,range=65,gather=1},
- [7]={id=7,dmg=20,range=65,gather=1,hitSlow=0.1},
+ [7]={id=7,dmg=20,range=65,gather=1,hitSlow=0.1,knock=0.1},
  [11]={id=11,shield=0.2},
- [14]={id=14,dmg=0,range=125,gather=0,steal=250}
+ [14]={id=14,dmg=0,range=125,gather=0,steal=250,knock=0.2}
 }
 local pi=math.pi
 local fixtures={
