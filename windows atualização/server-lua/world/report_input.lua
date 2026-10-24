@@ -2,6 +2,8 @@
 -- Port of packets.js case R: report, report reason, staff shadow and ban.
 -- Persistent reports and sanctions are delegated to mandatory real services.
 local Reports={}
+-- JS Map.has(sid) remains true when Map.set(sid, undefined) was used.
+local UNDEFINED={}
 local reasons={"Bot","Hack","Autoheal","Abuse"}
 local function int(v)
   return type(v)=="number" and v==v and v%1==0 and v~=math.huge and v~=-math.huge
@@ -29,16 +31,17 @@ function Reports.handle(ctx,player,args)
     player.reported=player.reported or {}
     if player.reported[sid]~=nil then return end
     target.reports=(target.reports or 0)+1
-    player.reported[sid]=service(ctx,"report")({
+    local report=service(ctx,"report")({
       target=target,reporter=player,sessionReports=target.reports
     })
+    player.reported[sid]=report==nil and UNDEFINED or report
     return
   end
   if action==0 then
     local reason=int(args[3]) and reasons[args[3]] or nil
     if not reason then return invalid(player,"report reason") end
     local entry=player.reported and player.reported[sid]
-    if not entry or entry.reason then return end
+    if not entry or entry==UNDEFINED or entry.reason then return end
     return service(ctx,"reportReason")({
       target=target,reporter=player,entry=entry,reason=reason
     })
