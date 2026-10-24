@@ -14,7 +14,9 @@ function Anonymous.handle(ctx,player,args)
    return player.anticheat:invalid("I","anon")
  end
  if not player.account or not truth(player.account.name) then return end
- local clock=assert(ctx.wallTimeMs,"original Date.now milliseconds clock required")
+ local clock=ctx.wallTimeMs or function()
+   return math.floor(require("socket").gettime()*1000)
+ end
  local now=clock()
  assert(type(now)=="number","authoritative clock must return ms")
  if now-(player.anonChangedAt or 0)<Policy.rateLimits.anonCooldownMs then return end
