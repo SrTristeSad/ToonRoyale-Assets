@@ -175,6 +175,69 @@ function Moderation:recordVerdict(account,level,reason,staff,opts)
  elseif level=="clear" then self:unbanAccount(account.id) end
  self:saveRecords()
 end
+-- ModerationStore.playerRecord / guestRecord from the original staff panel.
+local function signalCounts(flags)
+ local result=object()
+ for _,value in ipairs(flags) do
+  result[value.signal]=(result[value.signal] or 0)+1
+ end
+ return result
+end
+local function recentReports(reports)
+ local list=arr()
+ for i=#reports,math.max(1,#reports-4),-1 do
+  local entry=reports[i]
+  local row={by=entry.by,at=entry.at}
+  if entry.reason~=nil then row.reason=entry.reason end
+  list[#list+1]=row
+ end
+ return list
+end
+local function sessionView(session)
+ if not session then return Json.null end
+ return {at=session.at,server=session.server,ip=session.ipHash}
+end
+function Moderation:playerRecord(account,session)
+ local rec=self:record(account.id)
+ local weekAgo=self.nowMs()-7*24*60*60*1000
+ local weekFlags=arr()
+ local weeklyReports=0
+ for _,f in ipairs(rec.flags) do
+  if f.at>=weekAgo then weekFlags[#weekFlags+1]=f end
+ end
+ for _,item in ipairs(rec.reports) do
+  if item.at>=weekAgo then weeklyReports=weeklyReports+1 end
+ end
+ local verdict=rec.verdict
+ local shown=not absent(verdict) and
+   {level=verdict.level,reason=verdict.reason} or Json.null
+ return {reports={session=session and session.reports or 0,
+   week=weeklyReports,lifetime=#rec.reports},
+  flags={week={total=#weekFlags,signals=signalCounts(weekFlags)},
+    lifetime={total=#rec.flags,signals=signalCounts(rec.flags)}},
+  verdict=shown,session=sessionView(session),recent=recentReports(rec.reports)}
+end
+local function signalName(reason)
+ local upper=reason:match("reported ([A-Z_]+)")
+ if upper then return upper end
+ if reason:find("untrusted",1,true) then return "UNTRUSTED_EVENTS" end
+ return reason:gsub("[^%a]+","_"):upper():sub(1,32)
+end
+function Moderation:guestRecord(player,session)
+ local names=arr()
+ local anticheat=player.anticheat
+ for _,reason in ipairs(anticheat and anticheat.flagOrder or {}) do
+  names[#names+1]={signal=signalName(reason)}
+ end
+ local reports=player.reportLog or {}
+ local signals=signalCounts(names)
+ local verdict=player.shadowed and {level="shadow",reason=""} or Json.null
+ return {reports={session=player.reports or 0,week=#reports,lifetime=#reports},
+  flags={week={total=#names,signals=signals},
+   lifetime={total=#names,signals=signals}},
+  verdict=verdict,session=sessionView(session),recent=recentReports(reports)}
+end
+
 function Moderation:callbacks()
  return {
   banEntry=function(...)return self:banEntry(...)end,
