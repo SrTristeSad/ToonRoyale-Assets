@@ -75,6 +75,9 @@ room:handleInput(player,"9",{0})
 room:tick(10100)
 assert(player.x>startX,"Player.update physics actually moved Player")
 player.moveDir=nil
+-- The deterministic 0.5 spawn lands in the river; buildings are prohibited
+-- there by original checkItemLocation. Move to a valid dry test location.
+player.x=500;player.y=500;player.dir=0
 player.buildIndex=3
 player:buildItem(items.list[3])
 assert(player.buildIndex==-1 and player.wood==110)
