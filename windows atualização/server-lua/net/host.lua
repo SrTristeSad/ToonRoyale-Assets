@@ -88,6 +88,7 @@ function Host.new(options)
   local api
   if options.accounts then
     api=LocalAPI.new({store=options.accounts,moderation=options.moderation,
+      game=options.game,
       roomCode=code,servers=assert(options.servers,"LC/MB list from original Node required"),
       nowMs=options.nowMs})
   end
