@@ -111,6 +111,10 @@ jobs:
           diff -u /tmp/moo-input-node.txt /tmp/moo-input-lua.txt
           test "$(wc -l < /tmp/moo-input-node.txt)" -eq 33
           echo "PASS 33 cenarios de pacotes gameplay comparados com Node"
+      - name: Transporte Host para Room com sessão e Player real obrigatório
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/room-transport-smoke.lua
       - name: Sala com AI nativa e bloqueio de Crab King incompleto
         run: |
           set -euo pipefail
