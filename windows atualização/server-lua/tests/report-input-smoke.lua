@@ -51,4 +51,4 @@ end
 ctx.accounts=nil
 local ok=pcall(function() send({2,2}) end)
 assert(not ok,"account sanctions require persistence")
-print("PASS pacote R: 12 entradas, permissão, deduplicação e persistência obrigatória")
+print("PASS pacote R: 11 entradas, permissão, deduplicação e persistência obrigatória")
