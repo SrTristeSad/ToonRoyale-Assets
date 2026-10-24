@@ -199,6 +199,19 @@ function World:disableObject(obj)
   return true
 end
 
+-- ObjectManager.removeAllItems(sid, server) from the original LOCAL Node.
+function World:removeAllItems(sid,opts)
+ opts=opts or {}
+ for _,obj in ipairs(self.objects) do
+  if obj.active and obj.owner and obj.owner.sid==sid then
+   self:disableObject(obj)
+  end
+ end
+ if opts.broadcast then
+  opts.broadcast("R",sid)
+ end
+end
+
 function World:fetchSpawnObj(sid,opts)
   opts=opts or {}
   for _,obj in ipairs(self.objects) do
