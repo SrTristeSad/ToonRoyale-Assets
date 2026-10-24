@@ -66,6 +66,11 @@ function Registry.new(room,opts)
    })
   end
  end
+ if room.tribes then
+   opts.clanList=opts.clanList or function()return room.tribes:list()end
+   opts.leaveTribe=opts.leaveTribe or function(p)return room.tribes:leaveTribe(p)end
+   opts.forget=opts.forget or function(p)return room.tribes:forget(p)end
+ end
  opts.hats=opts.hats or Catalogue.hats
  opts.accessories=opts.accessories or Catalogue.accessories
  assert(room and type(room.bindPlayer)=="function"
