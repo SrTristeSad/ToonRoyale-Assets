@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Spawn, recursos e pontos de respawn Player Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/spawn-reference.mjs > /tmp/moo-spawn-node.txt
+          lua5.4 server-lua/tests/spawn-reference.lua > /tmp/moo-spawn-lua.txt
+          diff -u /tmp/moo-spawn-node.txt /tmp/moo-spawn-lua.txt
+          test "$(wc -l < /tmp/moo-spawn-node.txt)" -eq 8
+          echo 'PASS 8 cenarios de spawn e respawn'
       - name: Snapshots de jogadores e objetos (pacotes D, a, H)
         run: |
           set -euo pipefail
