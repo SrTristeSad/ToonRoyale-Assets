@@ -103,6 +103,10 @@ jobs:
           diff -u /tmp/moo-crab-rewards-node.txt /tmp/moo-crab-rewards-lua.txt
           test "$(wc -l < /tmp/moo-crab-rewards-node.txt)" -eq 12
           echo 'PASS 12 cenarios de vitoria e Crab Shell'
+      - name: Player constructor spawn inventario e dados integrados
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/player-lifecycle-smoke.lua
       - name: Inventario recursos e wire-data Player Node vs Lua
         run: |
           set -euo pipefail
