@@ -1,21 +1,42 @@
-# Migração do servidor local Node.js para Lua
+# Servidor Lua — migração 1:1 da versão Windows
 
-**Meta:** preservar os pacotes, os valores e o comportamento do servidor original, não criar um jogo diferente.
+**Objetivo:** portar o servidor local Node.js para Lua sem mudar o jogo, as regras nem o protocolo do cliente.
 
-## Estado atual
+## Implementado e testado
 
-- Implementado: metade **servidor** do transporte MessagePack autenticado (handshake `io-init`, tabelas por sessão, mixer, HMAC-SHA256, máscaras, sequência, ledger e pacotes de resposta).
-- Reutiliza o protocolo Lua existente do cliente (`src/protocol/`) para evitar divergências.
-- O código do Node.js continua sendo a **referência executável** e o servidor ativo enquanto a migração não atingir paridade.
-- Não implementado em Lua ainda: endpoints HTTP, servidor WebSocket, emissão/consumo de tickets, contas, mundo autoritativo, movimento, colisões, recursos, construções, combate, animais, bots, clãs, ranking, administração e persistência.
-- **Não anuncie nem configure esta etapa como servidor jogável ou 1:1.** Nenhum fallback oculto para Node deve ser chamado de servidor Lua.
+- **Protocolo autenticado** em `protocol/session.lua`: io-init, IDs dinâmicos das mensagens, SHA-256/HMAC, máscaras, contador, anti-replay e ledger.
+- **WebSocket RFC6455** em `net/websocket.lua`: upgrade, SHA-1, frame binário, mascaramento, comprimento, fragmentação rejeitada e limite de payload.
+- **Gateway LuaSocket** em `net/host.lua`: endpoint `/ping`, parâmetros `/mooio/protocol`, status, emissão de tickets de convite de uso único em `POST /api/join`, negociação `/s/LC`, limite de jogadores, bind restrito a LAN/VPN e loop não bloqueante. O host recebe **callbacks obrigatórios** `onConnect` e `onPacket`, que serão fornecidos pelo motor do mundo quando portado.
+- Gerador criptográfico de parâmetros do protocolo em `protocol/build.lua`.
+- Testes: `tests/protocol.lua` contra os valores calculados pelo JavaScript original (`tests/reference.mjs`), `tests/websocket.lua` e um teste de HTTP + WebSocket real (`tests/host-smoke.lua` / `tests/host-smoke.py`).
 
-## Protocolo
+## Limites — NÃO é o servidor completo
 
-A implementação está em `protocol/session.lua`. As funções espelham `server/src/protocol/session.js`.
+A infraestrutura de rede Lua funciona isoladamente, mas **a lógica de partida ainda precisa ser portada**. Não existe equivalência 1:1 do mundo neste estágio.
 
-Testes: `lua5.4 server-lua/tests/protocol.lua` a partir da pasta `windows atualização`. Em uma distribuição LÖVE, as mesmas dependências podem ser carregadas pelo LuaJIT.
+Pendente: contas/autorização V2, outros endpoints HTTP, simulação do mundo, spawn completo, movimento e colisões, construções, coleta, economia, armas, tiros, PvP, animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
 
-## Critério para mudar o host local
+**O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
-Somente substituir `src/net/mooio_host.lua` quando houver testes reais cliente↔Lua com os **mesmos** pacotes/estados do Node e equivalência de spawn, movimento, construção, colisões, combate, economia, animais, bots, eventos, clãs, morte/respawn e desconexão. Cada divergência deve ser tratada antes de migrar a função. Os parâmetros devem vir de `shared/config.js`, não de valores inventados.
+## Como executar os testes
+
+A partir de `windows atualização/`:
+
+```sh
+node server-lua/tests/reference.mjs > server-lua/tests/reference-fixtures.txt
+lua5.4 server-lua/tests/protocol.lua server-lua/tests/reference-fixtures.txt
+lua5.4 server-lua/tests/websocket.lua
+```
+
+Para testar a camada de rede separadamente, instale LuaSocket para o interpretador de testes:
+
+```sh
+lua5.4 server-lua/tests/host-smoke.lua &
+python3 server-lua/tests/host-smoke.py
+```
+
+O gateway é um componente do futuro servidor, **não uma alternativa jogável ao Node neste momento**.
+
+## Paridade antes da troca
+
+A migração do host em `src/net/mooio_host.lua` só poderá ocorrer após testes reais cliente↔Lua para todas as famílias de pacotes e as mesmas regras de `shared/config.js`: entrada, mundo, coleta, economia, objetos, combate, animais, bots, tribos, morte, respawn e desconexão. Não inventar valores nem substituir funcionalidades originais por simulações.
