@@ -214,7 +214,6 @@ function Room:handleInput(player,name,args)
     items=self.items,tribes=self.tribes,accounts=self.accounts,
     broadcast=self.broadcast,chat=self.chat,moderation=self.moderation,game=self,
     wallTimeMs=self.wallTimeMs,gameKey=self.key,config=self.config,players=self.players,
-    unhandled=self.services.onUnportedPacket,
     log=self.services.log
   },player,name,args)
 end
