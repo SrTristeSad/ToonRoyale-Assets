@@ -107,6 +107,15 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: Catalogo completo de itens equipamentos e alimentos Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/catalogue-reference.mjs > /tmp/moo-catalog-node.txt
+          lua5.4 server-lua/tests/catalogue-reference.lua > /tmp/moo-catalog-lua.txt
+          diff -u /tmp/moo-catalog-node.txt /tmp/moo-catalog-lua.txt
+          test "$(grep -c '^COUNT|' /tmp/moo-catalog-node.txt)" -eq 6
+          test "$(grep -c '^FOOD|' /tmp/moo-catalog-node.txt)" -eq 12
+          echo 'PASS campos originais de 129 definicoes e 12 casos de comida'
       - name: Inventario recursos e wire-data Player Node vs Lua
         run: |
           set -euo pipefail
