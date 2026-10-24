@@ -107,6 +107,14 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: Tribos ClanManager integral Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/tribes-reference.mjs > /tmp/moo-tribes-node.txt
+          lua5.4 server-lua/tests/tribes-reference.lua > /tmp/moo-tribes-lua.txt
+          diff -u /tmp/moo-tribes-node.txt /tmp/moo-tribes-lua.txt
+          test "$(wc -l < /tmp/moo-tribes-node.txt)" -eq 26
+          echo 'PASS 26 cenarios de tribos, pedidos, membros e dissolucao'
       - name: Upgrades H e loja c originais Node vs Lua
         run: |
           set -euo pipefail
