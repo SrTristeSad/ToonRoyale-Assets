@@ -97,6 +97,7 @@ function Host.new(options)
     accounts=options.accounts,api=api,
     rooms=rooms,activeByRoom={},capacity=capacity,maxPeers=maxPeers,
     guiHost=options.guiHost==true,controller=nil,shutdownRequested=false,
+    botCount=options.botCount or 0,
     tickets={},peers={},listener=nil,active=0
   },Host)
 end
@@ -219,7 +220,7 @@ function Host:request(peer,req)
   elseif req.method=="GET" and path=="/mooio/protocol" then
     addOutput(peer,reply(200,publicBuild(self.build)))
   elseif req.method=="GET" and path=="/mooio/status" then
-    addOutput(peer,reply(200,'{"project":"Moo-IO","runtime":"lua","mode":'..jsonString(self.mode)..'}'))
+    addOutput(peer,reply(200,assert(Json.encode({project="Moo-IO",mode=self.mode,build=self.build.buildId,bots=self.botCount}))))
   elseif req.method=="POST" and path=="/api/join" then
     if not equal(h["x-mooio-code"],self.roomCode) then return bad(peer,403,"invite_required") end
     if not req.body:find('"captcha"%s*:%s*true') then return bad(peer,403,"captcha") end
