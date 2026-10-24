@@ -15,8 +15,9 @@ function PlayerUpdate.step(player,delta,ctx)
     "nonnegative tick delta required")
   if not player.alive then return false end
   local cfg=ctx.config or DefaultConfig
-  local items=assert(ctx.items and ctx.items.weapons and ctx.items.projectiles,
+  assert(ctx.items and ctx.items.weapons and ctx.items.projectiles,
     "original shared items.weapons/projectiles required")
+  local items=ctx.items
   local weapon=assert(items.weapons[player.weaponIndex],"invalid original weapon index")
   local world=assert(ctx.world,"authoritative ObjectManager required")
   local players=assert(ctx.players,"original player list required")
