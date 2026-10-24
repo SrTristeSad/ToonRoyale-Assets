@@ -12,7 +12,10 @@ if(objectIdStart<0||objectIdEnd<2)throw Error("original ObjectId source changed"
 const {randomBytes}=await import("node:crypto");
 const objectId=new Function("randomBytes","return ("+source.slice(objectIdStart,objectIdEnd)+")")(randomBytes);
 const Store=new Function("PERIOD_SPANS","DEFAULT_PREFS","isRude","objectId",
- "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(periods,defaults,()=>false,objectId);
+ "SOCIAL_FIELDS","HANDLE_RE",
+ "return ("+source.slice(pos).replace(/^export /,"").trim()+")")(
+ periods,defaults,value=>value==="badword",objectId,
+ ["youtube","twitch","tiktok","x","discord"],/^[A-Za-z0-9._-]{1,32}$/);
 const id="abc123";
 const base=()=>({kills:0,deaths:0,damage:0,healing:0,wood:0,food:0,stone:0,
  gold:0,animalDamage:0,animalKills:{},bestScore:0,maxKills:0,lives:0,playtime:0,periods:{}});
@@ -115,3 +118,12 @@ out("FRIEND_CANCEL",store.cancelFriendRequest("one",canceled.request.id),
 out("FRIEND_REMOVE",store.removeFriend("one","two"),
  store.removeFriend("one","two"),store.friendsOf("one").length);
 out("FRIEND_MISSING",store.createFriendRequest("one","missing").status);
+
+let socialResult=store.setSocials(a,{youtube:"Hi.Name",discord:" dev-id ",tiktok:""});
+out("SOCIAL_SET",socialResult.status,socialResult.body.socials.youtube,
+ socialResult.body.socials.discord,Object.keys(socialResult.body.socials).length);
+socialResult=store.setSocials(a,{youtube:"bad?handle"});
+out("SOCIAL_FORMAT",socialResult.status,socialResult.body.field,socialResult.body.why);
+socialResult=store.setSocials(a,{twitch:"badword"});
+out("SOCIAL_RUDE",socialResult.status,socialResult.body.field,socialResult.body.why);
+out("SOCIAL_UNCHANGED",a.socials.youtube,a.socials.discord);
