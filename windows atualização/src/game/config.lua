@@ -14,6 +14,7 @@ local C = {
   maxPlayers = 40,
   maxPlayersHard = 50,
   gatherAngle = math.pi/2.6,
+  shieldAngle = math.pi/3, -- shared/config.js [qd], original shield arc
   colGrid = 10,
   areaCount = 7,
   treesPerArea = 9,
