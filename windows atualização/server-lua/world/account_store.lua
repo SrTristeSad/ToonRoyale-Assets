@@ -73,7 +73,7 @@ function Store.open(path,opts)
     nowMs=opts.nowMs or function() return os.time()*1000 end,
     isRude=opts.isRude,
     randomBytes=opts.randomBytes or SecureRandom.bytes,
-    tickets={},devices={}},Store)
+    tickets={},devices={},loginFlows={},discordCodes={}},Store)
   self.migratedIds=self:migrateIds()
   return self
 end
@@ -842,6 +842,73 @@ function Store:weeklyCrowns()
   return crowns
 end
 
+-- AccountStore.accountForEmail / startLogin / finishLogin from Node store.js.
+local function emptyStats()
+  return {kills=0,deaths=0,damage=0,healing=0,wood=0,food=0,
+    stone=0,gold=0,animalDamage=0,animalKills=object(),
+    bestScore=0,maxKills=0,lives=0,playtime=0,periods=object()}
+end
+function Store:accountForEmail(email)
+  local key=type(email)=="string" and email:match("^%s*(.-)%s*$"):lower() or ""
+  if key=="" or #key>120 then return json.null end
+  local id=self.data.emails[key]
+  if not truth(id) then
+    local createdAt=self.nowMs()
+    id=objectId(createdAt,self.randomBytes)
+    self.data.accounts[id]={
+      id=id,email=key,name=json.null,role=json.null,clan=json.null,
+      createdAt=createdAt,stats=emptyStats(),socials=object(),
+      prefs=self:prefsOf(nil),verdict=json.null
+    }
+    self.data.emails[key]=id
+    self:save()
+  end
+  return self.data.accounts[id] or json.null
+end
+function Store:startLogin(email)
+  local account=self:accountForEmail(email)
+  if not truth(account) then return json.null end
+  local flow=hexBytes(self.randomBytes(12),12)
+  self.loginFlows[flow]={accountId=account.id,at=self.nowMs()}
+  return flow
+end
+function Store:finishLogin(flow)
+  local entry=self.loginFlows[flow]
+  if not entry then return json.null end
+  self.loginFlows[flow]=nil
+  return self.data.accounts[entry.accountId] or json.null
+end
+-- AccountStore Discord link codes (separate from the regular login flow).
+function Store:createDiscordCode(discordName)
+  local code=hexBytes(self.randomBytes(12),12)
+  local discord=tostring(discordName)
+  self.discordCodes[code]={discord=discord:sub(1,32),at=self.nowMs()}
+  return code
+end
+function Store:discordCode(code)
+  local key=type(code)=="string" and code or tostring(code or "")
+  local entry=self.discordCodes[key]
+  if not entry then return json.null end
+  if self.nowMs()-entry.at>10*60*1000 then
+    self.discordCodes[key]=nil
+    return json.null
+  end
+  return entry
+end
+function Store:linkDiscord(account,code)
+  if not truth(account.name) then
+    return {status=400,body={error="no name"}}
+  end
+  local entry=self:discordCode(code)
+  if not truth(entry) then
+    return {status=400,body={error="code"}}
+  end
+  self.discordCodes[code]=nil
+  account.discord={name=entry.discord,linkedAt=self.nowMs()}
+  self:save()
+  return {status=200,body={ok=true,discord=entry.discord}}
+end
+
 -- Node uses dot-method calls; this wrapper retains that shape for existing Lua ports.
 function Store:callbacks()
   return {
@@ -876,6 +943,12 @@ function Store:callbacks()
     removeFriend=function(a,b) return self:removeFriend(a,b) end,
     accountByEmail=function(email) return self:accountByEmail(email) end,
     accountById=function(id) return self:accountById(id) end,
+    accountForEmail=function(email) return self:accountForEmail(email) end,
+    startLogin=function(email) return self:startLogin(email) end,
+    finishLogin=function(flow) return self:finishLogin(flow) end,
+    createDiscordCode=function(name) return self:createDiscordCode(name) end,
+    discordCode=function(code) return self:discordCode(code) end,
+    linkDiscord=function(account,code) return self:linkDiscord(account,code) end,
     issueTicket=function(opts) return self:issueTicket(opts) end,
     recentDevice=function(did) return self:recentDevice(did) end,
     consumeTicket=function(ticket,maxAgeMs)
