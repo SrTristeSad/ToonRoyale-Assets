@@ -107,6 +107,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: Catalago integral no player e ciclo real Host Room
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/catalogue-live-smoke.lua
       - name: Catalogo completo de itens equipamentos e alimentos Node vs Lua
         run: |
           set -euo pipefail
