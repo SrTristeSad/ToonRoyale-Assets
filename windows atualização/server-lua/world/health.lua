@@ -51,7 +51,7 @@ function Health.change(player,amount,doer,source,projectile,options)
   assert(type(options.nowMs)=="number","authoritative timestamp required")
   assert(type(options.players)=="table","authoritative player list required")
   if amount>0 and player.health>=player.maxHealth then return false end
-  if amount<0 and player.powers.god then return false end
+  if amount<0 and player.powers.god~=nil and player.powers.god~=false and player.powers.god~=0 then return false end
   if amount<0 and player.skin then amount=amount*jsOr(player.skin.dmgMult,1) end
   if amount<0 and player.tail then amount=amount*jsOr(player.tail.dmgMult,1) end
   if amount<0 and projectile and hasTail(player,15) then amount=amount*0.75 end
