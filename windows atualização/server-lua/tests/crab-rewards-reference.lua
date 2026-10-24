@@ -67,7 +67,7 @@ for _,tc in ipairs(cases) do
      events[#events+1]="EVENT:"..data.kind..":"..data.server..":"..data.by
    end
  }
- Rewards.onKill(ai,tc.noKiller and nil or killer,{
+ Rewards.onKill(ai,not tc.noKiller and killer or nil,{
    onCrabKingKilled=function(a,who)return CrabRewards.onKill(a,who,ctx)end
  })
  local people={}
