@@ -24,8 +24,8 @@ function Movement.step(player,delta,world,players,opts)
   assert(world and type(world.getGridArrays)=="function","authoritative world required")
   assert(type(players)=="table","players array required")
   assert(opts.nowMs~=nil and finite(opts.nowMs),"authoritative clock required")
-  assert((player.alive or opts.allowDeathMidTick) and player.powers and finite(player.powers.speed),
-    "original Player.update requires powers.speed; death may occur during preceding regen")
+  assert(player.alive and player.powers and finite(player.powers.speed),
+    "alive player with powers.speed required")
   assert(finite(player.x) and finite(player.y) and finite(player.xVel) and finite(player.yVel),
     "player coordinates/velocity required")
   -- Node player.js: after shame/regeneration section, before weapon/tool section.
