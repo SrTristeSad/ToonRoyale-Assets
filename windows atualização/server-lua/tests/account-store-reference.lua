@@ -255,3 +255,19 @@ out("DISCORD_LINK_OK",discordResult.status,#discordResult.body.discord,
 local expired=authStore:createDiscordCode("expired")
 authStore.discordCodes[expired].at=authStore.discordCodes[expired].at-600001
 out("DISCORD_EXPIRE",authStore:discordCode(expired)==Json.null)
+
+local claim=authStore:accountForEmail("claim@example.com")
+local nameResult=authStore:claimName(claim,"ab")
+out("CLAIM_SHORT",nameResult.status,nameResult.body.error)
+nameResult=authStore:claimName(claim,"Bad+Name")
+out("CLAIM_CENSORED",nameResult.status,nameResult.body.error,nameResult.body.shown)
+nameResult=authStore:claimName(claim,"qweir")
+out("CLAIM_UNCLEAN",nameResult.status,nameResult.body.error)
+nameResult=authStore:claimName(claim,"PlayerOne")
+out("CLAIM_VALID",nameResult.status,nameResult.body.name,
+ authStore:nameOwner("playerone")==claim)
+local another=authStore:accountForEmail("another@example.com")
+nameResult=authStore:claimName(another,"playerone")
+out("CLAIM_TAKEN",nameResult.status,nameResult.body.error)
+nameResult=authStore:claimName(claim,"OtherName")
+out("CLAIM_IMMUTABLE",nameResult.status,nameResult.body.name)
