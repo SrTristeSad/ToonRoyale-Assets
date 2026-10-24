@@ -2,6 +2,7 @@
 -- Exact word-order and Player.setUserData validation against Node source.
 local words=require("server-lua.world.name_words")
 local Identity=require("server-lua.world.player_identity")
+local Pack=require("src.protocol.msgpack")
 local function hex(s)
  return (s:gsub(".",function(c)return string.format("%02x",string.byte(c))end))
 end
@@ -21,7 +22,7 @@ local cases={
  {id="account-override",name="Explorer",account="Permanent"},
  {id="empty-account",name="Explorer",account=""},
  {id="lower",name="hello123"},
- {id="numeric",name=1234},{id="null",name=nil},
+ {id="numeric",name=1234},{id="null",name=Pack.null},
  {id="truth",name=true}
 }
 for _,tc in ipairs(cases) do
