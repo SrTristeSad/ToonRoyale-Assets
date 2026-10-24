@@ -2,6 +2,9 @@
 -- shared/config.js @ 06f7c1ca965a7628671676c8d9a7efd3997bb5e7
 -- These are the authoritative reference values for world generation.
 local C = {
+  -- RENDER from shared/config.js; required for authoritative visibility.
+  maxScreenWidth = 1920,
+  maxScreenHeight = 1080,
   mapScale = 14400,
   -- Moo-Quest bundled Node shared/config.js uses the normal gathering economy.
   -- These flags must follow OUR running server, not the archived sandbox demo.
