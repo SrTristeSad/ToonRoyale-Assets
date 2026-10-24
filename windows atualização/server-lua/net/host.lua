@@ -112,13 +112,16 @@ function Host:drop(peer)
   pcall(function() peer.tcp:close() end)
   if peer.upgraded then
     self.active=math.max(0,self.active-1)
-    if self.onClose then pcall(self.onClose,peer) end
+    if peer.roomKey then
+      self.activeByRoom[peer.roomKey]=math.max(0,(self.activeByRoom[peer.roomKey] or 0)-1)
+    end
+    if self.onClose then pcall(self.onClose,peer,peer.roomKey) end
   end
 end
 function Host:close()
   if self.listener then self.listener:close();self.listener=nil end
   for _,p in ipairs(self.peers) do self:drop(p) end
-  self.peers={};self.tickets={};self.active=0
+  self.peers={};self.tickets={};self.active=0;self.activeByRoom={}
 end
 local function bad(peer,code,err)
   addOutput(peer,reply(code,'{"error":'..jsonString(err)..'}'))
@@ -190,9 +193,16 @@ function Host:request(peer,req)
     end
   end
   if req.method=="GET" and path=="/ping" then
-    local body='{"status":"ok","build":'..jsonString(self.build.buildId)..
-      ',"servers":[{"region":"local","regionName":"Local","name":"LC","key":"LC","playerCount":'..
-      self.active..',"playerCapacity":'..self.capacity..',"auth":false}]}'
+    local listed={}
+    if self.api then listed=self.api.servers() else
+      for _,roomKey in ipairs({"LC","MB"}) do
+        local def=self.rooms[roomKey]
+        if def then listed[#listed+1]={region="local",regionName="Local",name=roomKey,
+          key=roomKey,playerCount=self.activeByRoom[roomKey] or 0,
+          playerCapacity=def.capacity,auth=def.membersOnly or false} end
+      end
+    end
+    local body=assert(Json.encode({status="ok",build=self.build.buildId,servers=listed}))
     addOutput(peer,reply(200,body))
   elseif req.method=="GET" and path=="/mooio/protocol" then
     addOutput(peer,reply(200,publicBuild(self.build)))
