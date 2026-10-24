@@ -10,6 +10,7 @@ local Projectiles=require("server-lua.world.projectiles")
 local Structures=require("server-lua.world.structures")
 local Snapshot=require("server-lua.world.snapshot")
 local Social=require("server-lua.world.social_sync")
+local Profile=require("server-lua.world.profile")
 local Score=require("server-lua.world.score")
 local PlayerUpdate=require("server-lua.world.player_update")
 local Input=require("server-lua.world.input")
@@ -119,11 +120,7 @@ function Room:sendLeaderboard() return Social.sendLeaderboard(self) end
 function Room:sendMinimap(viewer) return Social.sendMinimap(self,viewer) end
 function Room:sendStats(viewer,sid) return Social.sendStats(self,viewer,sid) end
 function Room:sendProfile(viewer,sid)
-  -- Persistent account/profile presentation is owned by the account service.
-  -- This callback must preserve the original privacy/anonymous rules.
-  assert(type(self.services.sendProfile)=="function",
-    "real profile service required for Game.sendProfile")
-  return self.services.sendProfile(self,viewer,sid)
+  return Profile.send(self,viewer,sid)
 end
 
 function Room:hitObject(object,dir)
