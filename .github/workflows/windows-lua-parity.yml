@@ -215,8 +215,8 @@ jobs:
           node server-lua/tests/input-reference.mjs > /tmp/moo-input-node.txt
           lua5.4 server-lua/tests/input-reference.lua > /tmp/moo-input-lua.txt
           diff -u /tmp/moo-input-node.txt /tmp/moo-input-lua.txt
-          test "$(wc -l < /tmp/moo-input-node.txt)" -eq 33
-          echo "PASS 33 cenarios de pacotes gameplay comparados com Node"
+          test "$(wc -l < /tmp/moo-input-node.txt)" -eq 34
+          echo "PASS 34 cenarios de pacotes gameplay comparados com Node"
       - name: Transporte Host para Room com sessão e Player real obrigatório
         run: |
           set -euo pipefail
