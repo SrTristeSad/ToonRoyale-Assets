@@ -11,7 +11,7 @@ print(table.concat({"CFG",Config.mapScale,Config.areaCount,Config.treesPerArea,
   Config.bushesPerArea,Config.totalRocks,Config.goldOres,
   Config.riverWidth,Config.snowBiomeTop,Config.colGrid,Config.server.cactusDamage},"|"))
 for _,o in ipairs(world.objects) do
-  print(table.concat({"OBJ",o.sid,o.x,o.y,o.scale,o.type,o.name or "-",
+  print(table.concat({"OBJ",o.sid,string.format('%.6f',o.x),string.format('%.6f',o.y),o.scale,o.type,o.name or "-",
     o.dmg or 0,o.layer,#o.gridLocations},"|"))
 end
 local points={
