@@ -1,22 +1,20 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Composition root for the already-differential-tested Lua gameplay modules.
--- Critical missing Node subsystems are REQUIRED services; this module never
--- silently replaces animals, clans, leaderboard or stats with fake logic.
+-- Critical missing Node subsystems remain REQUIRED services. Observer and
+-- leaderboard packets are now real Lua ports; animal spawn / AI still absent.
 local Config=require("src.game.config")
 local World=require("server-lua.world.objects")
 local Projectiles=require("server-lua.world.projectiles")
 local Structures=require("server-lua.world.structures")
 local Snapshot=require("server-lua.world.snapshot")
+local Social=require("server-lua.world.social_sync")
 local PlayerUpdate=require("server-lua.world.player_update")
 local Input=require("server-lua.world.input")
 local Loop=require("server-lua.world.game_loop")
 local Room={}
 Room.__index=Room
 
-local serviceNames={
-  "ensureAnimals","updateLeaders","sendLeaderboard","sendMinimap",
-  "sendStats","syncAnimals"
-}
+local serviceNames={"ensureAnimals"}
 local function round(v,dp)
   local m=10^dp
   if v<0 then return -math.floor(-v*m+0.5)/m end
@@ -46,6 +44,8 @@ function Room.new(opts)
     game_objects=world.objects,
     object_manager=world,projectile_manager=projectileManager,
     config=config,items=items,services=callbacks,key=opts.key or "LC",
+    accounts=opts.accounts,crabKillers=opts.crabKillers or {},
+    crownOf=opts.crownOf,
     lastTick=now,nowMs=now,
     bots=opts.bots,
     spawnTimer=0,leaderboardTimer=0,minimapTimer=0,statsTimer=0
@@ -67,12 +67,12 @@ end
 function Room:syncObjects(viewer)
   return Snapshot.syncObjects(self,viewer,self.config)
 end
-function Room:syncAnimals(viewer) return self.services.syncAnimals(self,viewer) end
+function Room:syncAnimals(viewer) return Social.syncAnimals(self,viewer) end
 function Room:ensureAnimals() return self.services.ensureAnimals(self) end
-function Room:updateLeaders() return self.services.updateLeaders(self) end
-function Room:sendLeaderboard() return self.services.sendLeaderboard(self) end
-function Room:sendMinimap(viewer) return self.services.sendMinimap(self,viewer) end
-function Room:sendStats(viewer,sid) return self.services.sendStats(self,viewer,sid) end
+function Room:updateLeaders() return Social.updateLeaders(self) end
+function Room:sendLeaderboard() return Social.sendLeaderboard(self) end
+function Room:sendMinimap(viewer) return Social.sendMinimap(self,viewer) end
+function Room:sendStats(viewer,sid) return Social.sendStats(self,viewer,sid) end
 
 function Room:hitObject(object,dir)
   -- Exact observer notifications from ObjectManager.hitObj.
