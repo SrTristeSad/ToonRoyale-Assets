@@ -12,7 +12,8 @@ local a={id=id,name="Tester",role=Json.null,verdict=Json.null,clan="ABC",
 local clan={name="ABC",members={{id=id,role="officer",kills=1,periods={}}},
  requests={"someone"},invites={},stats={kills=0,raidKills=0,periods={}}}
 local store=Store.open("server-lua/tests/.does-not-exist.json",{
- nowMs=function()return 1792864800000 end})
+ nowMs=function()return 1792864800000 end,
+ isRude=function() return false end})
 store.data={accounts={[id]=a},names={tester=id},emails={["a@example.com"]=id},
  clans={ABC=clan},social={friends={[id]={{id="friend"}}},
  requests={{id="r1",senderId="friend",recipientId=id}}},legacyIds={legacy=id}}
@@ -73,3 +74,27 @@ out("WEEKLY_TOP",store:weeklyTopClan())
 local profile=store:profile(a)
 out("PROFILE",profile.name,profile.clan.name,profile.periods.week.kills)
 out("SAVES",saves)
+
+local creator={id="creator",name="Creator",clan=Json.null,stats=base(),role=Json.null}
+local joiner={id="joiner",name="Joiner",clan=Json.null,stats=base(),role=Json.null}
+store.data.accounts.creator=creator
+store.data.accounts.joiner=joiner
+store.data.names.creator="creator"
+store.data.names.joiner="joiner"
+local log={}
+store.onClanEvent=function(name,msg)log[#log+1]=name..":"..msg end
+local cr=store:clanAction(creator,"create",{name="DEF"})
+out("CLAN_CREATE",cr.status,creator.clan,store.data.clans.DEF.members[1].role)
+local req=store:clanAction(joiner,"request",{clan="def"})
+out("CLAN_REQUEST",req.status,#store.data.clans.DEF.requests)
+local decide=store:clanAction(creator,"decide",{name="Joiner",accept=true})
+out("CLAN_DECIDE",decide.status,joiner.clan,#store.data.clans.DEF.members)
+local rank=store:clanAction(creator,"role",{name="Joiner",role="owner"})
+local roles={}
+for _,m in ipairs(store.data.clans.DEF.members) do roles[#roles+1]=m.role end
+out("CLAN_TRANSFER",rank.status,table.concat(roles,","))
+local leave=store:clanAction(creator,"leave",{})
+out("CLAN_LEAVE",leave.status,creator.clan,#store.data.clans.DEF.members)
+local disband=store:clanAction(joiner,"disband",{})
+out("CLAN_DISBAND",disband.status,store.data.clans.DEF~=nil,joiner.clan)
+out("CLAN_EVENTS",#log,log[1],log[2])
