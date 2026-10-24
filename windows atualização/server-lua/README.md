@@ -20,6 +20,12 @@ Implementações independentes no diretório `world/`:
 - `movement.lua`: port do **trecho de movimento de `Player.update`**, cobrindo aceleração, lentidão, rio/piscinas secretas, neve, acessórios, deslocamento em subpassos, colisões do mundo e com jogadores, desaceleração e limites. Recebe o equipamento real, a lista de jogadores, o relógio e o mundo via dependências obrigatórias. Não implementa sozinho regeneração, coleta, combate nem spawn.
 - `snapshot.lua`: port dos métodos **`Game.syncPlayers` e `Game.syncObjects`**, incluindo os pacotes `D`, `a`, `H` e `N` (quando sandbox ilimitado), campo de anonimato, envio inicial, delta de atributos, desaparecimento/retorno do campo de visão e visibilidade de construções por time. Mantém `null` explícito no MessagePack para não deslocar os campos.
 
+- `spawn.lua`: port do **spawn/reset de Player** — recursos iniciais, XP, arma, itens, posições, atributos especiais e uso/consumo de pontos de respawn. `objects.lua` ganhou `disableObject` e `fetchSpawnObj` para a remoção segura do objeto e broadcast `Q`.
+- `vitals.lua`: port do período pré-movimento do `Player.update` — timers de vergonha, regeneração, veneno, cura por contato e rendimento periódico (moinhos/equipamento). Mantém o temporizador de 1 s separado por personagem, inclusive durante respawn.
+- `health.lua`: port de `changeHealth` e `kill` do Player original — multiplicadores de armadura, defesa anti-projéteis, imunidade administrativa, estatísticas, notificações de vida/morte, recompensas e efeitos por abate. Pontuação e rede são **callbacks obrigatórios**, não mocks no servidor.
+- `economy.lua`: port de `addResource`, `addWeaponXP`, `earnXP`, `changeItemCount`, `hasRes`, `useRes` e `canBuild`. Os valores vêm de `src/game/config.lua` transcrito de `shared/config.js`, sem inventar novos custos.
+
+
 Testes diferenciais contra **código original Node.js executado como referência**:
 `world-reference.mjs` extrai a função real `generateWorld` de `server.js` e executa `ObjectManager` original. `world-reference.lua` executa o módulo Lua com a mesma semente de teste. Verificação de cada SID, tipo, posição (seis casas decimais), escala, grade, cacto, dano, além de consultas de posicionamento e células vizinhas. As sementes testadas são `1`, `42`, `12345` e `4294967295`.
 
@@ -29,13 +35,15 @@ Testes diferenciais contra **código original Node.js executado como referência
 
 `snapshot-reference.mjs/.lua` executa os métodos originais de sincronização e testa três atualizações consecutivas, comprovando a mesma ordem e conteúdo de pacotes `D`/`a`/`H` em Lua. O teste também verifica anonimizacão, troca de equipamento e saída/entrada do campo de visão.
 
-**Ainda não está conectado ao jogo:** as demais fases de `Player.update` (regeneração/combate, armas/ferramentas), disparos, coleta, inventário, NPCs, objetos edificáveis, bots, tribos e endpoints de autenticação seguem pendentes. Até eles serem portados e testados, **o servidor local funcional continua sendo Node.js**.
+Testes novos executam as funções originais do Node.js, comparando os mesmos efeitos na implementação Lua: `spawn-reference` (8 cenários), `vitals-reference` (12 cenários com múltiplos ticks), `health-reference` (16 cenários de danos, morte e recompensas) e `economy-reference` (19 cenários de recursos, XP e custos). A suíte GitHub Actions roda automaticamente na branch `main` do ToonRoyale-Assets.
+
+**Ainda não está conectado ao jogo:** as demais fases de `Player.update` (armas/ferramentas, ataques e animação), integração autoritativa do ciclo de jogador, projéteis, coleta, NPCs, objetos edificáveis, bots, tribos e endpoints de autenticação seguem pendentes. Até eles serem portados e testados, **o servidor local funcional continua sendo Node.js**.
 
 ## Limites — NÃO é o servidor completo
 
 A infraestrutura de rede Lua funciona isoladamente, mas **a lógica de partida ainda precisa ser portada**. Não existe equivalência 1:1 do mundo neste estágio.
 
-Pendente: contas/autorização V2, outros endpoints HTTP, simulação do mundo, spawn completo, integração do movimento com o loop de partida, construções, coleta, economia, armas, tiros, PvP, animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
+Pendente: contas/autorização V2, outros endpoints HTTP, simulação do mundo, conexão do spawn e dos demais módulos ao loop de partida, construções, coleta, economia, armas, tiros, PvP, animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
