@@ -67,6 +67,10 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Registro real Game.addPlayer/removePlayer com Host Lua
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/player-registry-smoke.lua
       - name: Player Lua completo com spawn XP construcao e Game.tick
         run: |
           set -euo pipefail
