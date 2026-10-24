@@ -58,6 +58,11 @@ end
 function Transport:packet(peer,name,args)
  local player=assert(self.peers[peer],"unbound or closed connection packet")
  assert(not peer.closed,"closed WebSocket cannot issue gameplay commands")
+ -- Node connection.js runs anticheat.allow() AFTER authenticated decode
+ -- and BEFORE packets.handlePacket(). Never let blocked commands reach Room.
+ local ac=assert(player.anticheat,"real per-connection anticheat required")
+ assert(type(ac.allow)=="function","original anticheat.allow required")
+ if not ac:allow(name) then return false end
  return self.room:handleInput(player,name,args)
 end
 function Transport:closed(peer)
