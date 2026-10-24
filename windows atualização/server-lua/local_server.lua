@@ -85,6 +85,9 @@ function Local.new(opts)
  assert(type(opts.dataDir)=="string" and opts.dataDir~="",
   "separate LOCAL Lua data directory required")
  local now=opts.nowMs or stamp
+ local entropy=Random.bytes(4)
+ local a,b,c,d=entropy:byte(1,4)
+ math.randomseed(a+b*256+c*65536+d*16777216)
  local accounts=Accounts.open(opts.dataDir.."/accounts.json",{nowMs=now})
  local moderation=Moderation.open(opts.dataDir,{nowMs=now})
  moderation:migrateIds(accounts.migratedIds)
