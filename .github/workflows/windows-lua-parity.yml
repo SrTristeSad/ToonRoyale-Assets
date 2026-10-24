@@ -340,6 +340,12 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/room-animals-smoke.lua
+      - name: Bots originais LOCAL Node versus Lua - comportamento e spawn
+        run: |
+          set -euo pipefail
+          node server-lua/tests/bots-reference.mjs > /tmp/moo-bots-node.txt
+          lua5.4 server-lua/tests/bots-reference.lua > /tmp/moo-bots-lua.txt
+          diff -u /tmp/moo-bots-node.txt /tmp/moo-bots-lua.txt
       - name: Sala Lua integrada - Player Projectile Structures Snapshots
         run: |
           set -euo pipefail
