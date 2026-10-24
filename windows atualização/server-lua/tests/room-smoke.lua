@@ -8,6 +8,7 @@ local function assertEqual(a,b,msg)
   assert(a==b,(msg or "mismatch")..": "..tostring(a).." != "..tostring(b))
 end
 local items={
+ list={[3]={id=3}},
  weapons={[0]={id=0,gather=1,range=65,speed=300,dmg=25}},
  projectiles={[0]={dmg=25,scale=103,speed=1.6,range=1000,layer=0}}
 }
@@ -50,6 +51,14 @@ local player={
 room:bindPlayer(player)
 assertEqual(#room.players,1,"bound player")
 assertEqual(room.players[1],player,"same player")
+room:handleInput(player,"D",{0.9})
+room:handleInput(player,"9",{1.25})
+assertEqual(player.dir,0.9,"input aim routed to bound player")
+assertEqual(player.moveDir,1.25,"input movement routed to bound player")
+local rogue=pcall(function()
+  room:handleInput({id="not-in-room",alive=true},"D",{1})
+end)
+assert(not rogue,"foreign client cannot mutate this room")
 -- Bind does not duplicate identity when an existing player is passed.
 room:bindPlayer(player)
 assertEqual(#room.players,1,"no duplicate players")
