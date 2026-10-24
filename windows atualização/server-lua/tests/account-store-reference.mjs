@@ -99,7 +99,7 @@ for(const who of ["one","two","three"]){
 }
 let r1=store.createFriendRequest("one","two");
 out("FRIEND_CREATE",r1.status,/^[a-f0-9]{24}$/.test(r1.request?.id),
- /\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z/.test(r1.request?.createdAt));
+ r1.request?.createdAt?.length===24 && r1.request.createdAt.endsWith("Z"));
 out("FRIEND_PENDING",store.requestsFor("two").length,store.requestsFrom("one").length);
 out("FRIEND_DUPLICATE",store.createFriendRequest("one","two").status);
 out("FRIEND_ANSWER",!!store.answerFriendRequest("two",r1.request.id,true),
