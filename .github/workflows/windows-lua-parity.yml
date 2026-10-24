@@ -67,6 +67,14 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Entrada do cliente - packets essenciais Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/input-reference.mjs > /tmp/moo-input-node.txt
+          lua5.4 server-lua/tests/input-reference.lua > /tmp/moo-input-lua.txt
+          diff -u /tmp/moo-input-node.txt /tmp/moo-input-lua.txt
+          test "$(wc -l < /tmp/moo-input-node.txt)" -eq 24
+          echo "PASS 24 pacotes gameplay comparados com Node"
       - name: Sala Lua integrada - Player Projectile Structures Snapshots
         run: |
           set -euo pipefail
