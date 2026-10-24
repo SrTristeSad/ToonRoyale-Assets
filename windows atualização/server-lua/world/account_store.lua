@@ -896,10 +896,51 @@ local function emptyStats()
     stone=0,gold=0,animalDamage=0,animalKills=object(),
     bestScore=0,maxKills=0,lives=0,playtime=0,periods=object()}
 end
+-- AccountStore constructor secret.key: one durable 256-bit HMAC key per data directory.
+local function hexToRaw(hex)
+  if type(hex)~="string" or #hex~=64 or hex:find("[^0-9a-fA-F]") then
+    return nil
+  end
+  return (hex:gsub("..",function(pair)return string.char(tonumber(pair,16))end))
+end
+function Store:loadSecret()
+  if self.secret then
+    assert(type(self.secret)=="string" and #self.secret==32,
+      "AccountStore secret must be exactly 32 bytes")
+    return self.secret
+  end
+  local dir=self.file:match("^(.*)[/\\][^/\\]+$") or "."
+  local path=dir.."/secret.key"
+  local f=io.open(path,"rb")
+  if f then
+    local text=f:read("*a")
+    assert(f:close(),"cannot close secret.key")
+    local key=hexToRaw(text:match("^%s*(.-)%s*$"))
+    assert(key,"invalid original secret.key")
+    self.secret=key
+    return key
+  end
+  local key=self.randomBytes(32)
+  assert(type(key)=="string" and #key==32,
+    "OS secure random required for AccountStore secret.key")
+  local hex=(key:gsub(".",function(ch)
+    return string.format("%02x",ch:byte())end))
+  -- Never write secrets into accounts.json or log them.
+  local out,err=io.open(path,"wb")
+  assert(out,err)
+  local ok,why=out:write(hex)
+  if not ok then out:close();error(why) end
+  assert(out:close(),"cannot close secret.key")
+  self.secret=key
+  return key
+end
+
 function Store:issueToken(account,options)
+  self:loadSecret()
   return AccountToken.issue(self,account,options)
 end
 function Store:verifyToken(token)
+  self:loadSecret()
   return AccountToken.verify(self,token)
 end
 
