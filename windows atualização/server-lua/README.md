@@ -185,9 +185,16 @@ nativo por padrão. `tests/account-life-integration-smoke.lua` testa a cadeia
 temporário isolado.
 O teste isolado não comprova paridade integral do `AccountStore` original.
 
-**Ainda NÃO portados ou integrados:** autenticação/JWT/scrypt e tickets de
-conta, métodos completos de clãs e amizade, painel/rotas HTTP de conta,
+**Ainda NÃO portados ou integrados:** autenticação/JWT/scrypt, emissão e
+validação HTTP de tickets no host, métodos restantes de conta, painel/rotas HTTP de conta,
 salvamento das sanções, serialização de produção no inicializador,
 e os testes de ponta a ponta com cliente Windows. A ordenação de empates
 de rankings entre objetos JSON também requer prova diferencial contra Node.
+O AccountStore Lua agora também replica `migrateIds`, preferências, cosméticos,
+operações de clãs e amizades, `setSocials` e emissão/consumo de tickets.
+`tests/account-store-reference.mjs` executa métodos do **Node.js original**;
+`tests/account-store-reference.lua` compara a saída dos mesmos cenários
+na CI. A serialização de perfis `p` já usa JSON real, mas o host Lua e a
+autenticação completa ainda precisam ser integrados e validados.
+
 O servidor Node continua sendo o padrão até os marcos de aceitação concluírem.
