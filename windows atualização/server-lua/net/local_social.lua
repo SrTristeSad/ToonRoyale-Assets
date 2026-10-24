@@ -60,7 +60,7 @@ function Social:handle(method,path,headers,body)
  end
  local requestId=suffix:match("^/requests/([%w]+)$")
  if requestId and method=="POST" then
-  local accept=body.accept~=nil and body.accept~=false and body.accept~=Json.null
+  local accept=body.accept~=nil and body.accept~=false and body.accept~=0 and body.accept~="" and body.accept~=Json.null
   local request=store:answerFriendRequest(account.id,requestId,accept)
   if not request or request==Json.null then return message(404,"Request not found") end
   if accept and self.friendshipChanged then
