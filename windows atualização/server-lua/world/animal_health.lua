@@ -42,6 +42,8 @@ function Health.changeHealth(ai,amount,doer,runFrom,opts)
  end
  if amount<0 and doer and doer.isPlayer then
    ai.damageBy=ai.damageBy or {}
+   ai.damageOrder=ai.damageOrder or {}
+   if ai.damageBy[doer]==nil then ai.damageOrder[#ai.damageOrder+1]=doer end
    ai.damageBy[doer]=jsOr(ai.damageBy[doer],0)-amount
    if doer.lifeStats then
      doer.lifeStats.animalDamage=doer.lifeStats.animalDamage-amount
@@ -79,6 +81,7 @@ function Health.changeHealth(ai,amount,doer,runFrom,opts)
    ai.health=ai.maxHealth
    ai.runFrom=nil
    ai.damageBy={}
+   ai.damageOrder={}
    ai.state=0;ai.submerged=false;ai.bossAttack=nil
    if doer then
      assert(type(opts.score)=="function","real scoreCallback required")
