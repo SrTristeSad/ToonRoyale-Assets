@@ -3,6 +3,7 @@
 -- Critical missing Node subsystems remain REQUIRED services. Observer and
 -- leaderboard packets are now real Lua ports; animal spawn / AI still absent.
 local Config=require("src.game.config")
+local Catalogue=require("server-lua.world.catalogue")
 local World=require("server-lua.world.objects")
 local Projectiles=require("server-lua.world.projectiles")
 local Structures=require("server-lua.world.structures")
@@ -33,7 +34,7 @@ function Room.new(opts)
   end
   local config=opts.config or Config
   local world=opts.world or World.new({config=config})
-  local items=assert(opts.items,"original shared items catalogue required")
+  local items=opts.items or Catalogue
   assert(items.weapons and items.projectiles,
     "item catalogue must contain original weapons and projectiles")
   local players=opts.players or {}
