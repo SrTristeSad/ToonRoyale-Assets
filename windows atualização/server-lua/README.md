@@ -163,3 +163,27 @@ O gateway é um componente do futuro servidor, **não uma alternativa jogável a
 ## Paridade antes da troca
 
 A migração do host em `src/net/mooio_host.lua` só poderá ocorrer após testes reais cliente↔Lua para todas as famílias de pacotes e as mesmas regras de `shared/config.js`: entrada, mundo, coleta, economia, objetos, combate, animais, bots, tribos, morte, respawn e desconexão. Não inventar valores nem substituir funcionalidades originais por simulações.
+
+## Persistência de contas Lua (incremental)
+
+`world/account_store.lua` lê e grava **uma cópia separada** do mesmo esquema
+`server/data/accounts.json` do Node. O parser independente
+`vendor/dkjson.lua` (MIT, com licença preservada) mantém objetos, arrays,
+null e campos ainda não migrados. A escrita substitui o arquivo por uma
+cópia completa, mantendo `.lua-backup` para recuperação.
+
+Interfaces disponíveis: `Store.open(caminho, {nowMs=clock})`,
+`store:callbacks()` para `profile`, `recordUnlocks`, `recordLife`,
+`weeklyTopClan` e `setVerdict`. O caminho deve apontar para a **área Lua**;
+nunca compartilhe o mesmo arquivo em escrita simultânea com o Node.
+
+`tests/account-store-smoke.lua` valida roundtrip em disco, dados de conta,
+estatísticas, desbloqueios, clãs, arrays/objetos vazios e campos desconhecidos.
+O teste isolado não comprova paridade integral do `AccountStore` original.
+
+**Ainda NÃO portados ou integrados:** autenticação/JWT/scrypt e tickets de
+conta, métodos completos de clãs e amizade, painel/rotas HTTP de conta,
+salvamento das sanções, serialização de produção no inicializador,
+e os testes de ponta a ponta com cliente Windows. A ordenação de empates
+de rankings entre objetos JSON também requer prova diferencial contra Node.
+O servidor Node continua sendo o padrão até os marcos de aceitação concluírem.
