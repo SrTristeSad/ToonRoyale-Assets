@@ -25,3 +25,5 @@ jobs:
             fi
             echo "PASS world seed=$seed, $(grep -c '^OBJ|' "/tmp/world-node-$seed.txt") objects, $(grep -c '^PLACE|' "/tmp/world-node-$seed.txt") placement checks"
           done
+
+# Normalize decimal formatting before comparing world placement.
