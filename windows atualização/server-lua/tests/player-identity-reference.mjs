@@ -2,6 +2,7 @@
 // importing unrelated npm dependencies. No reimplementation of Node logic.
 import fs from "node:fs";
 import { config } from "../../server/src/moomoo/config.js";
+import { HAT } from "../../server/src/moomoo/modules/effects.js";
 const source=fs.readFileSync(new URL("../../server/src/moomoo/modules/player.js",import.meta.url),"utf8");
 const start=source.indexOf("constructor(id, sid, config,");
 const end=source.indexOf("// SPAWN:",start);
@@ -14,8 +15,8 @@ function get(name){
  const a=source.indexOf(marker),b=source.indexOf("\n        };",a);
  if(a<0||b<0)throw Error("Player."+name+" changed");
  const e=source.slice(a,b+11).replace("this."+name+" = ","").replace(/;\s*$/,"");
- return new Function("config","NAME_WORDS","items","UTILS","return ("+e+");")(
-  config,["qweir","discord","badword"],items,{fixTo:(v,dp)=>Number(v.toFixed(dp))}
+ return new Function("config","NAME_WORDS","items","UTILS","HAT","return ("+e+");")(
+  config,["qweir","discord","badword"],items,{fixTo:(v,dp)=>Number(v.toFixed(dp))},HAT
  );
 }
 const groups=[{id:0},{id:1},{id:2},{id:3}];
