@@ -30,6 +30,11 @@ assert b"101 Switching Protocols" in data,data
 while b"io-init" not in data and len(data)<2048:data+=sock.recv(4096)
 assert b"io-init" in data
 sock.close()
+code,raw=request("POST","/api/auth/code",{"email":"local@example.com"})
+assert code==200,(code,raw)
+flow=json.loads(raw)["flow"]
+code,raw=request("POST","/api/auth/verify",{"code":"123456","flow":flow})
+assert code==200,(code,raw)
 code,raw=request("POST","/shutdown",headers={"X-MooIO-Code":"testing42"},port=PORT+1)
 assert code==200 and json.loads(raw)["ok"]
 print("PASS Lua LOCAL LC HTTP/WebSocket io-init e shutdown")
