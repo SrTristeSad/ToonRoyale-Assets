@@ -107,6 +107,14 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: Anticheat rate-limits strikes e telemetria Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/anticheat-reference.mjs > /tmp/moo-anticheat-node.txt
+          lua5.4 server-lua/tests/anticheat-reference.lua > /tmp/moo-anticheat-lua.txt
+          diff -u /tmp/moo-anticheat-node.txt /tmp/moo-anticheat-lua.txt
+          test "$(wc -l < /tmp/moo-anticheat-node.txt)" -eq "$(grep -c '^step|' server-lua/tests/anticheat-scenarios.txt)"
+          echo 'PASS cenarios originais de token bucket, strike, kick, shame e telemetria'
       - name: NAME_WORDS completo e nomes de jogadores Node vs Lua
         run: |
           set -euo pipefail
