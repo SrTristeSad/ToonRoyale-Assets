@@ -2,6 +2,9 @@
 -- Constructor-only port of Node modules/player.js: Player.constructor lines
 -- 17-71; does not masquerade as completed Player methods. No spawn occurs.
 local Config=require("src.game.config")
+local Spawn=require("server-lua.world.spawn")
+local Snapshot=require("server-lua.world.snapshot")
+local Pack=require("src.protocol.msgpack")
 local Player={}
 local function freeOwnership(catalogue)
  local owned={}
@@ -31,6 +34,53 @@ function Player.new(id,sid,opts)
    morph=-1,dive=0,disguised=false,anon=false,tribeCooldown=0,
    chatCooldown=0,pingCooldown=0
  }
+ -- Original Player instance operations that are independent of accounts.
+ p.resetResources=function(self,moofoll)
+   return Spawn.resetResources(self,moofoll,opts.config or Config)
+ end
+ p.spawn=function(self,moofoll)
+   local world=assert(opts.world,"authoritative world required for Player.spawn")
+   assert(type(opts.nowMs)=="function",
+     "monotonic server clock callback required for Player.spawn")
+   return Spawn.spawn(self,moofoll,world,{
+     config=opts.config or Config,nowMs=opts.nowMs()
+   })
+ end
+ p.addItem=function(self,id)
+   local catalogue=assert(opts.items and opts.items.list,
+     "original items.list catalogue required for Player.addItem")
+   local item=catalogue[id]
+   if not item then return false end
+   assert(self.items,"Player.spawn required before addItem")
+   for index,oldId in ipairs(self.items) do
+     local oldItem=assert(catalogue[oldId],
+       "existing inventory item missing from authoritative catalogue")
+     if oldItem.group==item.group then
+       if self.buildIndex==oldId then self.buildIndex=id end
+       self.items[index]=id
+       return true
+     end
+   end
+   self.items[#self.items+1]=id
+   return true
+ end
+ p.getData=function(self,viewer)
+   return Snapshot.playerData(self,viewer)
+ end
+ p.setData=function(self,data)
+   -- Original Player.setData accepts client wire array with zero-based JS keys;
+   -- leave aura/bossMode/clan standalone just like the source.
+   assert(type(data)=="table","original Player.setData data array required")
+   self.id=data[1];self.sid=data[2];self.name=data[3]
+   self.x=data[4];self.y=data[5];self.dir=data[6]
+   self.health=data[7];self.maxHealth=data[8]
+   self.scale=data[9];self.skinColor=data[10]
+   self.aura=(data[11]~=nil and data[11]~=false and data[11]~=0
+     and data[11]~=Pack.null)
+   self.bossMode=(data[12]~=nil and data[12]~=false and data[12]~=0
+     and data[12]~=Pack.null)
+   self.clan=(data[13]==Pack.null) and nil or data[13]
+ end
  -- First original instance methods that do not depend on unported game services.
  p.resetMoveDir=function(self)self.moveDir=nil end
  p.shownName=function(self,viewer)
