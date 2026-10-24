@@ -171,6 +171,34 @@ function API:handle(method,target,headers,raw,ip)
   if not store:setClanShadow(body.clan,body.shadow) then return invalid("not found",404) end
   return response(200,{})
  end
+ if path=="/api/mod/player" or path=="/api/mod/kick" then
+  if account.role~="admin" and account.role~="mod" then return invalid("rank") end
+  local game=assert(self.game,"original gameApi required for staff requests")
+  local guest=truth(body.id) and not truth(body.name) and
+    game.playerBySession(str(body.id)) or nil
+  local target=not guest and store:nameOwner(body.name) or nil
+  if path=="/api/mod/player" then
+   if guest then
+    return response(200,self.moderation:guestRecord(guest,game.sessionOf(guest)))
+   end
+   if not target then return invalid("no player",404) end
+   return response(200,self.moderation:playerRecord(target,game.sessionFor(target.id)))
+  end
+  local kicked=0
+  local seconds=AntiCheatConfig.kickLock.staffSeconds
+  if truth(body.id) and not truth(body.name) then
+   if guest and guest.kick then
+    self.moderation:lock({ip=guest.ip,did=guest.did},seconds)
+    guest.kick("kicked");kicked=1
+   end
+  elseif target then
+   local last=type(target.lastSeen)=="table" and target.lastSeen or {}
+   self.moderation:lock({accountId=target.id,ip=last.ip,did=last.did},seconds)
+   kicked=game.kickAccount(target.id,"kicked")
+  end
+  if kicked==0 then return invalid("not online",404) end
+  return response(200,{})
+ end
  if path=="/api/account" then return response(200,store:accountInfo(account)) end
  if path=="/api/account/prefs" then
   return response(200,{prefs=store:setPrefs(account,body.prefs)})
