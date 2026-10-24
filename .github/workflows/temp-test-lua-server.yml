@@ -1,0 +1,19 @@
+name: Teste temporario de paridade do servidor Lua
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-test-lua-server.yml'
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua interpreter
+        run: sudo apt-get update -qq && sudo apt-get install -y lua5.4
+      - name: Compare JS authoritative protocol with Lua port
+        working-directory: windows atualização
+        run: |
+          node server-lua/tests/reference.mjs > server-lua/tests/reference-fixtures.txt
+          lua5.4 server-lua/tests/protocol.lua server-lua/tests/reference-fixtures.txt
