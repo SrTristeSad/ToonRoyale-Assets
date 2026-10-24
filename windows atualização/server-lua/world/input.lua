@@ -153,6 +153,21 @@ function Input.handle(ctx,player,name,args)
       end
     end
     return
+  elseif name=="V" then
+    -- Node packets.js: watched profile SID; -1 clears the selection.
+    local sid=args[1]
+    if not int(sid) then return bad(player,name,"stats") end
+    player.watchStats=sid
+    if sid>=0 then
+      local game=assert(ctx.game,"authoritative Game required for profile stats")
+      assert(type(game.sendProfile)=="function",
+        "real Game.sendProfile required; never fabricate account data")
+      assert(type(game.sendStats)=="function",
+        "real Game.sendStats required")
+      game:sendProfile(player,sid)
+      game:sendStats(player,sid)
+    end
+    return
   elseif name=="0" then
     player:send("0")
     return
