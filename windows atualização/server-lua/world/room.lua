@@ -122,6 +122,15 @@ function Room:score(player,amount)
   return Score.add(player,amount,self.config)
 end
 
+-- Game.playerCount excludes the bot Player instances from the server list.
+function Room:playerCount()
+ local count=0
+ for _,player in ipairs(self.players) do
+  if not player.isBot then count=count+1 end
+ end
+ return count
+end
+
 function Room:sendId(id,name,...)
   for _,player in ipairs(self.players) do
     if player.id==id then return player:send(name,...) end
