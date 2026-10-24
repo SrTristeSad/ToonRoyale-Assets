@@ -17,3 +17,4 @@ jobs:
         run: |
           node server-lua/tests/reference.mjs > server-lua/tests/reference-fixtures.txt
           lua5.4 server-lua/tests/protocol.lua server-lua/tests/reference-fixtures.txt
+          lua5.4 server-lua/tests/websocket.lua
