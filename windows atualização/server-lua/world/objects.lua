@@ -212,4 +212,80 @@ function World:fetchSpawnObj(sid,opts)
   return nil
 end
 
+-- ObjectManager.add for constructed items: same SID reuse order and GameObject.init
+-- fields.  Natural map generation keeps the existing addObject() path.
+function World:addDynamic(x,y,dir,scale,kind,data,owner)
+  local sid=#self.objects
+  local obj=nil
+  -- ObjectManager.add(gameObjects.length, ..., setSID=false)
+  for _,candidate in ipairs(self.objects) do
+    if candidate.sid==sid then obj=candidate;break end
+  end
+  if not obj then
+    for _,candidate in ipairs(self.objects) do
+      if not candidate.active then obj=candidate;break end
+    end
+  end
+  if not obj then
+    obj={sid=sid}
+    self.objects[#self.objects+1]=obj
+  end
+  data=data or {}
+  if not data.name and kind==1 and y>=self.config.mapScale-self.config.snowBiomeTop then
+    data={name="cactus",dmg=self.config.server.cactusDamage or 20}
+  end
+  local oldSid=obj.sid
+  -- Original GameObject.init clears all per-life fields before reusing an object.
+  for k in pairs(obj) do obj[k]=nil end
+  obj.sid=oldSid
+  obj.sentTo={}
+  obj.gridLocations={}
+  obj.active=true
+  obj.doUpdate=data.doUpdate
+  obj.x=x;obj.y=y;obj.dir=dir
+  obj.xWiggle=0;obj.yWiggle=0
+  obj.scale=scale;obj.type=kind;obj.id=data.id
+  obj.owner=owner;obj.name=data.name
+  obj.isItem=(data.id~=nil)
+  obj.group=data.group;obj.health=data.health
+  obj.layer=obj.group and obj.group.layer
+    or (kind==0 and 3 or kind==2 and 0 or kind==4 and -1 or 2)
+  obj.colDiv=data.colDiv or 1
+  for _,k in ipairs({"blocker","ignoreCollision","dontGather","hideFromEnemy",
+    "friction","projDmg","dmg","pDmg","pps","turnSpeed","req","trap",
+    "healCol","teleport","boostSpeed","projectile","shootRange",
+    "shootRate","spawnPoint"}) do
+    obj[k]=data[k]
+  end
+  obj.zIndex=data.zIndex or 0
+  obj.shootCount=obj.shootRate
+  obj.changeHealth=function(self,amount)
+    self.health=self.health+amount
+    return self.health<=0
+  end
+  local cfg=self.config
+  local cell=cfg.mapScale/cfg.colGrid
+  local ox=math.min(cfg.mapScale,math.max(0,obj.x))
+  local oy=math.min(cfg.mapScale,math.max(0,obj.y))
+  for col=0,cfg.colGrid-1 do
+    local gx=col*cell
+    for row=0,cfg.colGrid-1 do
+      local gy=row*cell
+      if ox+scale>=gx and ox-scale<=gx+cell
+        and oy+scale>=gy and oy-scale<=gy+cell then
+        local key=col.."_"..row
+        self.grids[key]=self.grids[key] or {}
+        self.grids[key][#self.grids[key]+1]=obj
+        obj.gridLocations[#obj.gridLocations+1]=key
+      end
+    end
+  end
+  if obj.doUpdate then
+    self.updateObjects=self.updateObjects or {}
+    self.updateObjects[#self.updateObjects+1]=obj
+  end
+  return obj
+end
+
+
 return World
