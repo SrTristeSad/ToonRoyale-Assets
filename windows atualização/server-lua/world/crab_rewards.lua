@@ -10,13 +10,18 @@ function Rewards.onKill(ai,doer,ctx)
     type(ctx.broadcast)=="function",
     "real Game.crabKillers and broadcast required")
   assert(type(doer.shownName)=="function","original Player.shownName required")
-  local winners={[doer]=true}
-  for player,damage in pairs(ai.damageBy) do
-    if player.alive and damage>=ai.maxHealth*0.05 then
-      winners[player]=true
+  -- JS uses Set([doer]) then iterates an insertion-ordered Map of damage.
+  -- Avoid Lua pairs() order so packet "5" grants occur in original order.
+  local winners={doer}
+  local seen={[doer]=true}
+  for _,player in ipairs(ai.damageOrder or {}) do
+    local damage=ai.damageBy[player] or 0
+    if player.alive and damage>=ai.maxHealth*0.05 and not seen[player] then
+      winners[#winners+1]=player
+      seen[player]=true
     end
   end
-  for player in pairs(winners) do
+  for _,player in ipairs(winners) do
     assert(type(player.skins)=="table" and type(player.send)=="function",
       "original Player.skins and Player.send required")
     ctx.crabKillers[player.sid]=true
