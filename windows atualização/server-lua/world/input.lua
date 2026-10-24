@@ -114,6 +114,28 @@ function Input.handle(ctx,player,name,args)
     elseif args[1]==0 then player.lockDir=not truthy(player.lockDir)
     else return bad(player,name,"toggle") end
     return
+  elseif name=="S" or name=="U" then
+    if not player.alive or player.pingCooldown>0 then return end
+    local x,y=player.x,player.y
+    if name=="U" then
+      x,y=args[1],args[2]
+      local cfg=assert(ctx.config,"shared config required for map ping")
+      if #args~=2 or not finite(x) or not finite(y)
+         or x<0 or y<0 or x>cfg.mapScale or y>cfg.mapScale then
+        return bad(player,name,"map coordinates")
+      end
+    end
+    local cfg=assert(ctx.config,"original map ping time required")
+    assert(type(cfg.mapPingTime)=="number","shared mapPingTime required")
+    local roster=assert(ctx.players,"room players required for map ping")
+    player.pingCooldown=cfg.mapPingTime
+    local px,py=math.floor(x+0.5),math.floor(y+0.5)
+    for _,other in ipairs(roster) do
+      if other==player or (truthy(player.team) and other.team==player.team) then
+        other:send("9",px,py)
+      end
+    end
+    return
   elseif name=="0" then
     player:send("0")
     return
