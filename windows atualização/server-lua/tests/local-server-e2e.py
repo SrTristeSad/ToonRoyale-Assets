@@ -39,6 +39,13 @@ jwt=json.loads(raw)["token"]
 code,raw=request("POST","/api/join",{"host":"http://127.0.0.1:"+str(PORT)+"/s/MB","auth":jwt},{"X-MooIO-Code":"testing42"})
 assert code==200,(code,raw)
 member_ticket=json.loads(raw)["ticket"]
+mb_wire=wire.replace(b"/s/LC?",b"/s/MB?").replace(ticket.encode(),member_ticket.encode())
+mb=socket.create_connection((HOST,PORT),timeout=8)
+mb.sendall(mb_wire);reply=b""
+while b"101 Switching Protocols" not in reply:reply+=mb.recv(4096)
+while b"io-init" not in reply and len(reply)<2048:reply+=mb.recv(4096)
+assert b"io-init" in reply
+mb.close()
 code,raw=request("POST","/shutdown",headers={"X-MooIO-Code":"testing42"},port=PORT+1)
 assert code==200 and json.loads(raw)["ok"]
 print("PASS Lua LOCAL LC HTTP/WebSocket io-init e shutdown")
