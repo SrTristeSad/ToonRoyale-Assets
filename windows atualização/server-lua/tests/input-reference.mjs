@@ -9,7 +9,7 @@ import { items } from "../../server/src/moomoo/modules/items.js";
 // none of these packet cases calls the filtered-chat or account handlers.
 const source=fs.readFileSync(new URL("../../server/src/network/packets.js",import.meta.url),"utf8");
 const start=source.indexOf("export function handlePacket(");
-const end=source.indexOf("\\nfunction handleAdmin(",start);
+const end=source.indexOf("function handleAdmin(",start);
 if(start<0||end<0)throw Error("Original packet handler marker changed");
 const original=source.slice(start,end).trim().replace(/^export /,"");
 const handlePacket=new Function("UTILS","items","config",
