@@ -1,0 +1,88 @@
+# Deterministic operations against original Windows Node AntiCheat.
+# case|name; step|milliseconds|operation|arg1|arg2...
+case|global-bucket
+step|100000|burst|unlisted|201
+step|100000|burst|unlisted|1
+step|101000|burst|unlisted|120
+step|101000|burst|unlisted|1
+case|aim-bucket
+step|100000|burst|D|71
+step|100000|burst|D|2
+step|100000|allow|M
+step|100100|burst|D|6
+step|101100|burst|D|40
+case|packet-buckets
+step|100000|burst|M|5
+step|100000|burst|F|61
+step|100000|allow|9
+step|100000|allow|D
+step|100000|allow|U
+case|strikes-decay
+step|100000|invalid|D|bad dir
+step|100000|invalid|F|bad build
+step|100000|strike|1|manual
+step|115000|strike|2|slow
+step|130100|strike|2|slow
+step|130100|allow|S
+case|kick-limit
+step|100000|strike|37|manual
+step|100000|invalid|D|bad dir
+step|100000|strike|1|threshold
+step|100000|apply|shame|ignored
+step|100000|allow|D
+case|penalties
+step|100000|apply|flag|client reported SOCKET_HOOKED
+step|100000|apply|flag|client reported SOCKET_HOOKED
+step|100000|apply|flag|12 untrusted input events
+step|100000|apply|shame|rule
+step|100000|apply|kick|rule
+step|100000|apply|flag|after close
+case|transport
+step|100000|transport|bad tag|bad seal
+step|100000|transport|bad sequence|replay
+step|100000|apply|flag|ignored
+case|malformed
+step|100000|transport|malformed body|payload
+step|100000|transport|short frame|
+case|telemetry-invalid
+step|100000|joined
+step|100050|telemetry|256|0|0|original|7|4|100
+step|100060|telemetry|0|-1|0|original|7|4|100
+step|100070|telemetry|0|0|0|original|7|4|100
+case|telemetry-ok
+step|100000|joined
+step|130000|pending|7
+step|130010|telemetry|0|0|0|original|7|4|100
+step|130011|telemetry|0|0|0|original|7|4|100
+case|telemetry-untrusted
+step|100000|joined
+step|130000|pending|7
+step|130010|telemetry|0|12|0|original|7|4|100
+case|telemetry-socket-flag
+step|100000|joined
+step|130000|pending|7
+step|130010|telemetry|2|0|0|original|7|4|100
+case|telemetry-integrity
+step|100000|joined
+step|130000|pending|7
+step|130010|telemetry|16|0|0|original|7|4|100
+case|telemetry-ledger
+step|100000|joined
+step|130000|pending|7
+step|130010|telemetry|0|0|0|original|7|4|101
+case|telemetry-seal
+step|100000|joined
+step|130000|pending|7
+step|130010|telemetry|0|0|0|changed|7|4|100
+case|telemetry-timeout
+step|100000|joined
+step|130000|pending|7
+step|175001|tick
+step|175002|tick
+case|telemetry-second-timeout
+step|100000|joined
+step|130000|pending|7
+step|130100|rounds|2
+step|175001|tick
+case|transport-unknown
+step|100000|transport|unknown packet id|
