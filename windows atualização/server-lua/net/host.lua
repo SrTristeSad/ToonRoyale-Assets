@@ -95,7 +95,7 @@ function Host.new(options)
     bind=ip,mode=mode,port=port,roomCode=code,build=build,
     onConnect=options.onConnect,onPacket=options.onPacket,onClose=options.onClose,
     accounts=options.accounts,api=api,
-    rooms=rooms,activeByRoom={},capacity=capacity,maxPeers=maxPeers,
+    rooms=rooms,activeByRoom={},activeByIp={},capacity=capacity,maxPeers=maxPeers,
     guiHost=options.guiHost==true,controller=nil,shutdownRequested=false,
     botCount=options.botCount or 0,
     tickets={},peers={},listener=nil,active=0
@@ -165,6 +165,15 @@ function Host:request(peer,req)
       end
     end
     if not t then return bad(peer,403,"ticket") end
+    local remoteIp=peer.tcp and peer.tcp:getpeername() or peer.ip
+    if not remoteIp then return bad(peer,403,"ip") end
+    if (self.activeByIp[remoteIp] or 0)>=5 then return bad(peer,403,"too many connections") end
+    local account=t.account and t.account~=Json.null and t.account or nil
+    if self.api and
+      (self.api.moderation:isBanned(remoteIp,account and account.id or nil,t.did)
+       or (account and account.verdict=="ban")) then
+      return bad(peer,403,"banned")
+    end
     if room.membersOnly and not (t.account and t.account~=Json.null) then
       return bad(peer,403,"members-only server")
     end
@@ -180,6 +189,8 @@ function Host:request(peer,req)
     addOutput(peer,response)
     peer.state="websocket";peer.upgraded=true;self.active=self.active+1
     peer.roomKey=key
+    peer.ip=remoteIp
+    self.activeByIp[remoteIp]=(self.activeByIp[remoteIp] or 0)+1
     self.activeByRoom[key]=(self.activeByRoom[key] or 0)+1
     function peer:send(name,args)
       local frame,err=self.session:encode(name,args or {})
