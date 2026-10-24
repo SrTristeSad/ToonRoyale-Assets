@@ -26,6 +26,7 @@ try{
   const [record,a,b,c,d,e,f,g,h]=row.split("|");
   if(record==="case"){
    scenario=a;now=100000;events=[];
+   Date.now=()=>now;
    player={id:"player",name:"Hero",ip:"1.2.3.4",did:"device",
     account:{id:"account"},flagged:false,skinIndex:0};
    const store={
