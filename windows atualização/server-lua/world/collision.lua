@@ -1,3 +1,4 @@
+local Angles=require("server-lua.world.atan2")
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Literal gameplay-geometry port of ObjectManager.checkCollision from Node.
 -- Damage, trap, teleport, boost, healing and z-order effects are authoritative.
@@ -6,8 +7,7 @@ local Config=require("src.game.config")
 local Geometry={}
 local function direction(x1,y1,x2,y2)
   local dy,dx=y1-y2,x1-x2
-  if math.atan2 then return math.atan2(dy,dx) end
-  return math.atan(dy,dx) -- Lua 5.2+/5.4
+  return Angles.atan2(dy,dx)
 end
 local function sameTeam(player,owner)
   return owner and owner.team and owner.team==player.team
