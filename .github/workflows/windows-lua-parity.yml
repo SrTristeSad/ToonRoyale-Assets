@@ -265,6 +265,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/mobile-rankings-smoke.lua
+      - name: Integracao vida equipamentos stats e gravacao de accounts.json
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/account-life-integration-smoke.lua
       - name: Desbloqueios persistentes e variantes de armas Node para Lua
         run: |
           set -euo pipefail
