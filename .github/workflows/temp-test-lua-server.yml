@@ -24,3 +24,4 @@ jobs:
           sleep 1
           python3 server-lua/tests/host-smoke.py
           cat /tmp/lua-host-smoke.log
+# Revalidar contador de conexoes e protocolo apos melhorias de 24-10-2026.
