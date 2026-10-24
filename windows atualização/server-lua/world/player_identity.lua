@@ -120,6 +120,30 @@ end
 function Identity:getData(viewer)
   return Sync.playerData(self,viewer)
 end
+-- These are unchanged server/client Player methods, shared by the
+-- authoritative Player and the stand-alone constructor parity harness.
+function Identity:resetResources(moofoll)
+  return Spawn.resetResources(self,moofoll,self.config)
+end
+function Identity:canSee(other)
+  return Sync.canSee(self,other,self.config)
+end
+function Identity:setData(data)
+  assert(type(data)=="table","original Player.setData wire array required")
+  local Pack=require("src.protocol.msgpack")
+  self.id=data[1];self.sid=data[2];self.name=data[3]
+  self.x=data[4];self.y=data[5];self.dir=data[6]
+  self.health=data[7];self.maxHealth=data[8]
+  self.scale=data[9];self.skinColor=data[10]
+  self.aura=jsTruth(data[11]) and data[11]~=Pack.null
+  self.bossMode=jsTruth(data[12]) and data[12]~=Pack.null
+  local clan=data[13]
+  if clan==nil or clan==Pack.null or not jsTruth(clan) or clan=="" then
+    self.clan=nil
+  else
+    self.clan=clan
+  end
+end
 function Identity:applyPowers()
   return Spawn.applyPowers(self,self.config)
 end
