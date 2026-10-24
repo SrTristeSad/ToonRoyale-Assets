@@ -46,6 +46,10 @@ while b"101 Switching Protocols" not in reply:reply+=mb.recv(4096)
 while b"io-init" not in reply and len(reply)<2048:reply+=mb.recv(4096)
 assert b"io-init" in reply
 mb.close()
+replay=socket.create_connection((HOST,PORT),timeout=8)
+replay.sendall(mb_wire)
+assert b"403 Forbidden" in replay.recv(4096)
+replay.close()
 code,raw=request("POST","/shutdown",headers={"X-MooIO-Code":"testing42"},port=PORT+1)
 assert code==200 and json.loads(raw)["ok"]
-print("PASS Lua LOCAL LC HTTP/WebSocket io-init e shutdown")
+print("PASS Lua LOCAL LC and MB auth, one-use ticket, io-init and shutdown")
