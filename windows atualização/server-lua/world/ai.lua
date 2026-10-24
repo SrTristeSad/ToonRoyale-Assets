@@ -212,7 +212,7 @@ function AI:update(delta)
        self.xVel=self.xVel+self.leapForce*math.cos(self.dir)
        self.yVel=self.yVel+self.leapForce*math.sin(self.dir)
      end
-     for _,grid in ipairs(world:getGridArrays(self.x,self.y,self.hitRange)) do
+     for _,grid in ipairs(world:getGridArrays(self.x,self.y,self.hitRange or 0)) do
        for _,obj in ipairs(grid) do
          if truth(obj.health) then
            local d=distance(self.x,self.y,obj.x,obj.y)
