@@ -39,6 +39,7 @@ const cases=[
  {id:"toggle-lock",packet:"K",args:[0]},
  {id:"toggle-invalid",packet:"K",args:[5]},
  {id:"ping",packet:"0",args:[]},
+ {id:"telemetry",packet:"T",args:[0,0,0,"seal",7,4,100]},
  {id:"map-self",packet:"S",args:[]},
  {id:"map-ally",packet:"S",args:[],team:"RED",allyTeam:"RED"},
  {id:"map-cooldown",packet:"S",args:[],pingCooldown:500},
@@ -64,7 +65,8 @@ for(const spec of cases){
    attrCache:new Map([["old",1]]),
    anticheat:{
      invalid(name,why){events.push("INVALID:"+name+":"+why)},
-     onGameStart(){events.push("ACSTART")}
+     onGameStart(){events.push("ACSTART")},
+     onTelemetry(args){events.push("TELEMETRY:"+args.map(g).join(","))}
    },
    setUserData(data){this.name=data.name;events.push("SET:"+this.name)},
    spawn(v){this.alive=true;events.push("SPAWN:"+g(v))},
