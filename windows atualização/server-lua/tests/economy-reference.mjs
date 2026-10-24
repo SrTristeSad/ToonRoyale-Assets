@@ -28,6 +28,7 @@ const actions=[
   ["build-limit",p=>{p.itemCounts[1]=30;return p.canBuild(p.item)}],
   ["sandbox",p=>p.useRes(p.item)],
   ["sandbox-build",p=>{p.wood=0;return p.canBuild(p.item)}],
+  ["sandbox-no-limit",p=>{delete p.item.group.limit;return p.canBuild(p.item)}],
   ["unlimited-spend",p=>p.addResource(0,-25,false)],
   ["round-cost",p=>p.useRes(p.item,1.25)]
 ];
