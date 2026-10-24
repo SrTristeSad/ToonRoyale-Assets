@@ -29,6 +29,7 @@ function Transport.new(options)
    createPlayer=options.createPlayer,
    onJoined=options.onJoined,
    onDisconnect=options.onDisconnect,
+   onRemoved=options.onRemoved,
    peers=setmetatable({},{__mode="k"})
  },Transport)
 end
@@ -73,6 +74,8 @@ function Transport:closed(peer)
      break
    end
  end
+ -- Original Game.removePlayer sends presence/count/E after the splice.
+ if self.onRemoved then self.onRemoved(player,peer,self.room) end
  return true
 end
 function Transport:callbacks()
