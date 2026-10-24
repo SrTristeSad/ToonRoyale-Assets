@@ -154,7 +154,7 @@ function Host:update(dt)
       for i=math.max(1,#lines-4),#lines do selected[#selected+1]=lines[i] end
       self.lastLog=table.concat(selected,"\n")
       if content:find("MOOIO_PHASE_STARTING",1,true) then
-        self.progress="Iniciando servidor Node.js..."
+        self.progress=os.getenv("MOO_IO_LOCAL_SERVER_RUNTIME")=="lua" and "Iniciando servidor Lua..." or "Iniciando servidor Node.js..."
       end
       local reason=content:match("MOOIO_PHASE_ERROR%s+([^\n]+)")
       if reason then
