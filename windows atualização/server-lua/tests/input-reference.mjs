@@ -39,6 +39,15 @@ const cases=[
  {id:"toggle-lock",packet:"K",args:[0]},
  {id:"toggle-invalid",packet:"K",args:[5]},
  {id:"ping",packet:"0",args:[]},
+ {id:"map-self",packet:"S",args:[]},
+ {id:"map-ally",packet:"S",args:[],team:"RED",allyTeam:"RED"},
+ {id:"map-cooldown",packet:"S",args:[],pingCooldown:500},
+ {id:"map-tap",packet:"U",args:[200.5,100.25]},
+ {id:"map-tap-ally",packet:"U",args:[210.25,120.25],team:"RED",allyTeam:"RED"},
+ {id:"map-negative",packet:"U",args:[-5,120]},
+ {id:"map-nonnumeric",packet:"U",args:["bad",120]},
+ {id:"map-extra",packet:"U",args:[15,25,35]},
+ {id:"map-dead",packet:"S",args:[],alive:false},
  {id:"dead-dir",packet:"D",args:[2.2],alive:false},
  {id:"dead-attack",packet:"F",args:[true,0.5],alive:false}
 ];
@@ -48,6 +57,7 @@ for(const spec of cases){
  const p={
    id:"guest",sid:7,alive:spec.alive===undefined?true:spec.alive,
    name:"Old",dir:0.25,moveDir:0.8,mouseState:0,hits:0,
+   x:125.5,y:200.5,team:spec.team??null,pingCooldown:spec.pingCooldown??0,
    buildIndex:spec.buildIndex??-1,weaponIndex:0,
    autoGather:0,lockDir:false,
    itemCounts:{},items:[0,3,6,10],weapons:[0],
@@ -62,9 +72,13 @@ for(const spec of cases){
    buildItem(item){events.push("BUILD:"+item.id)},
    send(name,...args){events.push("SEND:"+name+":"+args.map(g).join(","))}
  };
- const ctx={game:{key:"LC"},log:s=>events.push("LOG:"+s)};
+ const ally={
+   id:"ally",team:spec.allyTeam??null,alive:true,
+   send(name,...args){events.push("ALLY:"+name+":"+args.map(g).join(","))}
+ };
+ const ctx={game:{key:"LC",players:[p,ally]},log:s=>events.push("LOG:"+s)};
  handlePacket(ctx,p,spec.packet,spec.args);
  console.log(["INPUT",spec.id,p.alive?1:0,g(p.dir),g(p.moveDir),
    g(p.mouseState),p.hits,p.buildIndex,p.weaponIndex,g(p.autoGather),
-   g(p.lockDir),p.attrCache.size,events.join(";")].join("|"));
+   g(p.lockDir),p.attrCache.size,g(p.pingCooldown),events.join(";")].join("|"));
 }
