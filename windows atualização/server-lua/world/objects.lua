@@ -179,4 +179,37 @@ function World:getGridArrays(xPos,yPos,scale)
   return result
 end
 
+-- Port of ObjectManager.disableObj/removeObjGrid/fetchSpawnObj.
+function World:disableObject(obj)
+  if not obj or not obj.active then return false end
+  obj.active=false
+  if obj.owner and obj.pps then obj.owner.pps=obj.owner.pps-obj.pps end
+  for _,key in ipairs(obj.gridLocations or {}) do
+    local arr=self.grids[key]
+    if arr then
+      for i=#arr,1,-1 do if arr[i]==obj then table.remove(arr,i) end end
+    end
+  end
+  return true
+end
+
+function World:fetchSpawnObj(sid,opts)
+  opts=opts or {}
+  for _,obj in ipairs(self.objects) do
+    if obj.active and obj.owner and obj.owner.sid==sid and obj.spawnPoint then
+      local pos={obj.x,obj.y}
+      self:disableObject(obj)
+      assert(type(opts.broadcast)=="function","real spawn-point requires Q broadcast")
+      opts.broadcast("Q",obj.sid)
+      if obj.owner then
+        assert(type(obj.owner.changeItemCount)=="function","spawn-point requires item counter")
+        assert(obj.group and obj.group.id~=nil,"spawn-point group missing")
+        obj.owner:changeItemCount(obj.group.id,-1)
+      end
+      return pos
+    end
+  end
+  return nil
+end
+
 return World
