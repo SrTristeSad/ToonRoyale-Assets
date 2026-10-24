@@ -106,6 +106,46 @@ function Local.new(opts)
   end
   return result
  end
+ local game={}
+ game.playerBySession=function(id)
+  for _,key in ipairs({"LC","MB"}) do
+   for _,player in ipairs(rooms[key].room.players) do
+    if player.id==id then return player end
+   end
+  end
+ end
+ game.sessionOf=function(player)
+  for _,key in ipairs({"LC","MB"}) do
+   for _,p in ipairs(rooms[key].room.players) do
+    if p==player then
+     return {at=p.connectedAt,server=key,ipHash=p.ipHash,reports=p.reports}
+    end
+   end
+  end
+ end
+ game.sessionFor=function(id)
+  for _,key in ipairs({"LC","MB"}) do
+   for _,p in ipairs(rooms[key].room.players) do
+    if p.account and p.account.id==id then return game.sessionOf(p) end
+   end
+  end
+ end
+ game.kickAccount=function(id,reason)
+  local n=0
+  for _,key in ipairs({"LC","MB"}) do
+   for _,p in ipairs(rooms[key].room.players) do
+    if p.account and p.account.id==id and p.kick then p.kick(reason);n=n+1 end
+   end
+  end
+  return n
+ end
+ game.setShadow=function(id,on)
+  for _,key in ipairs({"LC","MB"}) do
+   for _,p in ipairs(rooms[key].room.players) do
+    if p.account and p.account.id==id then p.shadowed=on end
+   end
+  end
+ end
  local host
  host=Host.new({bind=assert(opts.bind,"LAN/VPN binding required"),
   port=opts.port or 8080,mode=opts.mode or "lan",
@@ -113,7 +153,7 @@ function Local.new(opts)
   rooms={LC={capacity=Config.maxPlayers,membersOnly=false},
     MB={capacity=80,membersOnly=true}},
   maxPeers=120,guiHost=opts.guiHost==true,botCount=opts.botCount or 0,
-  accounts=accounts,moderation=moderation,servers=serverList,
+  accounts=accounts,moderation=moderation,servers=serverList,game=game,
   nowMs=now,
   onConnect=function(peer,ticket,key)
    peer.host=host
