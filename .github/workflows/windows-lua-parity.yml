@@ -67,6 +67,10 @@ jobs:
           diff -u /tmp/moo-movement-node.txt /tmp/moo-movement-lua.txt
           test "$(wc -l < /tmp/moo-movement-node.txt)" -eq 81
           echo 'PASS 81 snapshots'
+      - name: Vida animal real integrada ao motor da sala Lua
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/animals-health-smoke.lua
       - name: Vida morte e recompensas de animais Node vs Lua
         run: |
           set -euo pipefail
