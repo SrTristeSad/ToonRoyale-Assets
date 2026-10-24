@@ -3,6 +3,7 @@
 -- of accounts.json: never point it at a running Node server's data directory.
 local json=require("server-lua.vendor.dkjson")
 local SecureRandom=require("src.net.secure_random")
+local AccountToken=require("server-lua.world.account_token")
 local Store={}
 Store.__index=Store
 
@@ -74,6 +75,7 @@ function Store.open(path,opts)
     isRude=opts.isRude,
     gameName=opts.gameName,
     randomBytes=opts.randomBytes or SecureRandom.bytes,
+    secret=opts.secret,passwordMode=opts.passwordMode==true,
     tickets={},devices={},loginFlows={},discordCodes={}},Store)
   self.migratedIds=self:migrateIds()
   return self
@@ -894,6 +896,13 @@ local function emptyStats()
     stone=0,gold=0,animalDamage=0,animalKills=object(),
     bestScore=0,maxKills=0,lives=0,playtime=0,periods=object()}
 end
+function Store:issueToken(account,options)
+  return AccountToken.issue(self,account,options)
+end
+function Store:verifyToken(token)
+  return AccountToken.verify(self,token)
+end
+
 function Store:accountForEmail(email)
   local key=type(email)=="string" and email:match("^%s*(.-)%s*$"):lower() or ""
   if key=="" or #key>120 then return json.null end
@@ -990,6 +999,8 @@ function Store:callbacks()
     accountByEmail=function(email) return self:accountByEmail(email) end,
     accountById=function(id) return self:accountById(id) end,
     claimName=function(a,name) return self:claimName(a,name) end,
+    issueToken=function(account,opts) return self:issueToken(account,opts) end,
+    verifyToken=function(token) return self:verifyToken(token) end,
     accountForEmail=function(email) return self:accountForEmail(email) end,
     startLogin=function(email) return self:startLogin(email) end,
     finishLogin=function(flow) return self:finishLogin(flow) end,
