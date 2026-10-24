@@ -34,6 +34,10 @@ Implementações independentes no diretório `world/`:
 - `room.lua`: **motor de sala Lua integrado (ainda sem conexão de rede ao Player real)**: executa `Game.tick`, `Player.update`, projéteis, estruturas, snapshots de jogadores/objetos/animais, líderes, placar, minimapa e estatísticas. `handleInput` entrega comandos validados somente a um jogador daquela sala. O spawn de animais ainda exige serviço autoritativo e contas com coroas exigem `crownOf` real.
 - `input.lua`: port parcial de `server/src/network/packets.js::handlePacket` para `M` (spawn), `D` (direção), `9` (movimento/parada), `e` (reset), `F` (ataque/construção), `z` (armas/itens), `K` (alternâncias), `0` (ping da rede), `S` (marcação da posição no mapa) e `U` (posição escolhida no mapa tático Android). Preserva `mapPingTime`, alcance e restrições por tribo, e exige anticheat real. **Demais pacotes exigem um handler autoritativo**, não são aceitos silenciosamente.
 - `social_sync.lua`: ports fiéis de `Game.syncAnimals` (pacote `I`), `sendMinimap` (`7`), `updateLeaders`, `sendLeaderboard` (`G`) e `sendStats` (`F`). Inclui jogadores anônimos, tribos, ocultação de condenados, coroas, permissões administrativas, rastreamento de animais visíveis e estatísticas, com a mesma ordenação e payloads do Node.
+- `animal_types.lua`: todos os **15 tipos de animais** convertidos campo por campo de `server/src/moomoo/modules/aiManager.js::AI_TYPES`; o índice Lua é explicitamente o SID do tipo no cliente.
+- `ai.lua`: port de `AI.init` e da atualização de **animais comuns**, cobrindo temporizadores de reaparecimento, veneno, perseguição, fuga, rotação, subpassos físicos, colisões, golpes e limite do mapa. **O Crab King não usa essa IA como substituta**: seus métodos de mergulho e incursão continuam pendentes.
+- `animals.lua`: port de `AiManager.spawn`, `Game.animalPosition` e `Game.ensureAnimals`, com as mesmas posições, biomas, reaproveitamento de SIDs e densidade de spawn. É opcional em `room.lua` até que os serviços de vida/morte e o chefe estejam completos; quando presente, a sala exige callbacks de saúde e rede e rejeita o chefe sem seu comportamento real.
+
 
 
 
@@ -59,18 +63,21 @@ As novas suítes diferenciais também comparam:
 - `game-loop-reference.mjs/.lua`: **4 perfis de sala × 6 ticks = 24 snapshots**, extraídos diretamente do método original `Game.tick`.
 - `input-reference.mjs/.lua`: **33 cenários de entrada** comparados com o `handlePacket` Node original, incluindo ping, marcações no mapa e envio apenas para aliados.
 - `social-reference.mjs/.lua`: **4 perfis × 3 atualizações = 12 snapshots** comparados com métodos originais do Node, incluindo `Game.crownOf` e privacidade de anonimato.
+- `ai-reference.mjs/.lua`: **20 situações × 3 ticks = 60 snapshots** de `AI.update` original, cobrindo animais pacíficos, touros e lobos, perseguição, respawn e dano periódico.
+- `animal-manager-reference.mjs/.lua`: valida os **15 tipos** completos do `AI_TYPES`, cálculo de local de nascimento, plano de população, reuso de SIDs e `spawnDelay`.
+- `room-animals-smoke.lua`: executa vaca e lobo nativos no `Room.tick`, sem serviços inventados, e impede o Crab King de entrar sem callbacks reais de mergulho e combate.
 - `player-update-reference.mjs/.lua`: **18 situações × 3 ticks = 54 snapshots**, executando o método `Player.update` **inteiro**, incluindo a parada por morte durante efeitos periódicos.
 - `room-smoke.lua`: valida uma sala integrada com jogador, animal, projétil e construção; emite `D`/`a`/`H`/`X`/`I`/`7`/`G`/`F`, recebe comandos da sala e mantém obrigatórios os serviços ainda não portados.
 
 Testes novos executam as funções originais do Node.js, comparando os mesmos efeitos na implementação Lua: `spawn-reference` (8 cenários), `vitals-reference` (12 cenários com múltiplos ticks), `health-reference` (16 cenários de danos, morte e recompensas) e `economy-reference` (19 cenários de recursos, XP e custos). A suíte GitHub Actions roda automaticamente na branch `main` do ToonRoyale-Assets.
 
-**Integração parcial de sala confirmada:** a sala Lua já processa movimento, projéteis, estruturas, snapshots de animais, ranking, minimapa, estatísticas e comandos diretos da sala no mesmo tick. Ainda não está conectado ao host de rede nem possui implementação completa de IA, bots, clãs, autenticação, entrada/saída ou persistência. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
+**Integração parcial de sala confirmada:** a sala Lua já processa movimento, projéteis, estruturas, snapshots e IA básica de animais comuns (quando habilitada), ranking, minimapa, estatísticas e comandos diretos da sala no mesmo tick. Ainda não está conectado ao host de rede nem possui implementação completa de IA, bots, clãs, autenticação, entrada/saída ou persistência. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
 
 ## Limites — NÃO é o servidor completo
 
 A infraestrutura de rede e um núcleo de sala Lua funcionam isoladamente, com testes de paridade contra o Node. **Ainda não existe uma sala Lua completa de ponta a ponta para substituir o Node.js**, porque o despachante dos pacotes, a construção integral do Player e os serviços de animal/conta/tribo continuam faltando.
 
-Pendente: contas/autorização V2, endpoints HTTP restantes, ligação do host a `room.lua` e ao construtor real de jogadores, **handlers restantes de entrada** (upgrades, loja, clãs, chat, rankings por categoria, moderação), IA e spawn dos animais, bots, clãs, loja, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
+Pendente: contas/autorização V2, endpoints HTTP restantes, ligação do host a `room.lua` e ao construtor real de jogadores, **handlers restantes de entrada** (upgrades, loja, clãs, chat, rankings por categoria, moderação), vida/morte real dos animais, ataques e mergulho do Crab King, bots, clãs, loja, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
@@ -83,6 +90,7 @@ node server-lua/tests/reference.mjs > server-lua/tests/reference-fixtures.txt
 lua5.4 server-lua/tests/protocol.lua server-lua/tests/reference-fixtures.txt
 lua5.4 server-lua/tests/websocket.lua
 lua5.4 server-lua/tests/room-smoke.lua
+lua5.4 server-lua/tests/room-animals-smoke.lua
 node server-lua/tests/social-reference.mjs > /tmp/social-node.txt
 lua5.4 server-lua/tests/social-reference.lua > /tmp/social-lua.txt
 diff -u /tmp/social-node.txt /tmp/social-lua.txt
