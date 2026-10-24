@@ -13,7 +13,7 @@
 - Gerador criptográfico de parâmetros do protocolo em `protocol/build.lua`.
 - Testes: `tests/protocol.lua` contra os valores calculados pelo JavaScript original (`tests/reference.mjs`), `tests/websocket.lua` e um teste de HTTP + WebSocket real (`tests/host-smoke.lua` / `tests/host-smoke.py`).
 
-## Migração do mundo (fase atual)
+**Plano de aceitação em 3 etapas:** [MIGRATION_3_STEPS.md](MIGRATION_3_STEPS.md). Nenhuma etapa depende apenas de estimativas: cada marco possui testes e condições de saída.\n\n## Migração do mundo (fase atual)
 
 Implementações independentes no diretório `world/`:
 
@@ -40,8 +40,8 @@ Implementações independentes no diretório `world/`:
 - `score.lua`: port de `Game.scoreCallback` para pontos, XP, progresso e estatísticas, com comparação direta contra Node.
 - `player_registry.lua`: ciclo de sessão de `Game.addPlayer/removePlayer` com atribuição/reuso dos 50 SIDs, hash SHA-256 do endereço de conexão, campos de conta, boas-vindas `A` contendo os 15 animais originais, hooks obrigatórios de limpeza, notificações de presença, contagem e saída `E`. Inclui callbacks prontos para `RoomTransport`, sem permitir pular a autenticação ou a gestão de clãs.
 
-- `room.lua`: motor Lua integrado de `Game.tick`, jogadores, projéteis, estruturas, animais, chefes, placar e minimapa. O `player_registry.lua` e `room_transport.lua` já têm integração de ciclo de sessão testada; **a distribuição jogável para usuários ainda depende dos serviços reais de autenticação/loja/clãs, proteção e conteúdo de produção**.
-- `input.lua`: port parcial de `server/src/network/packets.js::handlePacket` para `M` (spawn), `D` (direção), `9` (movimento/parada), `e` (reset), `F` (ataque/construção), `z` (armas/itens), `K` (alternâncias), `0` (ping da rede), `S` (marcação da posição no mapa) e `U` (posição escolhida no mapa tático Android). Preserva `mapPingTime`, alcance e restrições por tribo, e exige anticheat real. **Demais pacotes exigem um handler autoritativo**, não são aceitos silenciosamente.
+- `room.lua`: motor Lua integrado de `Game.tick`, jogadores, projéteis, estruturas, animais, chefes, placar e minimapa; integra loja e evolução, tribos de partida, chat e anonimato. O ciclo de sessão também é testado, mas **a distribuição jogável ainda depende de autenticação, clãs de conta, moderação e persistência reais**.
+- `input.lua`: port dos comandos `M`, `D`, `9`, `e`, `F`, `z`, `K`, `0`, `S`, `U`, `T`, `H` (upgrades), `c` (loja), `L`/`N`/`b`/`P`/`Q` (tribos), `6` (chat) e `I` (anonimato). Todos usam validação original e anticheat real. **Pacotes restantes continuam exigindo o handler autoritativo**, sem aceitação silenciosa.
 - `social_sync.lua`: ports fiéis de `Game.syncAnimals` (pacote `I`), `sendMinimap` (`7`), `updateLeaders`, `sendLeaderboard` (`G`) e `sendStats` (`F`). Inclui jogadores anônimos, tribos, ocultação de condenados, coroas, permissões administrativas, rastreamento de animais visíveis e estatísticas, com a mesma ordenação e payloads do Node.
 - `animal_types.lua`: todos os **15 tipos de animais** convertidos campo por campo de `server/src/moomoo/modules/aiManager.js::AI_TYPES`; o índice Lua é explicitamente o SID do tipo no cliente.
 - `animal_health.lua`: port de `AI.changeHealth`: dano, imunidade do Crab King submerso, reação a ataques, veneno, registro de dano, morte, pontuação, drops, reaparecimento e desaparecimento de animais administrativos. Depende dos serviços de rede/pontuação reais; não inventa ouro ou recursos.
@@ -91,6 +91,12 @@ As novas suítes diferenciais também comparam:
 - `player-identity-reference.mjs/.lua`: **18 casos** usando preâmbulo e métodos de identidade extraídos diretamente de `Player` no Node, incluindo anon, nome, equipamento gratuito, troca de item e aparência.
 - `player-score-reference.mjs/.lua`: **20 variantes de arma + 8 cenários de pontuação**, comparados com `Player.variant` e `Game.scoreCallback` originais.
 - `player-full-smoke.lua`: percorre `Player.new` → pacote `M` → spawn → `Game.tick` → movimento, XP, construção, combate e animações.
+- `equipment-reference.mjs/.lua`: **33 casos** de upgrade `H`, compra `c`, equipamento e compra vinculada à conta comparados com `packets.js` original.
+- `tribes-reference.mjs/.lua`: **26 casos** de `ClanManager` Node vs Lua, incluindo ordem dos pacotes, clãs de tribo, membros e desconexão.
+- `chat-reference.mjs/.lua`: **39 casos** de `filterchat.js` e pacote `6`, com sanitização UTF-16, palavras filtradas, limite, cooldown, shadowban e auditoria de moderação.
+- `anon-reference.mjs/.lua`: **18 casos** do pacote `I`, cooldown, privacidade de conta, reinicialização de snapshots e placar.
+- `gameplay-final-smoke.lua`: dois jogadores `Player` reais atravessam `RoomTransport` → spawn → upgrade → loja → criar/entrar/sair de tribo → chat → `Game.tick` → desconexão. Usa explicitamente serviços de teste onde os subsistemas de conta/persistência ainda não existem.
+
 - `player-registry-smoke.lua`: verifica `Host`/`RoomTransport` → construtor Lua real → welcome `A` → spawn e comandos → saída, metadados de conta, hash IP, ordem de limpeza, reutilização de SID e pacote `E`.
 
 
@@ -116,9 +122,9 @@ Testes novos executam as funções originais do Node.js, comparando os mesmos ef
 
 ## Limites — NÃO é o servidor completo
 
-A infraestrutura de rede e um núcleo de sala Lua funcionam isoladamente, com testes de paridade contra o Node. **Ainda não existe uma instalação Lua completa e publicável para substituir o Node.js**: o catálogo e os nomes já existem em Lua, mas faltam a homologação e persistência do anticheat, handlers de pacotes e serviços de contas, tribos, bots, moderação, presença e persistência.
+A infraestrutura de rede e o motor Lua já passam nos testes isolados e integrados com jogadores de teste. **Ainda não existe instalação Lua completa e publicável para substituir o Node.js**: faltam integração da autenticação de contas e dos clãs persistentes, os demais handlers de pacotes, bots, moderação, presença, salvamento e validação com o cliente Windows real.
 
-Pendente: integrar `player_registry.lua` com os serviços verdadeiros e com `net/host.lua` em uma instalação executável; contas/autorização V2, moderador/persistência das sanções anticheat e endpoints HTTP restantes, **handlers restantes de entrada** (upgrades, compra/equipamentos da loja, clãs, chat, moderação), bots, tribos, persistência e testes reais do cliente contra o servidor Lua. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
+Pendente: inicializar `player_registry.lua` junto com `net/host.lua` e os serviços reais numa instalação Windows; contas/autorização V2, clãs persistentes, moderação/denúncias, sanções e respectivos registros, endpoints HTTP restantes, handlers `V`/`R`/`A` e quaisquer outros incompletos, bots, persistência e **testes cliente Windows↔Lua reais**. O gateway Lua ainda aceita somente convidados LAN/VPN, sem substituir a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
