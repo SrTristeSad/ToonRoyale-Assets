@@ -98,7 +98,14 @@ function Economy.canBuild(player,item,options)
   local group=assert(item.group,"original item group required")
   local limit
   if cfg.inSandbox then
-    limit=jsOr(group.sandboxLimit,math.max(group.limit*3,99))
+    if group.sandboxLimit~=nil and group.sandboxLimit~=false and group.sandboxLimit~=0 then
+      limit=group.sandboxLimit
+    else
+      -- Preserve JS short-circuit: only read group.limit if there is
+      -- no sandboxLimit. Some item groups omit a normal-mode limit.
+      assert(type(group.limit)=="number","original group limit required")
+      limit=math.max(group.limit*3,99)
+    end
   else
     limit=group.limit
   end
