@@ -107,6 +107,14 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/player-lifecycle-smoke.lua
+      - name: Upgrades H e loja c originais Node vs Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/equipment-reference.mjs > /tmp/moo-equipment-node.txt
+          lua5.4 server-lua/tests/equipment-reference.lua > /tmp/moo-equipment-lua.txt
+          diff -u /tmp/moo-equipment-node.txt /tmp/moo-equipment-lua.txt
+          test "$(wc -l < /tmp/moo-equipment-node.txt)" -eq 33
+          echo 'PASS 33 upgrades, compras, equipar e desequipar originais'
       - name: Anticheat nativo integrado a Host Player e sala Lua
         run: |
           set -euo pipefail
