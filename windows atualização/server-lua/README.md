@@ -29,6 +29,10 @@ Implementações independentes no diretório `world/`:
 - `build.lua`: port de `Player.buildItem`, com posicionamento real no mapa, limites, bloqueios, construções, cura por alimentos, penalização de vergonha, gastos de recursos e geração de objetos. `objects.lua` agora possui `addDynamic`, reutilizando SIDs e indexação espacial do `ObjectManager.add` original.
 - `projectiles.lua`: port de `Projectile` e `ProjectileManager`, com ciclo de vida, quadro inicial, alcance, colisão de segmento/retângulo (`UTILS.lineInRect`), dano a jogadores e estruturas, defesa de escudos, reutilização de projéteis e pacotes `X`, `L`, `Q` e `Y`.
 - `structures.lua`: port de `Game.updateStructures`, `Game.turretTarget` e `GameObject.update`: atualização de moinhos, temporizador de torretas, seleção de alvo, proteção por tribo, invisibilidade, disparo em direção ao inimigo e atualização visual `M`. Estruturas destruídas são retiradas de `updateObjects` como no Node.
+- `game_loop.lua`: transcrição da ordem de atualização de `Game.tick`: bots, cooldowns, jogadores, projéteis, estruturas, IA, spawn de animais, líderes, placar, minimapa, estatísticas e sincronização por observador. Usa o relógio monotônico injetado e exige serviços reais para módulos ainda não portados.
+- `player_update.lua`: conecta `vitals.lua`, `movement.lua` e `weapon_tick.lua` na mesma ordem de `Player.update`, incluindo a verificação de morte após dano periódico e antes da física.
+- `room.lua`: **motor de sala Lua integrado (ainda não conectado ao cliente)**: instancia mundo e `ProjectileManager`; executa `Game.tick`, `Player.update`, `Structures.update`, `Snapshot.syncPlayers`/`syncObjects`, e envia eventos de colisão `L`/`Q` pelo `hitObject`. Serviços não portados (IA, placar, minimapa, stats e sincronização dos animais) são explicitamente obrigatórios. O bind do Player recebe seus métodos reais; não inventa o construtor de jogador.
+
 
 
 
@@ -50,15 +54,19 @@ As novas suítes diferenciais também comparam:
 - `projectile-reference.mjs/.lua`: **20 cenários × 3 ticks (60 snapshots)** executando `Projectile`/`ProjectileManager` originais, verificando estado, colisões e pacotes de rede.
 - `structures-reference.mjs/.lua`: **20 cenários × 3 ticks (60 snapshots)** com `Game.updateStructures`, `Game.turretTarget` e `GameObject.update` reais.
 
+- `game-loop-reference.mjs/.lua`: **4 perfis de sala × 6 ticks = 24 snapshots**, extraídos diretamente do método original `Game.tick`.
+- `player-update-reference.mjs/.lua`: **18 situações × 3 ticks = 54 snapshots**, executando o método `Player.update` **inteiro**, incluindo a parada por morte durante efeitos periódicos.
+- `room-smoke.lua`: valida o encadeamento de um jogador, um projétil e uma construção pela sala Lua, com emissão de pacotes reais `D`/`a`/`H`/`X`, avanço de física e clocks, e rejeição de serviços ainda não implementados.
+
 Testes novos executam as funções originais do Node.js, comparando os mesmos efeitos na implementação Lua: `spawn-reference` (8 cenários), `vitals-reference` (12 cenários com múltiplos ticks), `health-reference` (16 cenários de danos, morte e recompensas) e `economy-reference` (19 cenários de recursos, XP e custos). A suíte GitHub Actions roda automaticamente na branch `main` do ToonRoyale-Assets.
 
-**Ainda não está conectado ao jogo:** o loop autoritativo precisa unir os módulos de jogador, objetos, projéteis e torretas; também faltam IA de animais, bots, tribos, handlers completos de pacotes, autenticação e outros endpoints. Até eles serem portados e testados, **o servidor local funcional continua sendo Node.js**.
+**Integração parcial de sala confirmada:** a sala Lua já processa movimento, projéteis, estruturas e atualizações S2C no mesmo tick. Ainda não recebe pacotes dos clientes nem possui a implementação completa dos serviços externos de IA, bots, clãs, ranking, autenticação, entrada/saída e persistência. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
 
 ## Limites — NÃO é o servidor completo
 
-A infraestrutura de rede Lua funciona isoladamente, mas **a lógica de partida ainda precisa ser portada**. Não existe equivalência 1:1 do mundo neste estágio.
+A infraestrutura de rede e um núcleo de sala Lua funcionam isoladamente, com testes de paridade contra o Node. **Ainda não existe uma sala Lua completa de ponta a ponta para substituir o Node.js**, porque o despachante dos pacotes, a construção integral do Player e os serviços de animal/conta/tribo continuam faltando.
 
-Pendente: contas/autorização V2, outros endpoints HTTP, integração da simulação Lua completa e seus callbacks autoritativos ao host, handlers de entrada, animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
+Pendente: contas/autorização V2, endpoints HTTP restantes, conexão do `room.lua` e do jogador real ao host, handlers de pacotes de entrada, animais e IA, bots, clãs, loja, placar, persistência, moderação e anti-cheat de gameplay. A API Lua ainda admite apenas guest em LAN/VPN e não substitui a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
@@ -70,6 +78,10 @@ A partir de `windows atualização/`:
 node server-lua/tests/reference.mjs > server-lua/tests/reference-fixtures.txt
 lua5.4 server-lua/tests/protocol.lua server-lua/tests/reference-fixtures.txt
 lua5.4 server-lua/tests/websocket.lua
+lua5.4 server-lua/tests/room-smoke.lua
+node server-lua/tests/game-loop-reference.mjs > /tmp/game-loop-node.txt
+lua5.4 server-lua/tests/game-loop-reference.lua > /tmp/game-loop-lua.txt
+diff -u /tmp/game-loop-node.txt /tmp/game-loop-lua.txt
 ```
 
 Para testar a camada de rede separadamente, instale LuaSocket para o interpretador de testes:
