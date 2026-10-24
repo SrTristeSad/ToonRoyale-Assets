@@ -7,6 +7,9 @@ local room={
  bindPlayer=function()end,sendId=function()end,
  recordLife=function(_,p,died)
   events[#events+1]="life:"..p.sid..":"..tostring(died)
+ end,
+ onPlayerDeath=function(_,p)
+  events[#events+1]="death:"..p.sid
  end
 }
 local registry=Registry.new(room,{
@@ -23,4 +26,7 @@ registry.playersById[player.id]=player
 registry:beforeRemove(player,{},room)
 assert(table.concat(events,",")=="life:1:false,leave:1,forget:1,items:1")
 assert(type(registry.options.recordLife)=="function")
+assert(type(registry.options.onDeath)=="function")
+registry.options.onDeath(player)
+assert(events[#events]=="death:1","native onPlayerDeath must be bound by default")
 print("PASS recordLife nativo no PlayerRegistry: ordem de desconexao")
