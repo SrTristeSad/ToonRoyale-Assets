@@ -209,7 +209,16 @@ function Host:processPeer(peer)
         addOutput(peer,WS.encode(frame.payload:sub(1,125),10))
       elseif frame.opcode==2 then
         local msg,reason=peer.session:decode(frame.payload)
-        if not msg then self:drop(peer);return end
+        if not msg then
+          local ac=peer.player and peer.player.anticheat
+          if ac then
+            assert(type(ac.onTransportError)=="function",
+              "original anticheat.onTransportError required")
+            ac:onTransportError(reason)
+          end
+          self:drop(peer)
+          return
+        end
         local ok,e=pcall(self.onPacket,peer,msg.name,msg.args)
         if not ok then self:drop(peer);error("Lua onPacket: "..tostring(e)) end
       end
