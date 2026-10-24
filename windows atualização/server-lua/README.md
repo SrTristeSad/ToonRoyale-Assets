@@ -2,6 +2,17 @@
 
 **Objetivo:** portar o servidor local Node.js para Lua sem mudar o jogo, as regras nem o protocolo do cliente.
 
+**Referência obrigatória:** a opção **Criar minha sala** do cliente Windows executa
+`src/net/mooio_host.lua` → `scripts/start-server.ps1` →
+`server/src/offline.mjs` (bundle gerado a partir de `server/src/index.js`).
+O alvo é esse servidor **LOCAL no modo padrão**, isto é,
+`MOO_IO_V2_PRIVATE_ROOM` desativado. O modo V2, workers, credenciais
+V2/scrypt e recursos exclusivos de VPS não fazem parte desta migração.
+A existência de código V2 dentro de `server/src/index.js` **não o torna
+referência para esta réplica**. O teste `tests/local-server-target.mjs`
+protege esta seleção de referência na CI.
+
+
 ## Implementado e testado
 
 - **Protocolo autenticado** em `protocol/session.lua`: io-init, IDs dinâmicos das mensagens, SHA-256/HMAC, máscaras, contador, anti-replay e ledger.
@@ -118,13 +129,13 @@ As novas suítes diferenciais também comparam:
 
 Testes novos executam as funções originais do Node.js, comparando os mesmos efeitos na implementação Lua: `spawn-reference` (8 cenários), `vitals-reference` (12 cenários com múltiplos ticks), `health-reference` (16 cenários de danos, morte e recompensas) e `economy-reference` (19 cenários de recursos, XP e custos). A suíte GitHub Actions roda automaticamente na branch `main` do ToonRoyale-Assets.
 
-**Integração parcial de sala confirmada:** jogador Lua composto, catálogo original integral, filtro de nomes, movimento, construções, combate, economia, animais e Crab King já executam em `Room.tick`; `player_registry.lua` conecta sessões autenticadas pelo convite do Host aos jogadores, com SID e saída testados. A rotina anticheat da **configuração local compatível** já está conectada aos comandos, mas ainda faltam a persistência/gestão real das sanções, autenticação V2, moderação de denúncias, clãs, presença e persistência, além dos pacotes faltantes. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
+**Integração parcial de sala confirmada:** jogador Lua composto, catálogo original integral, filtro de nomes, movimento, construções, combate, economia, animais e Crab King já executam em `Room.tick`; `player_registry.lua` conecta sessões autenticadas pelo convite do Host aos jogadores, com SID e saída testados. A rotina anticheat da **configuração local compatível** já está conectada aos comandos, mas ainda faltam a persistência/gestão real das sanções, a integração completa dos serviços do servidor local, presença e testes reais com o cliente Windows. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
 
 ## Limites — NÃO é o servidor completo
 
 A infraestrutura de rede e o motor Lua já passam nos testes isolados e integrados com jogadores de teste. **Ainda não existe instalação Lua completa e publicável para substituir o Node.js**: faltam integração da autenticação de contas e dos clãs persistentes, os demais handlers de pacotes, bots, moderação, presença, salvamento e validação com o cliente Windows real.
 
-Pendente: inicializar `player_registry.lua` junto com `net/host.lua` e os serviços reais numa instalação Windows; contas/autorização V2, clãs persistentes, moderação/denúncias, sanções e respectivos registros, endpoints HTTP restantes, handlers `V`/`R`/`A` e quaisquer outros incompletos, bots, persistência e **testes cliente Windows↔Lua reais**. O gateway Lua ainda aceita somente convidados LAN/VPN, sem substituir a autenticação V2.
+Pendente: inicializar `player_registry.lua` junto com `net/host.lua` e os serviços reais numa instalação Windows; autenticação local e endpoints HTTP efetivamente usados por **Criar minha sala**, integração do mundo, bots e persistência e **testes cliente Windows↔Lua reais**. Excluir código exclusivo do modo V2 do escopo. O gateway Lua ainda aceita somente convidados LAN/VPN, sem substituir a autenticação V2.
 
 **O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
