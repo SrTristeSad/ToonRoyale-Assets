@@ -60,7 +60,7 @@ function AntiCheat:apply(action,reason)
  if action=="close" then
   self.log("close ("..reason..")")
   self.closed=true
-  self.closeFn("INVALID_CONNECTION")
+  self.closeFn(4001) -- CLOSE.INVALID_CONNECTION in original constants.js
  elseif action=="kick" then
   self.log("kick ("..reason..")")
   self.closed=true
