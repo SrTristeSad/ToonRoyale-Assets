@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Game.sendProfile port from server/src/moomoo/server.js.
 -- JSON serialization and registered account profiles are provided by real services.
+local Json=require("server-lua.vendor.dkjson")
 local Profile={}
 local function truth(v) return v~=nil and v~=false and v~=0 end
 function Profile.send(game,viewer,sid)
@@ -25,8 +26,8 @@ function Profile.send(game,viewer,sid)
   else
     data={name=target.name,guest=true}
   end
-  local encode=assert(game.services and game.services.encodeJson,
-    "authoritative JSON serializer required for profile wire payload")
+  -- Match Node JSON.stringify using the bundled JSON encoder by default.
+  local encode=(game.services and game.services.encodeJson) or Json.encode
   assert(type(encode)=="function","encodeJson must be a function")
   local wire=encode(data)
   assert(type(wire)=="string","profile JSON must serialize to a string")
