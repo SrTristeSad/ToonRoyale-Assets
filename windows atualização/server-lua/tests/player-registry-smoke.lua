@@ -70,6 +70,9 @@ local two=bridge:connected(p2,{did="account"})
 assert(two.sid==1 and two.isMember and two.role=="admin")
 assert(two.shadowed and two.name=="Permanent" and two.clanTag=="CLAN")
 assert(registry.playersById[one.id]==one and registry.playersById[two.id]==two)
+-- Original input ignores movement until the client sends spawn packet M.
+bridge:packet(p1,"M",{{name="Hero",skin=0,moofoll=false}})
+assert(one.alive and one.spawned and one.name=="Hero")
 bridge:packet(p1,"D",{1.2})
 assert(one.dir==1.2,"real input goes to correct Player")
 room.crabKillers[one.sid]=true
