@@ -8,6 +8,7 @@ local Equipment=require("server-lua.world.equipment_input")
 local TribeInput=require("server-lua.world.tribe_input")
 local Chat=require("server-lua.world.chat_input")
 local Anonymous=require("server-lua.world.anon_input")
+local Ranking=require("server-lua.world.mobile_rankings")
 local Input={}
 local function truthy(v)
   return v~=nil and v~=false and v~=0 and v~=MP.null
@@ -152,6 +153,17 @@ function Input.handle(ctx,player,name,args)
         other:send("9",px,py)
       end
     end
+    return
+  elseif name=="Y" then
+    local category=args[1]
+    if #args~=1 or type(category)~="string" or not Ranking.valid(category) then
+      return bad(player,name,"ranking category")
+    end
+    if not player.alive then return end
+    local now=assert(ctx.wallTimeMs,"authoritative wall clock required for mobile ranking")
+    if now-(player.lastMobileRankingAt or 0)<1000 then return end
+    player.lastMobileRankingAt=now
+    player:send("n",category,Ranking.build(assert(ctx.players,"room players required"),player,category))
     return
   elseif name=="V" then
     -- Node packets.js: watched profile SID; -1 clears the selection.
