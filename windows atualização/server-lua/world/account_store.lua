@@ -73,6 +73,7 @@ function Store.open(path,opts)
     nowMs=opts.nowMs or function() return os.time()*1000 end,
     isRude=opts.isRude,
     randomBytes=opts.randomBytes or SecureRandom.bytes},Store)
+  self.migratedIds=self:migrateIds()
   return self
 end
 function Store:save()
@@ -687,6 +688,55 @@ function Store:setSocials(account,socials)
   account.socials=result
   self:save()
   return {status=200,body={socials=result}}
+end
+
+-- AccountStore.migrateIds: preserve Node's remapping across every reference.
+function Store:migrateIds()
+  local remap=object()
+  for old,account in pairs(self.data.accounts) do
+    if not (#old==24 and old:match("^[a-f0-9]+$")) then
+      local seconds=math.floor(((account.createdAt and account.createdAt~=0)
+          and account.createdAt or self.nowMs())/1000)
+      local suffix=(#old==16 and old:match("^[a-f0-9]+$")) and old
+          or (self.randomBytes(8):gsub(".",function(ch)
+              return string.format("%02x",ch:byte()) end))
+      remap[old]=string.format("%08x",seconds)..suffix
+    end
+  end
+  if next(remap)==nil then return remap end
+  local function mapped(id) return remap[id] or id end
+  local accounts=object()
+  for _,account in pairs(self.data.accounts) do
+    account.id=mapped(account.id)
+    accounts[account.id]=account
+  end
+  self.data.accounts=accounts
+  for _,index in ipairs({self.data.emails,self.data.names}) do
+    for name,id in pairs(index) do index[name]=mapped(id) end
+  end
+  for _,clan in pairs(self.data.clans) do
+    for _,member in ipairs(clan.members) do member.id=mapped(member.id) end
+    for _,past in ipairs(clan.past or {}) do past.id=mapped(past.id) end
+    for _,invite in ipairs(clan.invites or {}) do
+      invite.id=mapped(invite.id)
+      invite.by=mapped(invite.by)
+    end
+    for i,id in ipairs(clan.requests) do clan.requests[i]=mapped(id) end
+  end
+  local friends=object()
+  for id,entries in pairs(self.data.social.friends) do
+    for _,entry in ipairs(entries) do entry.id=mapped(entry.id) end
+    friends[mapped(id)]=entries
+  end
+  self.data.social.friends=friends
+  for _,request in ipairs(self.data.social.requests) do
+    request.senderId=mapped(request.senderId)
+    request.recipientId=mapped(request.recipientId)
+  end
+  self.data.legacyIds=self.data.legacyIds or object()
+  for old,new in pairs(remap) do self.data.legacyIds[old]=new end
+  self:save()
+  return remap
 end
 
 -- Node uses dot-method calls; this wrapper retains that shape for existing Lua ports.
