@@ -454,6 +454,10 @@ jobs:
           lua5.4 server-lua/tests/snapshot-reference.lua > /tmp/moo-sync-lua.txt
           diff -u /tmp/moo-sync-node.txt /tmp/moo-sync-lua.txt
           echo 'PASS snapshots de jogadores e objetos'
+      - name: Persistencia moderacao e porta de shutdown LOCAL
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/moderation-control-smoke.lua
       - name: HTTP local de contas e ingressos - AccountStore real
         run: |
           set -euo pipefail
