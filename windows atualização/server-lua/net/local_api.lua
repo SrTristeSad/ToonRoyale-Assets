@@ -2,6 +2,7 @@
 -- HTTP handlers from the Windows LOCAL server/src/api/routes.js.
 -- This is the original non-V2 AccountStore flow, not a new login service.
 local Json=require("server-lua.vendor.dkjson")
+local AntiCheatConfig=require("server-lua.anticheat.config")
 local API={}
 API.__index=API
 local function truth(v) return v~=nil and v~=false and v~=0 and v~="" and v~=Json.null end
@@ -34,6 +35,7 @@ function API.new(opts)
   "original ModerationStore banEntry/lockedFor required")
  return setmetatable({store=opts.store,moderation=opts.moderation,
   roomCode=assert(opts.roomCode,"local invitation code required"),
+  game=opts.game,
   servers=assert(opts.servers,"original local LC and MB server list required"),
   nowMs=opts.nowMs or function()return os.time()*1000 end,
   friendRate={}},API)
@@ -151,7 +153,9 @@ function API:handle(method,target,headers,raw,ip)
   ["/api/account/look"]=true,["/api/name"]=true,
   ["/api/account/socials"]=true,["/api/discord/link"]=true,
   ["/api/friends/allow"]=true,["/api/top"]=true,
-  ["/api/mod/role"]=true,["/api/mod/clan"]=true
+  ["/api/mod/role"]=true,["/api/mod/clan"]=true,
+  ["/api/mod/verdict"]=true,["/api/mod/kick"]=true,
+  ["/api/mod/player"]=true
  }
  local clanAction=path:match("^/api/clan/([%w]+)$")
  if not authPaths[path] and not clanAction then return nil end
