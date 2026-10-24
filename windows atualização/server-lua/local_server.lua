@@ -107,7 +107,8 @@ function Local.new(opts)
   roomCode=assert(opts.roomCode,"MOO_IO_ROOM_CODE required"),
   rooms={LC={capacity=Config.maxPlayers,membersOnly=false},
     MB={capacity=80,membersOnly=true}},
-  maxPeers=120,accounts=accounts,moderation=moderation,servers=serverList,
+  maxPeers=120,guiHost=opts.guiHost==true,
+  accounts=accounts,moderation=moderation,servers=serverList,
   nowMs=now,
   onConnect=function(peer,ticket,key)
    peer.host=host
@@ -126,6 +127,7 @@ end
 function Local:start()return self.host:start()end
 function Local:update()
  self.host:update()
+ if self.host.shutdownRequested then self:close();return false end
  local now=self.clock()
  local ticks=0
  while now-self.nextTick>=self.step and ticks<5 do
