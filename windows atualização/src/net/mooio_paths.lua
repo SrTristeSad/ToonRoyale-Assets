@@ -44,6 +44,9 @@ function Paths.find(fs)
   return nil,"Instalacao incompleta: extraia o ZIP inteiro e abra MOO-IO.vbs na pasta do projeto."
 end
 function Paths.script(root)
+  if os.getenv("MOO_IO_LOCAL_SERVER_RUNTIME")=="lua" then
+    return join(root,"scripts/start-server-lua.ps1")
+  end
   return join(root,"scripts/start-server.ps1")
 end
 function Paths.log(root)
