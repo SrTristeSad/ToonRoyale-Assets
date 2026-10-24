@@ -75,11 +75,15 @@ function Host.new(options)
   local code=options.roomCode
   assert(type(code)=="string" and #code>=8 and #code<=64
     and code:match("^[%w%-]+$"),"invalid room code")
+  local capacity=options.capacity or 40
+  assert(type(capacity)=="number" and capacity%1==0 and capacity>=1 and capacity<=40,"capacity must be 1..40")
+  local maxPeers=options.maxPeers or math.max(40,capacity)
+  assert(type(maxPeers)=="number" and maxPeers%1==0 and maxPeers>=capacity,"invalid max peers")
   local build=options.build or Build.new()
   return setmetatable({
     bind=ip,mode=mode,port=port,roomCode=code,build=build,
     onConnect=options.onConnect,onPacket=options.onPacket,onClose=options.onClose,
-    capacity=options.capacity or 40,maxPeers=options.maxPeers or 40,
+    capacity=capacity,maxPeers=maxPeers,
     tickets={},peers={},listener=nil,active=0
   },Host)
 end
@@ -95,7 +99,7 @@ function Host:drop(peer)
   if peer.closed then return end
   peer.closed=true
   pcall(function() peer.tcp:close() end)
-  if peer.state=="websocket" then
+  if peer.upgraded then
     self.active=math.max(0,self.active-1)
     if self.onClose then pcall(self.onClose,peer) end
   end
@@ -132,7 +136,7 @@ function Host:request(peer,req)
     peer.session=Session.new({build=self.build})
     local response="HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: "..accept.."\r\n\r\n"
     addOutput(peer,response)
-    peer.state="websocket";self.active=self.active+1
+    peer.state="websocket";peer.upgraded=true;self.active=self.active+1
     function peer:send(name,args)
       local frame,err=self.session:encode(name,args or {})
       if not frame then return false,err end
