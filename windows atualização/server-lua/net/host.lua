@@ -124,6 +124,9 @@ function Host:drop(peer)
   pcall(function() peer.tcp:close() end)
   if peer.upgraded then
     self.active=math.max(0,self.active-1)
+    if peer.ip then
+      self.activeByIp[peer.ip]=math.max(0,(self.activeByIp[peer.ip] or 0)-1)
+    end
     if peer.roomKey then
       self.activeByRoom[peer.roomKey]=math.max(0,(self.activeByRoom[peer.roomKey] or 0)-1)
     end
@@ -134,7 +137,7 @@ function Host:close()
   if self.controller then self.controller:close();self.controller=nil end
   if self.listener then self.listener:close();self.listener=nil end
   for _,p in ipairs(self.peers) do self:drop(p) end
-  self.peers={};self.tickets={};self.active=0;self.activeByRoom={}
+  self.peers={};self.tickets={};self.active=0;self.activeByRoom={};self.activeByIp={}
 end
 local function bad(peer,code,err)
   addOutput(peer,reply(code,'{"error":'..jsonString(err)..'}'))
