@@ -192,9 +192,8 @@ function Input.handle(ctx,player,name,args)
     player:send("0")
     return
   end
-  assert(type(ctx.unhandled)=="function",
-    "unported packet "..name.." requires authoritative external handler")
-  return ctx.unhandled(player,name,args)
+  -- Exact Node packets.js default: unknown packets count as anticheat invalid.
+  return bad(player,name,"unhandled")
 end
 
 return Input
