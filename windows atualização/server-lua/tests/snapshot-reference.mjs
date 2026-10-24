@@ -10,7 +10,8 @@ const gameSrc=fs.readFileSync(new URL("../../server/src/moomoo/server.js",import
 const a=gameSrc.indexOf("    syncPlayers(viewer) {");
 const b=gameSrc.indexOf("    syncAnimals(viewer) {",a);
 if (a<0||b<0) throw Error("Game.syncPlayers or syncObjects missing");
-const methodText=gameSrc.slice(a,b).replace(/}\n\s*(?=\/\/ "H")/, "},\n    ");\nconst methods=new Function("config","UTILS","return ({"+methodText+"});")(config,UTILS);
+const methodText=gameSrc.slice(a,b).replace(/}\n\s*(?=\/\/ "H")/, "},\n    ");
+const methods=new Function("config","UTILS","return ({"+methodText+"});")(config,UTILS);
 const playerSrc=fs.readFileSync(new URL("../../server/src/moomoo/modules/player.js",import.meta.url),"utf8");
 function playerFn(method) {
  const mark="this."+method+" = function (";
