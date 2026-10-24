@@ -6,6 +6,7 @@ local MP=require("src.protocol.msgpack")
 local function repr(v)
   if v==nil or v==MP.null then return "~" end
   if type(v)=="boolean" then return v and "true" or "false" end
+  if type(v)=="number" and v==math.floor(v) then return string.format("%.0f",v) end
   return tostring(v)
 end
 local function printPacket(name,...)
