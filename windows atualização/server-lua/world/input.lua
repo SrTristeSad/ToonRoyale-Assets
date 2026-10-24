@@ -1,8 +1,8 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Port of the first-party gameplay packets in server/src/network/packets.js:
 -- M, D, 9, e, F, z, K and 0.
--- Unported messages must be dispatched to a REAL handler, never silently
--- accepted. Original Player methods and anticheat strike accounting required.
+-- Unknown packets follow Node's original anticheat.invalid('unhandled').
+-- Original Player methods and anticheat strike accounting remain required.
 local MP=require("src.protocol.msgpack")
 local Equipment=require("server-lua.world.equipment_input")
 local TribeInput=require("server-lua.world.tribe_input")
@@ -13,7 +13,7 @@ local Reports=require("server-lua.world.report_input")
 local Admin=require("server-lua.world.admin_input")
 local Input={}
 local function truthy(v)
-  return v~=nil and v~=false and v~=0 and v~=MP.null
+  return v~=nil and v~=false and v~=0 and v~="" and v~=MP.null
 end
 local function finite(v)
   return type(v)=="number" and v==v and v~=math.huge and v~=-math.huge
