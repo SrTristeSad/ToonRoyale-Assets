@@ -19,6 +19,7 @@ local hunter={
  x=-2420,y=7200,xVel=0,yVel=0,dir=0,scale=35,health=1000,
  points=0,kills=0,age=1,alive=true,active=true,spawned=true,
  zIndex=0,team=nil,watchStats=-1,
+ chatCooldown=500,tribeCooldown=600,pingCooldown=700,
  weaponIndex=0,buildIndex=-1,skinIndex=0,tailIndex=0,
  iconIndex=0,skinColor=0,isLeader=false,
  powers={power=1,speed=1,invisible=0},skins={},
