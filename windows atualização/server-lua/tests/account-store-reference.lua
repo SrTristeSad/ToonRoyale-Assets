@@ -136,3 +136,36 @@ out("SOCIAL_FORMAT",socialResult.status,socialResult.body.field,socialResult.bod
 socialResult=store:setSocials(a,{twitch="badword"})
 out("SOCIAL_RUDE",socialResult.status,socialResult.body.field,socialResult.body.why)
 out("SOCIAL_UNCHANGED",a.socials.youtube,a.socials.discord)
+
+local legacy,otherLegacy="1234567890abcdef","oldkey"
+local oldAccount={id=legacy,createdAt=1792864800000,name="Legacy"}
+local otherAccount={id=otherLegacy,createdAt=1792864800000,name="Other"}
+local oldClan={name="LEG",members={{id=legacy}},past={{id=otherLegacy}},
+ invites={{id=legacy,by=otherLegacy}},requests={otherLegacy}}
+local legacyStore=Store.open("server-lua/tests/.does-not-exist.json",{
+ nowMs=function()return 1792864800000 end,
+ randomBytes=function(n)assert(n==8);return "abcdefgh" end})
+legacyStore.save=function()end
+legacyStore.data={
+ accounts={[legacy]=oldAccount,[otherLegacy]=otherAccount},
+ names={legacy=legacy,other=otherLegacy},
+ emails={["legacy@example.com"]=legacy},clans={LEG=oldClan},
+ legacyIds={},social={
+ friends={[legacy]={{id=otherLegacy}},[otherLegacy]={{id=legacy}}},
+ requests={{senderId=legacy,recipientId=otherLegacy}}}}
+local remapped=legacyStore:migrateIds()
+local aId,bId=remapped[legacy],remapped[otherLegacy]
+local count=0
+for _ in pairs(legacyStore.data.accounts) do count=count+1 end
+out("MIGRATE",#aId==24 and aId:match("^[a-f0-9]+$")~=nil,
+ aId:sub(-#legacy)==legacy,
+ #bId==24 and bId:match("^[a-f0-9]+$")~=nil,count)
+out("MIGRATE_RELATIONS",
+ legacyStore.data.names.legacy==aId,
+ legacyStore.data.emails["legacy@example.com"]==aId,
+ oldClan.members[1].id==aId,oldClan.past[1].id==bId,
+ oldClan.invites[1].by==bId,oldClan.requests[1]==bId)
+out("MIGRATE_SOCIAL",
+ legacyStore.data.social.friends[aId][1].id==bId,
+ legacyStore.data.social.requests[1].recipientId==bId,
+ legacyStore:accountById(otherLegacy)==otherAccount)
