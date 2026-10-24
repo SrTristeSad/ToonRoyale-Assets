@@ -8,6 +8,8 @@ local Network=require("src.net.mooio_network")
 local Build=require("server-lua.protocol.build")
 local Session=require("server-lua.protocol.session")
 local WS=require("server-lua.net.websocket")
+local Json=require("server-lua.vendor.dkjson")
+local LocalAPI=require("server-lua.net.local_api")
 local Host={}
 Host.__index=Host
 local function hex(s) return (s:gsub(".",function(c)return string.format("%02x",c:byte())end)) end
@@ -41,7 +43,7 @@ local function parseHead(buffer)
     if k then headers[k:lower()]=v end
   end
   local length=tonumber(headers["content-length"] or "0")
-  if not length or length%1~=0 or length<0 or length>8192 then return false,"bad body length" end
+  if not length or length%1~=0 or length<0 or length>32768 then return false,"bad body length" end
   local endAt=at+3+length
   if #buffer<endAt then return nil end
   return {method=method,target=target,version=version,headers=headers,
@@ -80,9 +82,16 @@ function Host.new(options)
   local maxPeers=options.maxPeers or math.max(40,capacity)
   assert(type(maxPeers)=="number" and maxPeers%1==0 and maxPeers>=capacity,"invalid max peers")
   local build=options.build or Build.new()
+  local api
+  if options.accounts then
+    api=LocalAPI.new({store=options.accounts,moderation=options.moderation,
+      roomCode=code,servers=assert(options.servers,"LC/MB list from original Node required"),
+      nowMs=options.nowMs})
+  end
   return setmetatable({
     bind=ip,mode=mode,port=port,roomCode=code,build=build,
     onConnect=options.onConnect,onPacket=options.onPacket,onClose=options.onClose,
+    accounts=options.accounts,api=api,
     capacity=capacity,maxPeers=maxPeers,
     tickets={},peers={},listener=nil,active=0
   },Host)
@@ -121,11 +130,22 @@ function Host:request(peer,req)
     local key,build=req.target:match("^/s/(%w+)%?b=([%w]+)")
     if not key or key~="LC" or build~=self.build.buildId then return bad(peer,403,"build") end
     local token=req.target:match("[?&]token=tk:([0-9a-f]+)")
-    local t=token and self.tickets[token] or nil
+    local t
+    if self.accounts then
+      t=token and self.accounts:consumeTicket(token,45000) or nil
+      if t==Json.null then t=nil end
+      if t and t.server~=nil and t.server~=Json.null and t.server~=key then
+        return bad(peer,403,"ticket")
+      end
+    else
+      t=token and self.tickets[token] or nil
+      if t then
+        -- Legacy host fixtures: one-use ticket, consumed before upgrade.
+        self.tickets[token]=nil
+        if os.time()-t.created>45 then return bad(peer,403,"expired ticket") end
+      end
+    end
     if not t then return bad(peer,403,"ticket") end
-    -- One-use ticket, consumed before the WebSocket upgrade.
-    self.tickets[token]=nil
-    if os.time()-t.created>45 then return bad(peer,403,"expired ticket") end
     if self.active>=self.capacity then return bad(peer,409,"server full") end
     if h.origin~="http://"..self.bind..":"..self.port
       or h.host~=self.bind..":"..self.port then return bad(peer,403,"origin") end
@@ -146,6 +166,20 @@ function Host:request(peer,req)
     local ok,err=pcall(self.onConnect,peer,t)
     if not ok then self:drop(peer);error("Lua onConnect: "..tostring(err)) end
     return
+  end
+  if self.api and path:sub(1,5)=="/api/" then
+    local ip
+    if peer.tcp and type(peer.tcp.getpeername)=="function" then
+      ip=peer.tcp:getpeername()
+    end
+    ip=ip or peer.ip or "unknown"
+    local status,payload=self.api:handle(req.method,req.target,h,req.body,ip)
+    if status then
+      local body= status==204 and "" or assert(Json.encode(payload))
+      addOutput(peer,reply(status,body))
+      peer.state="closing"
+      return
+    end
   end
   if req.method=="GET" and path=="/ping" then
     local body='{"status":"ok","build":'..jsonString(self.build.buildId)..
