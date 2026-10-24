@@ -14,7 +14,7 @@ const records=[
 ];
 const emitter=[];
 const fn=new Function("gameObjects","return ("+
- source.slice(at+"this.removeAllItems = ".length,end).trim()+")")(records);
+ source.slice(at+"this.removeAllItems = ".length,end).trim()+"})")(records);
 const world={disableObj(obj){obj.active=false;emitter.push("off:"+obj.sid)}};
 const server={broadcast(name,sid){emitter.push(name+":"+sid)}};
 fn.call(world,4,server);
