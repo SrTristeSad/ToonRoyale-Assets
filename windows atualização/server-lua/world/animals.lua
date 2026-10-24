@@ -7,6 +7,7 @@ local Rewards=require("server-lua.world.animal_rewards")
 local Crab=require("server-lua.world.crab_king")
 local CrabRewards=require("server-lua.world.crab_rewards")
 local Types=require("server-lua.world.animal_types")
+local Environment=require("server-lua.world.environment")
 local Config=require("src.game.config")
 local Animals={}
 Animals.__index=Animals
@@ -44,6 +45,13 @@ function Animals.new(opts)
    health=opts.health,boss=opts.boss or Crab.attach,
    onCrabKingKilled=crabKilled,crabKillers=opts.crabKillers
  },Animals)
+ -- Node Game constructor supplies respawnAt only for secret animals.
+ if not self.respawnAt then
+   self.respawnAt=function(ai)
+     if ai.secret then return self:randomSecretPoint(ai.scale) end
+     return nil
+   end
+ end
  if not self.health and type(self.score)=="function" and type(self.send)=="function" then
    self.health=function(actor,amount,doer,runFrom)
      return Health.changeHealth(actor,amount,doer,runFrom,actor.options)
@@ -51,6 +59,23 @@ function Animals.new(opts)
  end
  return self
 end
+-- Game.randomSecretPoint(scale) from the LOCAL Node server.js.
+function Animals:randomSecretPoint(scale)
+ local pools=assert(self.config.secretPool and self.config.secretPool.pool,
+   "original secretPool config required")
+ for _=1,50 do
+  local p=pools[self:randomInt(0,#pools-1)+1]
+  local a=self.random()*math.pi*2
+  local radius=self.random()*(p[3]-scale)
+  local x=p[1]+math.cos(a)*radius
+  local y=p[2]+math.sin(a)*radius
+  if Environment.secretDistance(self.config,x+scale,y)<=0 then
+   return {x=x,y=y}
+  end
+ end
+ return {x=pools[1][1],y=pools[1][2]}
+end
+
 function Animals:randomInt(min,max)
  return math.floor(self.random()*(max-min+1))+min
 end
