@@ -168,7 +168,7 @@ function Room:handleInput(player,name,args)
   end
   assert(present,"cannot route client packets to a player outside this room")
   return Input.handle({
-    items=self.items,gameKey=self.key,config=self.config,players=self.players,
+    items=self.items,accounts=self.accounts,gameKey=self.key,config=self.config,players=self.players,
     unhandled=self.services.onUnportedPacket,
     log=self.services.log
   },player,name,args)
