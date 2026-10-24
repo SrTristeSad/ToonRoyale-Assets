@@ -20,7 +20,7 @@ function World.new(opts)
     and config.treeScales and config.bushScales and config.rockScales
     and config.snowBiomeTop and config.riverWidth,
     "world generation requires actual shared config values")
-  return setmetatable({config=config,random=random,objects={},grids={}},World)
+  return setmetatable({config=config,random=random,objects={},grids={},updateObjects={}},World)
 end
 
 function World:randomInt(min,max)
