@@ -47,8 +47,11 @@ assert(#events==#expected,"wrong event count: "..table.concat(events,","))
 for i=1,#expected do
  assert(events[i]==expected[i],i..": "..events[i].." ~= "..expected[i])
 end
--- A missing persistence service must never silently accept account sanctions.
+-- Original Node allows room-only sanctions when there is no AccountStore.
 ctx.accounts=nil
-local ok=pcall(function() send({2,2}) end)
-assert(not ok,"account sanctions require persistence")
-print("PASS pacote R: 11 entradas, permissão, deduplicação e persistência obrigatória")
+send({2,2})
+assert(events[#events-1]=="ban" and events[#events]=="kick:kicked",
+  "Node bans the IP and kicks even without persistent accounts")
+send({2,1})
+assert(target.shadowed==true,"shadow must work without account service")
+print("PASS pacote R: denuncias, staff e sancoes com/sem AccountStore")
