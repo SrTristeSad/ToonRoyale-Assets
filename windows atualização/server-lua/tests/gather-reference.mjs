@@ -24,8 +24,8 @@ const f=n=>Number(n||0).toFixed(6);
 const j=v=>v==null?"-":String(v);
 for(const [index,properties] of [
   [0,{dmg:25,range:65,gather:1}],
-  [7,{dmg:20,range:65,gather:1,hitSlow:0.1}],
-  [14,{dmg:0,range:125,gather:0,steal:250}],
+  [7,{dmg:20,range:65,gather:1,hitSlow:0.1,knock:0.1}],
+  [14,{dmg:0,range:125,gather:0,steal:250,knock:0.2}],
   [11,{shield:0.2}]
 ])for(const [key,value] of Object.entries(properties))
   assert.equal(items.weapons[index][key],value,"source item config drift "+index+"."+key);
