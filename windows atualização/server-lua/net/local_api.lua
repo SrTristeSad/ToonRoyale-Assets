@@ -12,7 +12,7 @@ local function str(v)
  return tostring(v)
 end
 local function queryPart(raw)
- return (raw or ""):gsub("%%+"," "):gsub("%%(%x%x)",function(h) return string.char(tonumber(h,16)) end)
+ return (raw or ""):gsub("%+"," "):gsub("%%(%x%x)",function(h) return string.char(tonumber(h,16)) end)
 end
 local function query(raw,key)
  for part in (raw or ""):gmatch("[^&]+") do
