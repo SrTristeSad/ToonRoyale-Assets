@@ -2,6 +2,7 @@
 -- Incremental port of server/src/api/store.js. This is an independent copy
 -- of accounts.json: never point it at a running Node server's data directory.
 local json=require("server-lua.vendor.dkjson")
+local SecureRandom=require("src.net.secure_random")
 local Store={}
 Store.__index=Store
 
@@ -70,7 +71,8 @@ function Store.open(path,opts)
     "invalid account store structure")
   local self=setmetatable({file=path,data=data,
     nowMs=opts.nowMs or function() return os.time()*1000 end,
-    isRude=opts.isRude},Store)
+    isRude=opts.isRude,
+    randomBytes=opts.randomBytes or SecureRandom.bytes},Store)
   return self
 end
 function Store:save()
@@ -565,6 +567,103 @@ function Store:clanAction(account,action,body)
   return ok(object())
 end
 
+-- AccountStore social graph from server/src/api/store.js.
+-- Identifiers and timestamps use the same ObjectId / ISO8601 encoding as Node.
+local function isoUtc(ms)
+  local seconds=math.floor(ms/1000)
+  return os.date("!%Y-%m-%dT%H:%M:%S",seconds)..
+    string.format(".%03dZ",math.floor(ms%1000))
+end
+local function objectId(ms,random)
+  local raw=random(8)
+  assert(type(raw)=="string" and #raw==8,
+    "8 cryptographically secure random bytes required for ObjectId")
+  return string.format("%08x",math.floor(ms/1000))..
+    (raw:gsub(".",function(ch)return string.format("%02x",ch:byte())end))
+end
+function Store:createFriendRequest(senderId,recipientId)
+  if not self.data.accounts[recipientId] or senderId==recipientId then
+    return {status=404}
+  end
+  if self:areFriends(senderId,recipientId) then return {status=409} end
+  local social=self.data.social
+  for _,request in ipairs(social.requests) do
+    if request.senderId==senderId and request.recipientId==recipientId then
+      return {status=409}
+    end
+  end
+  for _,request in ipairs(social.requests) do
+    if request.senderId==recipientId and request.recipientId==senderId then
+      self:answerFriendRequest(recipientId,request.id,true)
+      return {status=200,friends=true}
+    end
+  end
+  local now=self.nowMs()
+  local request={id=objectId(now,self.randomBytes),senderId=senderId,
+    recipientId=recipientId,createdAt=isoUtc(now)}
+  social.requests[#social.requests+1]=request
+  self:save()
+  return {status=201,request=request}
+end
+function Store:answerFriendRequest(recipientId,requestId,accept)
+  local social=self.data.social
+  local request
+  for _,entry in ipairs(social.requests) do
+    if entry.id==requestId and entry.recipientId==recipientId then
+      request=entry;break
+    end
+  end
+  if not request then return false end
+  social.requests=exclude(social.requests,function(entry)
+    return entry==request or
+      (entry.senderId==request.recipientId and
+       entry.recipientId==request.senderId)
+  end)
+  if truth(accept) and not self:areFriends(request.senderId,request.recipientId) then
+    local since=isoUtc(self.nowMs())
+    local from=self:friendsOf(request.senderId)
+    local to=self:friendsOf(request.recipientId)
+    social.friends[request.senderId]=array()
+    for _,entry in ipairs(from) do
+      social.friends[request.senderId][#social.friends[request.senderId]+1]=entry
+    end
+    social.friends[request.senderId][#social.friends[request.senderId]+1]={
+      id=request.recipientId,createdAt=since
+    }
+    social.friends[request.recipientId]=array()
+    for _,entry in ipairs(to) do
+      social.friends[request.recipientId][#social.friends[request.recipientId]+1]=entry
+    end
+    social.friends[request.recipientId][#social.friends[request.recipientId]+1]={
+      id=request.senderId,createdAt=since
+    }
+  end
+  self:save()
+  return request
+end
+function Store:cancelFriendRequest(senderId,requestId)
+  local social=self.data.social
+  local before=#social.requests
+  social.requests=exclude(social.requests,function(entry)
+    return entry.id==requestId and entry.senderId==senderId
+  end)
+  if #social.requests==before then return false end
+  self:save()
+  return true
+end
+function Store:removeFriend(id,friendId)
+  if not self:areFriends(id,friendId) then return false end
+  local social=self.data.social
+  social.friends[id]=exclude(self:friendsOf(id),function(entry)
+    return entry.id==friendId
+  end)
+  social.friends[friendId]=exclude(self:friendsOf(friendId),function(entry)
+    return entry.id==id
+  end)
+  self:save()
+  return true
+end
+
 -- Node uses dot-method calls; this wrapper retains that shape for existing Lua ports.
 function Store:callbacks()
   return {
@@ -590,6 +689,10 @@ function Store:callbacks()
     requestsFor=function(id) return self:requestsFor(id) end,
     requestsFrom=function(id) return self:requestsFrom(id) end,
     namesFor=function(ids) return self:namesFor(ids) end,
+    createFriendRequest=function(a,b) return self:createFriendRequest(a,b) end,
+    answerFriendRequest=function(a,b,c) return self:answerFriendRequest(a,b,c) end,
+    cancelFriendRequest=function(a,b) return self:cancelFriendRequest(a,b) end,
+    removeFriend=function(a,b) return self:removeFriend(a,b) end,
     accountByEmail=function(email) return self:accountByEmail(email) end,
     accountById=function(id) return self:accountById(id) end
   }
