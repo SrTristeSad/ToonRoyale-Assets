@@ -29,5 +29,9 @@ jobs:
           lua5.4 server-lua/tests/collision-reference.lua > /tmp/collision-lua.txt
           diff -u /tmp/collision-node.txt /tmp/collision-lua.txt
           echo 'PASS authoritative collision reference Node vs Lua'
+          node server-lua/tests/environment-reference.mjs > /tmp/environment-node.txt
+          lua5.4 server-lua/tests/environment-reference.lua > /tmp/environment-lua.txt
+          diff -u /tmp/environment-node.txt /tmp/environment-lua.txt
+          echo 'PASS original boundary, snow and secret biome reference Node vs Lua'
 
 # Normalize decimal formatting before comparing world placement.
