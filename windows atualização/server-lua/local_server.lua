@@ -135,6 +135,7 @@ function Local:update()
   for _,key in ipairs({"LC","MB"}) do self.rooms[key].room:tick(self.nextTick)end
   ticks=ticks+1
  end
+ return true
 end
 function Local:close()return self.host:close()end
 return Local
