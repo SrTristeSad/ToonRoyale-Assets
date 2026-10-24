@@ -114,7 +114,12 @@ function Local.new(opts)
   nowMs=now,
   onConnect=function(peer,ticket,key)
    peer.host=host
-   return assert(rooms[key],"unknown Node room").transport:connected(peer,ticket)
+   local player=assert(rooms[key],"unknown Node room").transport:connected(peer,ticket)
+   if player.account then
+    player.account.lastSeen={ip=player.ip,did=ticket.did,at=now(),server=key}
+    accounts:save()
+   end
+   return player
   end,
   onPacket=function(peer,name,args,key)
    return assert(rooms[key],"unknown Node room").transport:packet(peer,name,args)
