@@ -205,7 +205,7 @@ function Store:recordLife(account,life)
         member.kills=(member.kills or 0)+life.kills
         for _,span in ipairs({"week","month"}) do
           member.periods=member.periods or object()
-          local p=period(member.periods,span,keys[span],false)
+          local p=period(member,span,keys[span],false)
           p.kills=p.kills+life.kills
         end
         break
