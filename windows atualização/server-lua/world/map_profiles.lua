@@ -97,12 +97,67 @@ local function checkPortals(portals,source,lookup,max)
     "portal blocked by solid geometry")
  end
 end
+-- Stateless interaction manifests. Runtime state belongs only to the
+-- LOCAL Room; JSON files cannot specify callbacks, Lua or asset paths.
+local resources={wood=true,stone=true,food=true}
+local interactiveKinds={cache=true,lever=true,gate=true}
+local function checkInteractables(list,w,h,zone)
+ assert(type(list)=="table" and #list<=32,"too many map interactables")
+ local lookup={}
+ for _,obj in ipairs(list) do
+  only(obj,{id=true,kind=true,x=true,y=true,width=true,height=true,
+    label=true,material=true,resource=true,amount=true,target=true})
+  assert(id(obj.id) and not lookup[obj.id],"invalid or duplicate interaction ID")
+  assert(interactiveKinds[obj.kind],"unsupported interaction kind")
+  assert(integer(obj.x,120,w-120) and integer(obj.y,120,h-120),
+    "interaction out of map bounds")
+  assert(obj.label==nil or validText(obj.label,40),"invalid interaction label")
+  assert(obj.material==nil or visualThemes[obj.material],
+    "invalid interaction material")
+  if obj.kind=="cache" then
+   assert(resources[obj.resource] and integer(obj.amount,1,500),
+     "invalid cache reward")
+   assert(obj.target==nil and obj.width==nil and obj.height==nil,
+     "cache cannot control gates")
+  elseif obj.kind=="lever" then
+   assert(id(obj.target) and obj.resource==nil and obj.amount==nil
+     and obj.width==nil and obj.height==nil,"invalid lever target")
+  else
+   assert(integer(obj.width,24,240) and integer(obj.height,24,240)
+     and obj.x+obj.width/2<w-30 and obj.y+obj.height/2<h-30
+     and obj.x-obj.width/2>30 and obj.y-obj.height/2>30,
+     "invalid gate size or placement")
+   assert(obj.target==nil and obj.amount==nil and obj.resource==nil,
+     "gate cannot hold reward")
+  end
+  if obj.kind~="gate" then
+   assert(not blocked(zone,obj.x,obj.y),"interaction inside wall")
+  else
+   local rect={x=obj.x-obj.width/2,y=obj.y-obj.height/2,
+     width=obj.width,height=obj.height}
+   for _,wall in ipairs(zone and zone.obstacles or {}) do
+    assert(not (rect.x<wall.x+wall.width and rect.x+rect.width>wall.x
+      and rect.y<wall.y+wall.height and rect.y+rect.height>wall.y),
+      "gate overlaps static wall")
+   end
+  end
+  lookup[obj.id]=obj
+ end
+ for _,obj in ipairs(list) do
+  if obj.kind=="lever" then
+   assert(lookup[obj.target] and lookup[obj.target].kind=="gate",
+     "lever must target a gate in the same zone")
+  end
+ end
+end
+
 function Maps.validate(content,wanted)
  assert(type(content)=="string" and #content<=131072,"map pack exceeds 128 KiB")
  local map,_,why=Json.decode(content,1,Json.null)
  assert(not why and type(map)=="table","invalid map JSON")
  only(map,{schemaVersion=true,id=true,name=true,description=true,mode=true,
-  generation=true,surface=true,spaces=true,portals=true,spawn=true})
+  generation=true,surface=true,spaces=true,portals=true,spawn=true,
+  interactables=true})
  assert(map.schemaVersion==1 and id(map.id)
    and (not wanted or wanted==map.id),"wrong map schema or ID")
  assert(validText(map.name,70) and
@@ -133,7 +188,7 @@ function Maps.validate(content,wanted)
  local lookup={}
  for _,zone in ipairs(map.spaces) do
   only(zone,{id=true,type=true,width=true,height=true,obstacles=true,
-    portals=true,mobs=true,visual=true})
+    portals=true,mobs=true,visual=true,interactables=true})
   assert(id(zone.id) and zone.id~="surface" and not lookup[zone.id],
     "invalid or duplicate space ID")
   assert(zone.type=="interior" or zone.type=="underground","invalid space type")
@@ -142,7 +197,9 @@ function Maps.validate(content,wanted)
   validateVisual(zone)
   zone.obstacles=zone.obstacles or {}
   zone.portals=zone.portals or {}
+  zone.interactables=zone.interactables or {}
   checkObstacles(zone.obstacles,zone.width,zone.height)
+  checkInteractables(zone.interactables,zone.width,zone.height,zone)
   zone.mobs=zone.mobs or {}
   assert(type(zone.mobs)=="table" and #zone.mobs<=24,"too many indoor mobs")
   for _,mob in ipairs(zone.mobs) do
@@ -155,6 +212,8 @@ function Maps.validate(content,wanted)
   lookup[zone.id]=zone
  end
  map.portals=map.portals or {}
+ map.interactables=map.interactables or {}
+ checkInteractables(map.interactables,Config.mapScale,Config.mapScale,nil)
  checkPortals(map.portals,nil,lookup,64)
  for _,zone in ipairs(map.spaces) do
   checkPortals(zone.portals,zone,lookup,32)
