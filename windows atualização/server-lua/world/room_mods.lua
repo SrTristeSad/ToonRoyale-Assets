@@ -45,6 +45,9 @@ local function validateManifest(content,id)
  end
  assert(type(data.name)=="string" and #data.name>0 and #data.name<=70,
    "nome de mod invalido")
+ assert(data.description==nil or
+   (type(data.description)=="string" and #data.description<=240),
+   "descricao de mod invalida")
  assert(type(data.changes)=="table" and next(data.changes),
    "mod sem mudancas")
  return data
@@ -81,8 +84,12 @@ function Mods.available(fs,dir)
    if success and type(content)=="string" then
     local valid,manifest=pcall(validateManifest,content,id)
     if valid then
-     result[#result+1]={id=manifest.id,name=manifest.name,
-       description=manifest.description or ""}
+     -- Invalid gameplay patches must not appear as installable mods.
+     local compatible=pcall(Mods.build,"normal",{id},dir)
+     if compatible then
+      result[#result+1]={id=manifest.id,name=manifest.name,
+        description=manifest.description or ""}
+     end
     end
    end
   end
