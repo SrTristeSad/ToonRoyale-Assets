@@ -143,6 +143,21 @@ function Registry:addBot(request)
  room:bindPlayer(player)
  self.playersById[player.id]=player
  local init={teams=self.options.clanList(),animals=self.animalKinds}
+ if room.key=="LC" then
+  local surfaceTotal=0
+  for _,row in ipairs(room.config.server.animalSpawnPlan) do
+   surfaceTotal=surfaceTotal+row.desired
+  end
+  init.roomSettings={difficulty=room.selectedDifficulty or "normal",
+    mods=room.activeMods or {},surfaceAnimals=surfaceTotal,
+    interiorAnimals=room.customMap and (function()
+      local count=0
+      for _,zone in ipairs(room.customMap.spaces or {}) do
+       count=count+#(zone.mobs or {})
+      end
+      return count
+    end)() or 0}
+ end
  if room.customMap and room.key=="LC" then
   init.map={id=room.mapId,name=room.customMap.name,
      portals=room.mapSpaces:get("surface").portals}
