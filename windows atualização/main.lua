@@ -442,6 +442,10 @@ function love.update(dt)
           end
         end
       elseif packet.name=="P" then
+        -- Freeze the background at the actual server-confirmed death site.
+        if camera and world.lastDeath then
+          camera:follow(world.lastDeath.x,world.lastDeath.y)
+        end
         -- No stale profile selection after death; stop the real Node's
         -- watchStats stream instead of just concealing the local overlay.
         if profile:isOpen() then
