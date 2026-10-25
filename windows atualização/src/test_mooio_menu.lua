@@ -32,6 +32,13 @@ return function()
   assert(home:click(412,362)=="difficulty" and home.difficulty=="normal")
   assert(home:click(429,409)=="difficulty" and home.difficulty=="extremo")
   assert(home:click(730,587)=="map_browse" and home.screen=="maps")
+  -- A map can be explicitly disabled. Refresh must not silently select one.
+  assert(home:click(690,256)=="map_select" and home.mapId=="")
+  assert(home:click(820,656)=="maps_done" and home.screen=="create")
+  home:refreshMaps()
+  assert(home.mapId=="","F5 refresh silently re-enabled a disabled map")
+  assert(home:mapName()=="Mapa desativado")
+  assert(home:click(730,587)=="map_browse" and home.screen=="maps")
   local sawCave=false
   for i,m in ipairs(home.mapCatalog) do
     if m.id=="bunker-e-cavernas" then
