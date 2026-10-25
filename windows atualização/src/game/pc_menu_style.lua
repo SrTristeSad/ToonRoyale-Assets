@@ -128,7 +128,7 @@ function UI.field(x,y,w,h,value,placeholder,focused)
  UI.text(out..suffix,x+13,y+math.max(7,(h-20)/2),
   18,value=="" and UI.colors.muted or UI.colors.paper,w-26)
 end
-function UI.backdrop(showWorld)
+function UI.backdrop(showWorld,uninterrupted)
  local g=love.graphics
  if showWorld then
   g.setColor(0.015,0.025,0.021,0.51)
@@ -146,10 +146,14 @@ function UI.backdrop(showWorld)
    end
   end
  end
- -- Pixel-cut shadow border and recessed content surface.
- g.setColor(0,0,0,0.48)
- g.rectangle("fill",0,0,1280,50)
- g.rectangle("fill",0,666,1280,54)
+ -- The title screen is one continuous game-world panorama. Full-width
+ -- opaque bars caused visible seams through trees and river; keep the
+ -- separate top/bottom frames only on interior option/setup screens.
+ if not uninterrupted then
+  g.setColor(0,0,0,0.48)
+  g.rectangle("fill",0,0,1280,50)
+  g.rectangle("fill",0,666,1280,54)
+ end
 end
 function UI.topbar(title,subtitle)
  local g=love.graphics
