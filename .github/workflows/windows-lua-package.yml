@@ -41,6 +41,28 @@ jobs:
           & (Join-Path $root 'scripts\build-windows.ps1') -LoveDir $loveDir -TlsNodeExe (Get-Command node.exe).Source -OutputDir $out
           if ($LASTEXITCODE -and $LASTEXITCODE -ge 8) { throw "Build falhou: $LASTEXITCODE" }
           & (Join-Path $root 'scripts\test-lua-release.ps1') -DistDir $out
+      - name: Importar mapa e mod externos apos empacotar (teste real Windows)
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
+          $importer=Join-Path $out 'scripts\import-json-pack.ps1'
+          foreach ($file in @('INSTALAR-MAPA.bat','INSTALAR-MOD.bat')) {
+            if (-not (Test-Path (Join-Path $out $file))) { throw "Importador ausente: $file" }
+          }
+          $map=Get-Content -LiteralPath (Join-Path $out 'server-lua\mods\maps\refugio-personalizado.json') -Raw | ConvertFrom-Json
+          $map.id='mapa-importado-teste'
+          $mapPath=Join-Path $env:RUNNER_TEMP 'mapa-importado-teste.json'
+          $map | ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $mapPath -Encoding utf8
+          & $importer -Source $mapPath -Kind map
+          $mod=Get-Content -LiteralPath (Join-Path $out 'server-lua\mods\floresta-densa.json') -Raw | ConvertFrom-Json
+          $mod.id='mod-importado-teste'
+          $modPath=Join-Path $env:RUNNER_TEMP 'mod-importado-teste.json'
+          $mod | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $modPath -Encoding utf8
+          & $importer -Source $modPath -Kind mod
+          foreach ($file in @('server-lua\mods\maps\mapa-importado-teste.json','server-lua\mods\mod-importado-teste.json')) {
+            if (-not (Test-Path (Join-Path $out $file))) { throw "Importacao falhou: $file" }
+          }
+          Write-Host 'PASS importacao de mapa e mod externos para pasta do jogo ja construido'
       - name: Smoke do executavel Windows - iniciar sala e encerrar
         run: |
           $ErrorActionPreference='Stop'
@@ -50,6 +72,8 @@ jobs:
           $env:MOO_IO_ROOM_CODE='testing42'
           $env:MOO_IO_LUA_DATA_DIR=Join-Path $out 'server-lua\data'
           $env:MOO_IO_BOT_COUNT='0'
+          $env:MOO_IO_MAP_ID='mapa-importado-teste'
+          $env:MOO_IO_MODS='mod-importado-teste'
           $env:PORT='18777'
           $stdout=Join-Path $env:RUNNER_TEMP 'server-stdout.txt'
           $stderr=Join-Path $env:RUNNER_TEMP 'server-stderr.txt'
@@ -77,6 +101,11 @@ jobs:
           } finally {
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
           }
+      - name: Remover fixtures importadas (nao inclui testes na versao final)
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
+          Remove-Item -LiteralPath (Join-Path $out 'server-lua\mods\maps\mapa-importado-teste.json') -Force
+          Remove-Item -LiteralPath (Join-Path $out 'server-lua\mods\mod-importado-teste.json') -Force
       - name: Compactar jogo completo
         run: |
           $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
