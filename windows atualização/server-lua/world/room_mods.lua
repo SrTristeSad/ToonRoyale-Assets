@@ -14,6 +14,8 @@ local multipliers={
 Mods.levels={"pacifico","normal","dificil","extremo"}
 local limits={
   spawns={desired={0,200}},
+  world={treesPerArea={0,50},bushesPerArea={0,50},totalRocks={0,400},goldOres={0,160}},
+  rules={healthRegenPerSecond={0,30},cooperativeWolves="boolean",predictiveHostiles="boolean"},
   animals={health={1,1000000},dmg={0,10000},speed={0,0.02},
     viewRange={1,6000},turnSpeed={0,0.1}}
 }
@@ -50,6 +52,12 @@ local function modFile(dir,id)
    "mod sem mudancas")
  return data
 end
+-- Metadata API for the client mod picker and server diagnostics.
+-- It invokes the same manifest validator as the runtime.
+function Mods.describe(dir,id)
+ local data=modFile(dir,id)
+ return {id=data.id,name=data.name,description=data.description or ""}
+end
 function Mods.ids(raw)
  if raw==nil or raw=="" then return {} end
  assert(type(raw)=="string" and #raw<=400,"lista de mods invalida")
@@ -71,6 +79,13 @@ function Mods.build(level,ids,dir)
  local types=copy(Types)
  local spawns=cfg.server.animalSpawnPlan
  cfg.server.roomDifficulty=level
+ -- All mutable gameplay options belong to this isolated room config.
+ -- NORMAL deliberately stays equivalent to the original server values.
+ cfg.server.roomRules={
+  healthRegenPerSecond=level=="pacifico" and 6 or 0,
+  cooperativeWolves=level=="dificil" or level=="extremo",
+  predictiveHostiles=level=="dificil" or level=="extremo"
+ }
  local factor=multipliers[level]
  if level~="normal" then
   for _,entry in ipairs(spawns) do
@@ -100,6 +115,20 @@ function Mods.build(level,ids,dir)
   for group,entries in pairs(manifest.changes) do
    assert(limits[group] and type(entries)=="table" and next(entries),
      "grupo de mod invalido: "..tostring(group))
+   if group=="world" or group=="rules" then
+    local target=group=="world" and cfg or cfg.server.roomRules
+    for field,value in pairs(entries) do
+     local limit=limits[group][field]
+     assert(limit and target[field]~=nil
+       and (limit=="boolean" and type(value)=="boolean"
+         or type(limit)=="table" and finite(value,limit)
+           and (group~="world" or value%1==0)),
+       "valor ou campo nao permitido: "..group.."."..tostring(field))
+     local key=group.."."..field
+     assert(not used[key],"conflito entre mods: "..key)
+     used[key]=true;patches[#patches+1]={target=target,field=field,value=value}
+    end
+   else
    for rawIndex,fields in pairs(entries) do
     assert(type(rawIndex)=="string" and rawIndex:match("^%d+$")
       and type(fields)=="table" and next(fields),
@@ -118,6 +147,7 @@ function Mods.build(level,ids,dir)
      assert(not used[key],"conflito entre mods: "..key)
      used[key]=true;patches[#patches+1]={target=target,field=field,value=value}
     end
+   end
    end
   end
  end
