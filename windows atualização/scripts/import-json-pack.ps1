@@ -21,7 +21,7 @@ if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
   throw 'Links e atalhos nao podem ser importados.'
 }
 $name=[IO.Path]::GetFileName($path)
-if (-not ($name -cmatch '^([a-z][a-z0-9-]{1,47})\.json
+if (-not ($name -cmatch '^([a-z][a-z0-9-]{1,47})\.json$')) {
   throw 'Nome invalido: use ID em minusculas, numeros e hifens (2 a 48 letras).'
 }
 $id=$Matches[1]
