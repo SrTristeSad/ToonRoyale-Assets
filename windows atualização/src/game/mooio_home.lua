@@ -228,6 +228,32 @@ function Home:click(sx,sy)
         self.serverSelected=index;self.focus=nil;return "server_select"
       end
     end
+  elseif self.screen=="mods" then
+    if inside(x,y,boxes.modsDone) then
+      self.screen="play";return "mods_done"
+    end
+    if inside(x,y,boxes.modsPrevious) then
+      self.modPage=math.max(0,self.modPage-1);return "mod_page"
+    end
+    if inside(x,y,boxes.modsNext) then
+      self.modPage=math.min(math.max(0,math.ceil(#self.modCatalog/6)-1),
+        self.modPage+1);return "mod_page"
+    end
+    for row=1,6 do
+      local index=self.modPage*6+row
+      local item=self.modCatalog[index]
+      if item and inside(x,y,{151,242+(row-1)*64,976,57}) then
+        local selected=Mods.ids(self.modIds)
+        local found
+        for j,id in ipairs(selected) do if id==item.id then found=j;break end end
+        if found then table.remove(selected,found)
+        elseif #selected<8 then selected[#selected+1]=item.id
+        else self:setStatus("Limite de oito mods por sala.",true);return "mods_limit" end
+        self.modIds=table.concat(selected,",")
+        self:setStatus(#selected.." mods selecionados.")
+        return "mod_toggle"
+      end
+    end
   elseif self.screen=="settings" then
     if inside(x,y,boxes.grid) then self.showGrid=not self.showGrid;return "grid" end
     if inside(x,y,boxes.fullscreen) then self.fullscreen=not self.fullscreen;return "fullscreen" end
@@ -415,6 +441,27 @@ function Home:draw(state,detail,showWorld)
       if not self.hosting and not self.starting then
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
+    elseif self.screen=="mods" then
+      printText("MODS INSTALADOS",140,165,30,C.white)
+      printText("Ative ou desative antes de criar a sala. Sem codigo Lua externo.",145,213,15,C.muted)
+      if #self.modCatalog==0 then
+        printText("Nenhum mod JSON valido encontrado em server-lua/mods.",169,316,20,C.muted)
+      end
+      local selected=","..self.modIds..","
+      for row=1,6 do
+        local mod=self.modCatalog[self.modPage*6+row]
+        if mod then
+          local y=242+(row-1)*64
+          local on=selected:find(","..mod.id..",",1,true)~=nil
+          panel(151,y,976,57,on and C.raised or C.panel,0)
+          printText((on and "[ATIVO] " or "[ ] ")..mod.name,166,y+7,18,
+            on and C.green or C.white,930)
+          printText(mod.description,168,y+34,14,C.muted,920)
+        end
+      end
+      button("modsPrevious","ANTERIOR",false)
+      button("modsNext","PROXIMOS",false)
+      button("modsDone","VOLTAR PARA SALA",true)
     elseif self.screen=="server" then
       printText("SERVIDORES",140,165,31,C.white)
       printText("Endereço do servidor dedicado: IP:porta (LAN/VPN) ou HTTPS V2.",145,220,16,C.muted)
