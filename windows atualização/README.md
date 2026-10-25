@@ -1,5 +1,24 @@
 # Moo-IO — Windows (servidor local Lua)
 
+## Controle USB / Bluetooth (gamepad)
+
+O cliente Windows aceita controles reconhecidos pelo LÖVE como gamepads, inclusive
+modelos compatíveis com Xbox e controles que exponham mapeamento SDL GameController.
+O teclado e o mouse continuam funcionando. Layout padrao:
+
+- Analógico esquerdo: mover; direito: mirar.
+- Gatilho direito (RT/R2): atacar enquanto pressionado.
+- A / Cruz: interagir (F); B / Círculo: construir casa (B).
+- X / Quadrado: ataque alternativo; Y / Triângulo: cura/acao R.
+- LB/L1: equipamento secundário (Q); RB/R1: ação E.
+- Direcional digital: selecionar os atalhos 1 a 4.
+- Start/Options: pausa. Em menus, A confirma onde o cursor estiver e B retorna;
+  analógico esquerdo move o cursor.
+  
+O controle não altera pacotes multiplayer. As ações são enviadas ao servidor Lua
+pelos mesmos comandos do teclado/mouse. Alguns controles sem mapeamento SDL não
+aparecerão como gamepads. O esquema de botões é inicial e pode ser refinado.
+
 ## Duas maneiras de jogar multiplayer
 
 **Jogar:** crie sua propria sala com o servidor Lua local, ou entre diretamente na sala de um amigo usando o convite `IP:porta/CODIGO` pela rede LAN/VPN.
