@@ -177,7 +177,11 @@ function AI:update(delta)
         end
        if target then
          self.chargeTarget=target
-         self.moveCount=randInt(opts,8000,12000)
+         local difficulty=cfg.server and cfg.server.roomDifficulty
+         -- Re-evaluate targets more frequently in harder rooms; the normal
+         -- preset retains original timing and movement.
+         self.moveCount=(difficulty=="dificil" or difficulty=="extremo")
+           and randInt(opts,2500,4500) or randInt(opts,8000,12000)
        else
          self.moveCount=randInt(opts,1000,2000)
          self.targetDir=randFloat(opts,-PI,PI)
@@ -229,7 +233,10 @@ function AI:update(delta)
    self.moveCount=self.moveCount-delta
    if self.moveCount<=0 then
      self.runFrom=nil;self.chargeTarget=nil
-     self.waitCount=truth(self.hostile) and 1500 or randInt(opts,1500,6000)
+     local difficulty=cfg.server and cfg.server.roomDifficulty
+     local aggressive=(difficulty=="dificil" or difficulty=="extremo")
+     self.waitCount=truth(self.hostile)
+       and (aggressive and 350 or 1500) or randInt(opts,1500,6000)
    end
  end
 
