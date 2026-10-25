@@ -315,11 +315,14 @@ function Room:usePortal(player,requestedPortal)
  player:send("j",destination.spaceId,destination.x,destination.y,{
   id=newZone.id,type=newZone.type,width=newZone.width,height=newZone.height,
   portals=newZone.portals,obstacles=newZone.obstacles,
-  visual=newZone.visual
+  visual=newZone.visual,interactables=newZone.interactables
  })
  return true
 end
 
+function Room:interactMapObject(player,objectId)
+ return require("server-lua.world.map_interactions").use(self,player,objectId)
+end
 function Room:buildHouse(player)
  return require("server-lua.world.house_build").build(self,player)
 end
