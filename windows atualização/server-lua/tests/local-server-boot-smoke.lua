@@ -16,6 +16,8 @@ assert(peer.out:find("HTTP/1.1 200",1,true))
 assert(peer.out:find('"key":"MB"',1,true))
 now=now+335
 assert(server:update()==true)
+assert(server.rooms.LC.room.lastTick>10000)
+assert(server.rooms.MB.room.lastTick>10000)
 server:close()
 os.execute("rmdir "..dir)
 print("PASS LOCAL Lua boot: LC MB bot registry and controller")
