@@ -134,6 +134,16 @@ reject(function(m)m.spaces[1].interactables[4].charges=99999 end)
 reject(function(m)m.spaces[1].interactables[4].cooldownMs=-1 end)
 reject(function(m)m.spaces[1].interactables[5].target="nonexistent" end)
 reject(function(m)m.spaces[1].interactables[5].cooldownMs=999999 end)
+reject(function(m)
+ m.spaces[1].interactables[3].x=859
+ m.spaces[1].interactables[3].y=790
+end)
+local exterior=assert(Json.decode(Json.encode(map)))
+exterior.interactables[#exterior.interactables+1]={
+ id="outdoor-deposit",kind="node",x=3790,y=3700,
+ resource="stone",amount=4,charges=2,cooldownMs=2000}
+assert(Maps.validate(Json.encode(exterior),exterior.id),
+ "custom-map surface must support finite gathering nodes")
 assert(server.rooms.MB.room.mapSpaces:get(zone.id)==nil)
 server:close()
 print("PASS map mechanisms: limited harvest, cooldown, anti-crush, two clients, stale packets and late join")
