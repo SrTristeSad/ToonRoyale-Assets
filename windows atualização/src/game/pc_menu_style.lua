@@ -26,6 +26,16 @@ function UI.text(message,x,y,size,color,w,align)
  if w then love.graphics.printf(tostring(message),x,y,w,align or "left")
  else love.graphics.print(tostring(message),x,y) end
 end
+-- One-line labels must never spill across buttons, server rows or fields.
+function UI.oneLine(value,maxWidth,size)
+ local text=tostring(value or ""):gsub("[\r\n]+"," ")
+ local f=UI.font(size or 16)
+ if f:getWidth(text)<=maxWidth then return text end
+ while #text>0 and f:getWidth(text.."...")>maxWidth do
+  text=text:sub(1,-2)
+ end
+ return text.."..."
+end
 function UI.panel(x,y,w,h,tint)
  tint=tint or UI.colors.stoneDark
  local g=love.graphics
@@ -65,7 +75,12 @@ function UI.button(x,y,w,h,label,active,primary,hover)
   g.setColor(0.93,0.96,0.94,0.78)
   g.rectangle("line",x-1,y-1,w+2,h+2)
  end
- UI.text(label,x+12,y+math.max(5,math.floor((h-21)/2)-1),19,
+ local fontSize=19
+ while fontSize>13 and UI.font(fontSize):getWidth(tostring(label))>w-26 do
+  fontSize=fontSize-1
+ end
+ local caption=UI.oneLine(label,w-24,fontSize)
+ UI.text(caption,x+12,y+math.max(3,math.floor((h-fontSize-4)/2)),fontSize,
     primary and {0.07,0.15,0.09} or UI.colors.paper,w-24,"center")
 end
 function UI.field(x,y,w,h,value,placeholder,focused)
@@ -84,8 +99,18 @@ function UI.field(x,y,w,h,value,placeholder,focused)
   g.rectangle("line",x-1,y-1,w+2,h+2)
  end
  local out=value~="" and value or placeholder
- if #out>51 then out="..."..out:sub(-48) end
- UI.text(out..(focused and "_" or ""),x+13,y+math.max(7,(h-20)/2),
+ -- Preserve the end of edited addresses/invite codes rather than drawing
+ -- outside the field when the user types more than the visible width.
+ local font=UI.font(18)
+ local suffix=focused and "_" or ""
+ local max=w-27-font:getWidth(suffix)
+ if font:getWidth(out)>max then
+  while #out>0 and font:getWidth("..."..out)>max do
+   out=out:sub(2)
+  end
+  out="..."..out
+ end
+ UI.text(out..suffix,x+13,y+math.max(7,(h-20)/2),
   18,value=="" and UI.colors.muted or UI.colors.paper,w-26)
 end
 function UI.backdrop(showWorld)
@@ -133,7 +158,9 @@ function UI.listRow(x,y,w,h,title,description,selected,hover)
   g.setColor(0.87,0.93,0.87,0.72)
   g.rectangle("line",x+1,y+1,w-2,h-2)
  end
- UI.text(title,x+22,y+6,18,UI.colors.paper,w-30)
- if description then UI.text(description,x+22,y+34,14,UI.colors.muted,w-30) end
+ UI.text(UI.oneLine(title,w-35,18),x+22,y+6,18,UI.colors.paper,w-30)
+ if description then
+  UI.text(UI.oneLine(description,w-35,14),x+22,y+34,14,UI.colors.muted,w-30)
+ end
 end
 return UI
