@@ -14,6 +14,8 @@ if os.getenv("MOO_IO_LUA_SERVER")=="1" then
       mode=os.getenv("MOO_IO_NETWORK_MODE")=="vpn" and "vpn" or "lan",
       roomCode=code,botCount=os.getenv("MOO_IO_BOT_COUNT") or "0",
       dataDir=os.getenv("MOO_IO_LUA_DATA_DIR") or "server-lua/data",
+      difficulty=os.getenv("MOO_IO_DIFFICULTY") or "normal",
+      modIds=os.getenv("MOO_IO_MODS") or "",
       guiHost=true,nowMs=function()return math.floor(Socket.gettime()*1000)end,
       log=function(msg)print(msg)end
     })
