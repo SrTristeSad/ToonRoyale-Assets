@@ -22,6 +22,18 @@ Convites públicos exigem DNS, HTTPS/WSS, certificados válidos e o gateway V2 j
 
 Selecione o nível na tela **Criar minha sala**. O nível pertence à sala, não à conta do jogador. O Normal mantém todas as regras tradicionais.
 
+## Instalar mapas e mods após extrair o jogo
+
+Não é necessário recompilar. Os instaladores estão na mesma pasta de `MOO-IO.vbs`:
+
+1. Para instalar um **mapa personalizado JSON**, arraste o arquivo para **`INSTALAR-MAPA.bat`**.
+2. Para instalar um **mod de regras JSON** (animais, recursos, dificuldade etc.), arraste o arquivo para **`INSTALAR-MOD.bat`**.
+3. Abra **Jogar → Configurar minha sala** para atualizar os mapas. Escolha o mapa desejado e marque os mods de regras desejados separadamente.
+
+O instalador copia apenas JSON com nome e ID válidos, respeita limites de tamanho e não substitui arquivos existentes. O motor ainda valida integralmente campos, coordenadas, materiais, colisões e alterações antes de criar a sala. Não execute scripts Lua, EXEs ou arquivos de origem desconhecida para instalar mapas. Os diretórios de instalação são `server-lua/mods/maps/` e `server-lua/mods/`.
+
+O modo **Normal** sem modificações continua usando as regras clássicas. Os mapas personalizados e seus mods de regras são carregados somente pela sala Lua local escolhida; o servidor V2 não é alterado.
+
 ## Núcleo de mods de dados
 
 Os mods são arquivos JSON instalados em `server-lua/mods/`. Em **Jogar → Criar minha sala**, escolha primeiro **Pacífico**, **Normal**, **Difícil** ou **Extremo** e depois clique em **Escolher** para ativar os mods instalados. Também é possível informar os IDs no campo de texto.
