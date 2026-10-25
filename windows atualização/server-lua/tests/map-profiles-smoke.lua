@@ -24,10 +24,14 @@ local spec=Maps.load("server-lua/maps","cabana-e-mina")
 assert(spec.mode=="generated" and #spec.spaces==2)
 local profile=Mods.build("normal",{},"server-lua/mods")
 Maps.apply(profile.config,spec)
-assert(profile.config.treesPerArea==11 and Config.treesPerArea==9)
+assert(profile.config.treesPerArea==Config.treesPerArea,
+ "generated map must inherit original MooMoo world values")
 local function signature()
- local world=World.new({config=profile.config,random=Maps.random(spec.generation.seed)})
- world:loadMap(spec)
+ local template=Maps.load("server-lua/maps","cabana-e-mina")
+ local world=World.new({config=profile.config,random=Maps.random(14827)})
+ world:loadMap(template)
+ assert(template.portals[1].x and template.portals[1].y,
+  "random doorway was not resolved at world generation")
  assert(#world.objects>0)
  local first={}
  for i=1,math.min(15,#world.objects) do
@@ -76,7 +80,8 @@ local mb=server.rooms.MB.room
 assert(lc.mapId=="cabana-e-mina" and mb.mapId=="classico")
 assert(lc.mapSpaces:get("mina").type=="underground")
 assert(mb.mapSpaces:get("mina")==nil)
-assert(lc.config.treesPerArea==11 and mb.config.treesPerArea==Config.treesPerArea)
+assert(lc.config.treesPerArea==Config.treesPerArea
+ and mb.config.treesPerArea==Config.treesPerArea)
 assert(lc.object_manager.config==lc.config)
 server:close()
 options.mapId="missing-map"
