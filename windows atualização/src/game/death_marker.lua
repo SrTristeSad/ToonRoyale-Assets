@@ -49,14 +49,17 @@ function Marker.drawMini(world,x,y,size,worldSize)
  local g=love.graphics
  g.push("all")
  local mx,my=x+dx,y+dy
- g.setColor(0.05,0.015,0.02,0.95)
- g.setLineWidth(5)
- g.circle("line",mx,my,10)
- g.setColor(1,0.32,0.27,1)
- g.setLineWidth(2)
- g.circle("line",mx,my,10)
- g.line(mx-5,my-5,mx+5,my+5)
- g.line(mx-5,my+5,mx+5,my-5)
+ -- MooMoo.io marks the most recent death with a conspicuous RED X.
+ -- Keep it above player/team dots; do not use a corpse, circle or ping.
+ local radius=9
+ g.setLineWidth(6)
+ g.setColor(0.04,0.01,0.01,0.96)
+ g.line(mx-radius,my-radius,mx+radius,my+radius)
+ g.line(mx-radius,my+radius,mx+radius,my-radius)
+ g.setLineWidth(3.5)
+ g.setColor(1,0.22,0.17,1)
+ g.line(mx-radius,my-radius,mx+radius,my+radius)
+ g.line(mx-radius,my+radius,mx+radius,my-radius)
  g.pop()
  return true
 end
