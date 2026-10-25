@@ -75,11 +75,18 @@ function Mods.build(level,ids,dir)
  if level~="normal" then
   for _,entry in ipairs(spawns) do
    if not types[entry.index].boss and not types[entry.index].fixedSpawn then
-    entry.desired=math.min(200,math.ceil(entry.desired*factor.spawn))
+    if level=="pacifico" and types[entry.index].hostile then
+     entry.desired=math.max(0,math.floor(entry.desired*factor.spawn))
+    elseif level~="pacifico" then
+     entry.desired=math.min(200,math.ceil(entry.desired*factor.spawn))
+    end
    end
   end
   for _,ai in pairs(types) do
    if ai.hostile and not ai.boss then
+    if level=="pacifico" then
+     ai.hostile=false;ai.chargePlayer=false
+    end
     if ai.dmg then ai.dmg=math.min(10000,ai.dmg*factor.damage) end
     if ai.speed then ai.speed=math.min(0.02,ai.speed*factor.speed) end
     if ai.viewRange then ai.viewRange=math.min(6000,ai.viewRange*factor.range) end
