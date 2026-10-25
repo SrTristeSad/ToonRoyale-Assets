@@ -534,12 +534,6 @@ local function drawMapHelp(world)
  -- Keep the playable viewport clear of permanent map/mod debug overlays.
  -- No remote entrance locator or item-distance HUD: discover features
  -- by exploring the procedurally generated surface as in MooMoo.io.
- if world.spaceId and world.spaceId:match("^casa%-%d+$") then
-  love.graphics.setColor(0.09,0.11,0.09,0.83)
-  love.graphics.rectangle("fill",16,h-52,390,36,5,5)
-  love.graphics.setColor(0.96,0.95,0.87,1)
-  love.graphics.print("H: EDITOR DE PAREDES  |  15 MADEIRA + 5 PEDRA",24,h-43)
- end
  local obj=View.nearestInteraction(world)
  if obj then
   love.graphics.setColor(0.10,0.11,0.10,0.88)
