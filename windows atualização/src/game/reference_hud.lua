@@ -93,6 +93,7 @@ local function minimap(world,w,h)
     love.graphics.line(mx-7,my-7,mx+7,my+7)
     love.graphics.line(mx-7,my+7,mx+7,my-7)
   end
+  mark(world.mapMarker,1,1,1)
   DeathMarker.drawMini(world,x,y,size,C.mapScale)
   if world.lastDeath and
      not DeathMarker.sameArea(world) then
@@ -107,7 +108,6 @@ local function minimap(world,w,h)
     love.graphics.setFont(fontSmall)
     love.graphics.print("ULTIMA MORTE",x,y-18)
   end
-  mark(world.mapMarker,1,1,1)
 end
 -- Draw only the minimap during the death sequence: the ordinary HUD
 -- is intentionally hidden, but the location marker must remain visible.
