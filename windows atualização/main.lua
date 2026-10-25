@@ -284,6 +284,18 @@ function love.load()
     love.event.quit(ok and 0 or 1)
     return
   end
+  if os.getenv("MOO_IO_GAMEPAD_TEST")=="1" then
+    local ok,err=pcall(function()
+      require("src.test_gamepad_controls")(
+        function(v) client=v end,
+        function(v) world=v end,
+        function(v) phase=v end)
+    end)
+    if not ok then print("MOO IO GAMEPAD FAIL: "..tostring(err)) end
+    allowQuit=true
+    love.event.quit(ok and 0 or 1)
+    return
+  end
   if os.getenv("MOO_IO_HUD_TEST")=="1" then
     local ok,err=pcall(function() require("src.test_missing_asset_ui")() end)
     if not ok then print("MOO IO HUD FAIL: "..tostring(err)) end
