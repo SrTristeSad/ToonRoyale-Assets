@@ -144,5 +144,12 @@ return function()
   home.roomOverlay=false
   love.graphics.setCanvas()
   canvas:release()
+  -- All title and submenus share keyboard/controller-friendly navigation.
+  home.screen="home";home.navScreen=nil;home.navIndex=0
+  assert(home:keypressed("tab")=="navigate" and home.navIndex==1)
+  assert(home:keypressed("return")=="play_tab" and home.screen=="play")
+  home.screen="server";home.focus="serverAddress"
+  assert(home:keypressed("tab")=="navigate" and home.focus==nil,
+    "Tab must release an active text field to navigate PC menus")
   print("MOO IO MENU PASS: salas locais, convite, LAN/VPN, opcoes e nenhuma entrada V2")
 end
