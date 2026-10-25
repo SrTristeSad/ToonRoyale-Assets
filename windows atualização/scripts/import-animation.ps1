@@ -16,7 +16,11 @@ if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
  throw 'Links e atalhos nao sao suportados.'
 }
 $name=[IO.Path]::GetFileName($path)
-if ((-not ($name -cmatch '^[a-zA-Z0-9][a-zA-Z0-9_-]*\.png
+$stem=[IO.Path]::GetFileNameWithoutExtension($path)
+if ([IO.Path]::GetExtension($name) -cne '.png' -or
+  $name.Length -gt 64 -or
+  $stem -cnotmatch '^[a-zA-Z0-9]' -or
+  $stem -cmatch '[^a-zA-Z0-9_-]') {
  throw 'Nome invalido: letras, numeros, _ e -, terminando em .png.'
 }
 if ($item.Length -lt 33 -or $item.Length -gt 8388608) {
