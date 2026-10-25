@@ -29,7 +29,17 @@ Bots aparecem com nomes normais (Lince, Ari, Raposa etc.), sem prefixo
 "Bot". Eles escolhem recursos de maneira mais consistente, recuam diante
 de ameacas superiores e podem cooperar com outros bots. Formar uma
 tribo e opcional, depende de proximidade e oportunidade: parte dos bots
-prefere jogar sozinha. Quando formam grupos, usam as tribos reais do
+prefere jogar sozinha.
+
+Bots acumulam XP real coletando e combatendo. Quando recebem pontos por
+idade, escolhem armas ou construcoes usando as mesmas regras e os mesmos
+pre-requisitos de idade do jogador (pacote H). Nao recebem armas de graca.
+Um bot pode preferir machados para recursos, outro espada para combate e
+outro arco ou besta; ao lutar, troca para equipamento de longo alcance
+apenas se a arma estiver desbloqueada e se houver municao/recursos.
+Quando o inimigo se aproxima ou ao coletar, volta a arma corpo a corpo.
+Sua arma aparece normalmente para os demais jogadores pelos snapshots
+do servidor; ataques respeitam tempo de recarga e fisica original. Quando formam grupos, usam as tribos reais do
 servidor e nao recebem privilegios nem recursos inventados.
 
 ## Configuracao de controles
