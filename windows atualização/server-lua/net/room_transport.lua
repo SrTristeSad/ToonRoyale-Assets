@@ -13,6 +13,18 @@ local function encodeArgs(...)
  end
  return out
 end
+-- Internally the original Node weapon slots have indices 0 and 1, while
+-- MessagePack packet V must encode a dense JS array instead of a map.
+local function weaponWire(inventory)
+ if type(inventory)~="table" or inventory[0]==nil then return inventory end
+ local wire={}
+ local index=0
+ while inventory[index]~=nil do
+   wire[#wire+1]=inventory[index]
+   index=index+1
+ end
+ return wire
+end
 function Transport.new(options)
  options=options or {}
  local room=assert(options.room,"real Lua Room required")
@@ -47,7 +59,11 @@ function Transport:connected(peer,ticket)
  -- A Lua player must always transmit its array payload through the
  -- encrypted/session-keyed peer:send, never through a second raw WebSocket.
  player.send=function(_,name,...)
-   return peer:send(name,encodeArgs(...))
+   local args=encodeArgs(...)
+   if name=="V" and args[2]==1 then
+     args[1]=weaponWire(args[1])
+   end
+   return peer:send(name,args)
  end
  self.room:bindPlayer(player)
  self.peers[peer]=player
