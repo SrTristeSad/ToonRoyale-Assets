@@ -65,6 +65,7 @@ local boxes={
   serverCode={773,513,326,49},serverEnter={773,573,326,51},
   serverPrev={150,633,260,42},serverNext={448,633,260,42},
   grid={355,280,570,57},fullscreen={355,364,570,57},
+  controls={355,447,570,57},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43},
   playConfigure={155,418,462,63},
   chooseLan={122,242,212,43},chooseVpn={348,242,212,43},
@@ -352,6 +353,7 @@ function Home:click(sx,sy)
   elseif self.screen=="settings" then
     if inside(x,y,boxes.grid) then self.showGrid=not self.showGrid;return "grid" end
     if inside(x,y,boxes.fullscreen) then self.fullscreen=not self.fullscreen;return "fullscreen" end
+    if inside(x,y,boxes.controls) then return "edit_controls" end
   end
   return nil
 end
@@ -678,8 +680,8 @@ function Home:draw(state,detail,showWorld)
       printText("CONFIGURACOES",336,190,31,C.white)
       button("grid","GRADE DO MAPA     "..(self.showGrid and "LIGADA" or "DESLIGADA"),false)
       button("fullscreen","TELA CHEIA       "..(self.fullscreen and "LIGADA" or "DESLIGADA"),false)
-      printText("Convide amigos pela tela da sala ou pelo menu ESC.",360,477,16,C.muted)
-      printText("ESC na partida: voltar e alterar as configuracoes.",360,505,16,C.muted)
+      button("controls","EDITAR TECLADO E JOYSTICK",false)
+      printText("Remapeie botoes e analogicos, altere a sensibilidade.",360,537,16,C.muted)
     end
   end
   panel(83,684,1111,34,{0.13,0.17,0.15},0)
