@@ -170,5 +170,16 @@
         }
       ]
     }
+  ],
+  "interactables": [
+    {
+      "id": "suprimentos-exterior",
+      "kind": "cache",
+      "x": 3620,
+      "y": 3660,
+      "label": "Suprimentos na superficie",
+      "resource": "food",
+      "amount": 12
+    }
   ]
 }
