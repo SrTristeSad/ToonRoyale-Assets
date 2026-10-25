@@ -153,7 +153,7 @@ end
 function World.new()
   return setmetatable({
     sid=nil,spawned=false,dead=false,players={},objects={},
-    map=nil,spaceId="surface",space=nil,justChangedSpace=false,
+    map=nil,roomSettings=nil,spaceId="surface",space=nil,justChangedSpace=false,
     mapMessage=nil,mapMessageTimer=0,
     objectSlots={},objectSlotBySid={},objectSlotCount=0,
     animals={},projectiles={},
@@ -181,6 +181,15 @@ function World:apply(name,args)
     -- permitted animal display metadata before any gameplay spawn.
     local handshake=args[1]
     if type(handshake)~="table" then return false end
+    local options=handshake.roomSettings
+    if type(options)=="table" and type(options.mods)=="table"
+      and type(options.difficulty)=="string" then
+      self.roomSettings={
+        difficulty=options.difficulty,
+        mods=options.mods,
+        surfaceAnimals=options.surfaceAnimals,
+        interiorAnimals=options.interiorAnimals}
+    else self.roomSettings=nil end
     -- The local Lua host advertises this only when LC runs a custom map.
     -- V2 and classic servers omit it and retain their original rendering.
     if type(handshake.map)=="table" and type(handshake.map.id)=="string"
