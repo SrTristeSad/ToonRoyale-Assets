@@ -87,6 +87,7 @@ jobs:
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-mod-generic-smoke.lua
           lua5.4 server-lua/tests/map-animation-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/mod-extra-mobs-smoke.lua
+          MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-dependencies-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-interactables-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-mechanisms-smoke.lua
           lua5.4 server-lua/tests/custom-map-human-welcome-smoke.lua
