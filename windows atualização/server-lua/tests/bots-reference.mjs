@@ -55,7 +55,7 @@ try {
  repeat.b.decide(repeat.a,270);
  console.log("WANDER_REPEAT|"+number(first.x)+"|"+number(first.y)+
   "|"+number(repeat.a.wander.x)+"|"+number(repeat.a.wander.y)+
-  "|"+String(repeat.a.heading));
+  "|"+number(repeat.a.heading));
  Math.random=()=>0.5;
  const dead=makeGame(p=>p.alive=false);
  dead.b.decide(dead.a,2200);dead.b.decide(dead.a,2200);
