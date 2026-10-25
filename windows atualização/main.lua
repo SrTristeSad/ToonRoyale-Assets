@@ -24,7 +24,25 @@ if os.getenv("MOO_IO_LUA_SERVER")=="1" then
     assert(ok,why)
     print("MOOIO_LUA_SERVER_READY")
   end
-  function love.update(dt)
+  -- Continuous cursor travel for controller navigation; axis callbacks only fire
+-- on changes, so relying on them makes menus nearly impossible to navigate.
+local function updateGamepadMenu(dt)
+ if phase~="menu" then return end
+ local joy=activeGamepad()
+ if not joy then return end
+ local xaxis,yaxis=joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty")
+ if math.abs(xaxis)<0.24 then xaxis=0 end
+ if math.abs(yaxis)<0.24 then yaxis=0 end
+ if xaxis==0 and yaxis==0 then return end
+ local x,y=love.mouse.getPosition()
+ local w,h=love.graphics.getDimensions()
+ local distance=460*math.min(dt,0.08)
+ local nextX=math.max(0,math.min(w-1,math.floor(x+xaxis*distance+0.5)))
+ local nextY=math.max(0,math.min(h-1,math.floor(y+yaxis*distance+0.5)))
+ love.mouse.setPosition(nextX,nextY)
+end
+
+function love.update(dt)
     if instance and instance:update()==false then love.event.quit(0) end
   end
   function love.draw() end
@@ -106,6 +124,7 @@ local lockDir=false
 local angle
 local gamepadAim=nil
 local gamepadAttack=false
+local currentAttackDir
 local function activeGamepad()
  if not love.joystick or not love.joystick.getJoysticks then return nil end
  for _,joy in ipairs(love.joystick.getJoysticks()) do
@@ -128,14 +147,15 @@ local function updateGamepad()
  end
  input:gamepadMove(joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty"))
  local rx,ry=joy:getGamepadAxis("rightx"),joy:getGamepadAxis("righty")
- if rx*rx+ry*ry>=0.12 then gamepadAim=angle(ry,rx) end
+ -- Releasing the right stick returns aiming to the mouse immediately.
+ gamepadAim=(rx*rx+ry*ry>=0.12) and angle(ry,rx) or nil
  local pressed=joy:getGamepadAxis("triggerright")>=0.52
  if phase=="playing" and client and client.state=="spawn_confirmed"
    and not died and not pause:isOpen() and not chatOpen
    and not panels:isOpen() and not clans:isOpen() then
   if pressed and not gamepadAttack then
    gamepadAttack=true
-   if not mouseAttack and not spaceAttack then client:send("F",{1,gamepadAim or 0}) end
+   if not mouseAttack and not spaceAttack then client:send("F",{1,gamepadAim or currentAttackDir()}) end
   elseif not pressed and gamepadAttack then
    gamepadAttack=false
    if not mouseAttack and not spaceAttack then client:send("F",{0,Pack.null}) end
@@ -145,7 +165,7 @@ local function updateGamepad()
   if client and client.state=="spawn_confirmed" then client:send("F",{0,Pack.null}) end
  end
 end
-local function currentAttackDir()
+currentAttackDir=function()
   local w,h=love.graphics.getDimensions()
   local mx,my=love.mouse.getPosition()
   return angle(my-h/2,mx-w/2)
@@ -300,6 +320,7 @@ function love.update(dt)
   -- The menu backdrop reuses the original top-down world preview even
   -- before connecting to a Node server.
   if phase=="menu" then
+    updateGamepadMenu(dt)
     menu.world:update(dt)
     previewAge=previewAge+dt
   end
@@ -950,22 +971,8 @@ function love.gamepadpressed(joystick,button)
  elseif button=="dpleft" then love.keypressed("4")
  end
 end
-function love.gamepadaxis(joystick,axis,value)
- -- Menu navigation uses the existing mouse hover/click controls, keeping
- -- native keyboard and pointer support intact.
- if joystick~=activeGamepad() or phase~="menu" then return end
- if axis=="leftx" or axis=="lefty" then
-  local deadzone=0.55
-  if math.abs(value)<deadzone then return end
-  local x,y=love.mouse.getPosition()
-  local w,h=love.graphics.getDimensions()
-  local delta=value>0 and 35 or -35
-  if axis=="leftx" then x=math.max(0,math.min(w-1,x+delta))
-  else y=math.max(0,math.min(h-1,y+delta)) end
-  love.mouse.setPosition(x,y)
- end
-end
 function love.gamepadreleased(joystick,button)
+ if joystick~=activeGamepad() then return end
  if button=="x" then love.keyreleased("space") end
 end
 function love.keypressed(key)
