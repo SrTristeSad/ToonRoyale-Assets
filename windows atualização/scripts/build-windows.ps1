@@ -36,6 +36,11 @@ if (Test-Path (Join-Path $root 'licenses')) {
   Copy-Item (Join-Path $root 'licenses') (Join-Path $OutputDir 'licenses') -Recurse -Force
 }
 Copy-Item (Join-Path $LoveDir '*') $OutputDir -Recurse -Force
+# Keep the Windows release free from Node differential fixtures and tests.
+foreach ($relative in @('server-lua\tests','src\test_browser_auth.lua','src\net\browser_auth.lua')) {
+  $target=Join-Path $OutputDir $relative
+  if (Test-Path $target) { Remove-Item $target -Recurse -Force }
+}
 # Runtime output must never inherit development accounts.
 $luaData = Join-Path $OutputDir 'server-lua\data'
 if (Test-Path $luaData) { Remove-Item $luaData -Recurse -Force }
@@ -45,7 +50,7 @@ foreach ($file in @('src\net\browser_auth.lua','src\test_browser_auth.lua')) {
   $target=Join-Path $OutputDir $file
   if (Test-Path $target) { Remove-Item $target -Force }
 }
-foreach ($bad in @('server','runtime\node','scripts\start-server.ps1')) {
+foreach ($bad in @('server','runtime\node','scripts\start-server.ps1','server-lua\tests','src\net\browser_auth.lua')) {
   if (Test-Path (Join-Path $OutputDir $bad)) { throw "Node/V2 inesperado no pacote: $bad" }
 }
 [IO.File]::WriteAllText((Join-Path $OutputDir 'LEIA-ME-PRIMEIRO.txt'),
