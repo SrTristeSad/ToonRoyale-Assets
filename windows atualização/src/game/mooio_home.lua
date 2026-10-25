@@ -368,6 +368,10 @@ function Home:navTargets()
  return rects
 end
 function Home:keyboardNavigate(key)
+ if self.navScreen~=self.screen then
+  self.navScreen=self.screen
+  self.navIndex=0
+ end
  local rects=self:navTargets()
  if #rects==0 then return nil end
  if key=="tab" or key=="down" or key=="up" then
@@ -386,6 +390,7 @@ function Home:keyboardNavigate(key)
   return "navigate"
  end
  if key=="return" or key=="kpenter" then
+  if not self.navIndex or self.navIndex==0 then self.navIndex=1 end
   local b=rects[self.navIndex]
   if b then
    local w,h=love.graphics.getDimensions()
@@ -408,6 +413,10 @@ function Home:keypressed(key)
     self.focus=nil;return "back"
   end
   if self.focus then
+    if key=="tab" then
+      self.focus=nil
+      return self:keyboardNavigate(key)
+    end
     if key=="backspace" then self[self.focus]=removeLast(self[self.focus]) end
     if key=="v" and (love.keyboard.isDown("lctrl") or love.keyboard.isDown("rctrl")) then
       self:textinput(love.system.getClipboardText())
