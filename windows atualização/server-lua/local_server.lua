@@ -13,6 +13,7 @@ local Host=require("server-lua.net.host")
 local Accounts=require("server-lua.world.account_store")
 local Moderation=require("server-lua.anticheat.moderation_store")
 local Chat=require("server-lua.world.local_chat")
+local Build=require("server-lua.protocol.build")
 local Local={}
 Local.__index=Local
 local function stamp()return math.floor(Socket.gettime()*1000)end
@@ -158,6 +159,9 @@ function Local.new(opts)
   rooms={LC={capacity=Config.maxPlayers,membersOnly=false},
     MB={capacity=80,membersOnly=true}},
   maxPeers=120,guiHost=opts.guiHost==true,botCount=opts.botCount or 0,
+  build=opts.build or Build.open(
+    opts.protocolBuildFile or (opts.dataDir.."/protocol-build.json"),
+    {nowMs=now,rotate=opts.rotateBuild==true}),
   accounts=accounts,moderation=moderation,servers=serverList,game=game,chat=chat,
   nowMs=now,
   onConnect=function(peer,ticket,key)
