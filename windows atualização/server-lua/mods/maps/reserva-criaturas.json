@@ -4,28 +4,17 @@
   "name": "Reserva de Criaturas (mod)",
   "description": "Mapa demonstrativo com novas especies 15 e 16; selecione tambem o mod Novas Especies.",
   "mode": "generated",
-  "generation": {
-    "treesPerArea": 7,
-    "bushesPerArea": 3,
-    "totalRocks": 36,
-    "goldOres": 9,
-    "seed": 29387
-  },
+  "generation": {},
   "surface": [],
-  "spawn": {
-    "x": 3520,
-    "y": 3670
-  },
   "portals": [
     {
       "id": "entrada-refugio",
-      "x": 3520,
-      "y": 3520,
       "to": "mod-sala-metal",
       "targetX": 530,
       "targetY": 710,
       "style": "hatch",
-      "label": "Refugio"
+      "label": "Refugio",
+      "placement": "random"
     }
   ],
   "spaces": [
@@ -200,11 +189,10 @@
     {
       "id": "suprimentos-exterior",
       "kind": "cache",
-      "x": 3620,
-      "y": 3660,
       "label": "Suprimentos na superficie",
       "resource": "food",
-      "amount": 12
+      "amount": 12,
+      "placement": "random"
     }
   ]
 }
