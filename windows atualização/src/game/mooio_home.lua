@@ -200,57 +200,7 @@ function Home:click(sx,sy)
     if inside(x,y,boxes.nickname) then self.focus="nickname";return "focus" end
     if inside(x,y,boxes.joinIP) then self.focus="invite";return "focus" end
     if inside(x,y,boxes.joinCode) then self.focus="joinCode";return "focus" end
-    if not self.hosting and not self.starting then
-      if inside(x,y,boxes.modeLan) then self.serverMode="lan";self.focus=nil;return "mode_lan" end
-      if inside(x,y,boxes.modeVpn) then self.serverMode="vpn";self.focus=nil;return "mode_vpn" end
-      if self.serverMode=="vpn" and inside(x,y,boxes.vpnIP) then
-        self.focus="vpnIP";return "focus"
-      end
-      if inside(x,y,boxes.difficulty) then
-        local nextLevel={pacifico="normal",normal="dificil",dificil="extremo",extremo="pacifico"}
-        self.difficulty=nextLevel[self.difficulty] or "normal"
-        local descriptions={
-          pacifico="Pacífico: vida regenera e animais menos agressivos.",
-          normal="Normal: mesmas regras tradicionais do Moo-IO.",
-          dificil="Difícil: mais animais e lobos que caçam em grupo.",
-          extremo="Extremo: ataques intensos e matilhas mais coordenadas."
-        }
-        self:setStatus(descriptions[self.difficulty])
-        self.focus=nil
-        return "difficulty"
-      end
-      if inside(x,y,boxes.mapBrowse) then
-        self.screen="maps";self.focus=nil;self.mapPage=0
-        self.mapCatalog=Maps.available(love.filesystem,"server-lua/maps")
-        return "map_browse"
-      end
-      if inside(x,y,boxes.modIds) then self.focus="modIds";return "focus" end
-      if inside(x,y,boxes.modBrowse) then
-        self.screen="mods";self.focus=nil;self.modPage=0
-        self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
-        return "mod_browse"
-      end
-      if inside(x,y,boxes.botsToggle) then
-        self.botsEnabled=not self.botsEnabled
-        self.focus=nil
-        return "bots_toggle"
-      end
-      if inside(x,y,boxes.botsMinus) then
-        self.botCount=math.max(0,self.botCount-1)
-        self.botsEnabled=self.botCount>0
-        self.focus=nil
-        return "bots_count"
-      end
-      if inside(x,y,boxes.botsPlus) then
-        self.botCount=math.min(8,self.botCount+1)
-        self.botsEnabled=true
-        self.focus=nil
-        return "bots_count"
-      end
-      if inside(x,y,boxes[self.serverMode=="vpn" and "createVpn" or "createLan"]) then
-        self.focus=nil;return "create"
-      end
-    elseif self.hosting then
+    if self.hosting then
       if inside(x,y,boxes.roomCopy) then self.focus=nil;return "copy" end
       if inside(x,y,boxes.roomEnter) then self.focus=nil;return "play_local" end
       if inside(x,y,boxes.roomStop) then self.focus=nil;return "stop" end
@@ -632,7 +582,7 @@ function Home:draw(state,detail,showWorld)
       button("chooseMapNext","PROXIMOS MAPAS",false)
       button("createBack","CANCELAR",false)
       button("createSubmit","CRIAR SALA NESTE MAPA",true)
-      printText("Escolhido: "..self:mapName(),635,612,15,C.green,510)
+      printText("Selecionado: "..self:mapName(),639,604,13,C.green,510)
       if #self.mapCatalog==0 then
         printText("Aviso: nenhum mapa adicional encontrado no pacote.",
           636,543,14,C.red,511)
