@@ -4,7 +4,9 @@
 param([Parameter(Mandatory=$true)][string]$Path)
 $ErrorActionPreference='Stop'
 if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "Missing $Path" }
-$code=[IO.File]::ReadAllText($Path)
+# Git checkout on Windows may convert LF to CRLF; normalize BEFORE
+# locating the test block. LÖVE accepts LF on Windows.
+$code=[IO.File]::ReadAllText($Path).Replace("`r`n","`n")
 $start=$code.IndexOf('  local integrationMode=os.getenv("MOOQUEST_INTEGRATION")',[StringComparison]::Ordinal)
 if ($start -lt 0) { throw 'Test-entry prelude not found in source main.lua' }
 $end=$code.IndexOf("`nend`n`nangle=function",$start,[StringComparison]::Ordinal)
