@@ -56,6 +56,7 @@ local boxes={
   roomStop={392,485,225,55},
   joinIP={704,287,421,51},joinCode={704,359,421,51},
   join={704,430,421,54},joinRetry={704,506,421,49},
+  v2Login={704,557,421,38},
   serverToPlay={381,526,518,54},
   grid={355,280,570,57},fullscreen={355,364,570,57},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43}
@@ -91,6 +92,10 @@ local function field(id,value,placeholder,focused)
     value=="" and C.muted or C.white,b[3]-28)
 end
 function Home.parseInvite(value,code)
+  if type(value)=="string" and type(code)=="string" and #code>0
+    and value:match("^https://[a-z0-9%.%-]+/?$") then
+    return Network.invite(value:gsub("/$","").."/"..code)
+  end
   if type(value)=="string" and type(code)=="string" and #code>0
     and not value:find("/",1,true) then
     local host=value:match("^%s*(.-)%s*$")
@@ -178,6 +183,9 @@ function Home:click(sx,sy)
       if inside(x,y,boxes.roomStop) then self.focus=nil;return "stop" end
     end
     if inside(x,y,boxes.join) then self.focus=nil;return "join" end
+    if not self.hosting and not self.starting and inside(x,y,boxes.v2Login) then
+      self.focus=nil;return "v2_login"
+    end
     if self.error and inside(x,y,boxes.joinRetry) then self.focus=nil;return "retry" end
     self.focus=nil
   elseif self.screen=="server" then
