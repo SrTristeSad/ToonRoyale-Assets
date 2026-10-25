@@ -132,8 +132,9 @@ function Bots:decide(a,delta)
  if not target then
   if not a.wander or a.targetUntil<a.at or dist(player,a.wander)<55 then
    local turn=(math.random()*2-1)*pi
+   -- LOCAL Node RoomBots decides each wander heading from a.heading,
+   -- but does not persist that heading between decisions.
    local heading=nilOr(a.heading,0)+turn
-   a.heading=heading
    local limit=nilOr(game.config and game.config.mapScale,14400)
    a.wander={
     x=clamp(player.x+math.cos(heading)*470,80,limit-80),
