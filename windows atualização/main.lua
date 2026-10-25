@@ -778,7 +778,16 @@ connectRoom=function(ip,port,inviteCode,authToken,secure)
 end
 
 homeAction=function(action)
-  if action=="play_tab" then
+  if action=="quit_game" then
+    if hosted.state=="ready" or hosted.state=="starting" then
+      -- Never destroy a live friend's room from the title screen silently.
+      pause:confirm(true,true)
+    else
+      allowQuit=true
+      love.event.quit()
+    end
+    return
+  elseif action=="play_tab" then
     -- Navigating to JOGAR cannot launch a server or join a room.
     -- Both operations require their own explicit button.
     home.screen="play"
