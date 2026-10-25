@@ -95,7 +95,7 @@ function Animals:spawn(x,y,angle,index,overrides)
  end
  if not ai then
    local opts={
-     config=self.config,players=self.players,world=self.world,
+     config=self.config,players=self.players,ais=self.ais,world=self.world,
      randInt=function(min,max)return self:randomInt(min,max)end,
      randFloat=function(min,max)return self:randomFloat(min,max)end,
      random=self.random,
