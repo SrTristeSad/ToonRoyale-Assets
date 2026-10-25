@@ -17,6 +17,21 @@ Quando o **anfitriao morre**, o fluxo original de retorno ao menu e mantido,
 mas o fundo mostra o ultimo local da morte em vez de recentralizar o mundo.
 Sair do cliente com uma sala ainda aberta continua exigindo confirmacao.
 
+## Inteligencia de animais e bots
+
+As partidas usam decisoes autoritativas no **servidor Lua**, sem IA calculada
+no cliente. Animais passivos procuram fugir de humanos proximos e predadores;
+animais hostis reavaliam os alvos mais rapidamente e tentam contornar
+paredes de cavernas e limites do mapa. O nivel de dificuldade ainda
+controla velocidade/agressividade e os comportamentos de alcateia.
+
+Bots aparecem com nomes normais (Lince, Ari, Raposa etc.), sem prefixo
+"Bot". Eles escolhem recursos de maneira mais consistente, recuam diante
+de ameacas superiores e podem cooperar com outros bots. Formar uma
+tribo e opcional, depende de proximidade e oportunidade: parte dos bots
+prefere jogar sozinha. Quando formam grupos, usam as tribos reais do
+servidor e nao recebem privilegios nem recursos inventados.
+
 ## Configuracao de controles
 
 Abra **Opcoes > Editar teclado e joystick** na tela inicial, ou
