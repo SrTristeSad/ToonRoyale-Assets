@@ -173,7 +173,7 @@ function Host:update(dt)
   end
   if self.elapsed>90 then
     self.state="failed"
-    self.error="Servidor nao iniciou. Confira server/data/mooio-host.log"
+    self.error="Servidor nao iniciou. Confira "..Paths.log(self.root or "")
     if self.process then kernel.TerminateProcess(self.process,1);kernel.CloseHandle(self.process);self.process=nil end
   end
 end
