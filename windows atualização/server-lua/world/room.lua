@@ -242,6 +242,10 @@ function Room:checkPortalCrossing(player)
   player.portalInside=nil
   return false
  end
+ -- Simply standing on a spawn pad must not change regions on its own.
+ if type(player.moveDir)~="number"
+   and math.abs(player.xVel or 0)<0.000001
+   and math.abs(player.yVel or 0)<0.000001 then return false end
  -- No automatic ping-pong after arrival. The player has to leave the
  -- arrival circle before stepping into that passage again.
  if player.portalInside==nearest.id then return false end
