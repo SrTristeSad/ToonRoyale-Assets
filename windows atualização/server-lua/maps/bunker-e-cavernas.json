@@ -28,7 +28,7 @@
     },
     {
       "id": "entrada-caverna",
-      "x": 5900,
+      "x": 4670,
       "y": 4700,
       "to": "caverna-01",
       "targetX": 500,
@@ -146,7 +146,7 @@
           "x": 500,
           "y": 700,
           "to": "surface",
-          "targetX": 5900,
+          "targetX": 4670,
           "targetY": 4700
         },
         {
