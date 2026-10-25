@@ -89,7 +89,7 @@ function Home.new()
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
     serverMode="lan",difficulty="normal",modIds="",modCatalog=installed,modPage=0,
     mapId=(maps[1] and maps[1].id or ""),mapCatalog=maps,
-    mapPage=0,focus=nil,
+    mapPage=0,focus=nil,navIndex=0,
     serverAddress="",serverCode="",serverRooms={},serverDirectory=nil,
     serverPage=0,serverSelected=1,
     status="",error=false,hosting=false,starting=false,
@@ -324,6 +324,73 @@ local function removeLast(s)
   while i>1 and s:byte(i)>=128 and s:byte(i)<192 do i=i-1 end
   return s:sub(1,i-1)
 end
+-- Tab/arrows and Enter use the same hitboxes as the mouse/gamepad.
+-- Never create a second navigation or server-connection code path.
+function Home:navTargets()
+ local ids={}
+ if self.screen=="home" then
+  ids={"homePlay","homeServers","homeSettings","homeQuit"}
+ elseif self.screen=="play" then
+  ids=self.hosting and {"nickname","roomCopy","roomEnter","roomStop","joinIP","joinCode","join","back"}
+    or {"nickname","playConfigure","joinIP","joinCode","join","v2Login","back"}
+ elseif self.screen=="create" then
+  ids={"chooseLan","chooseVpn","easyDiff","normalDiff",
+   "hardDiff","extremeDiff","createBots","createBotsMinus",
+   "createBotsPlus","createMods","chooseMapNext","createSubmit",
+   "createBack","back"}
+  if self.serverMode=="vpn" then table.insert(ids,3,"createVpnIP") end
+ elseif self.screen=="server" then
+  ids={"serverAddress","serverRefresh"}
+  for i=1,4 do
+   local row=self.serverRooms[self.serverPage*4+i]
+   if row then ids[#ids+1]={155,332+(i-1)*70,565,62} end
+  end
+  ids[#ids+1]="serverCode";ids[#ids+1]="serverEnter"
+  ids[#ids+1]="serverPrev";ids[#ids+1]="serverNext";ids[#ids+1]="back"
+ elseif self.screen=="maps" or self.screen=="mods" then
+  local total=self.screen=="maps" and (#self.mapCatalog+1) or #self.modCatalog
+  local page=self.screen=="maps" and self.mapPage or self.modPage
+  for i=1,6 do
+   if page*6+i<=total then
+    ids[#ids+1]={151,242+(i-1)*64,976,57}
+   end
+  end
+  ids[#ids+1]="modsPrevious";ids[#ids+1]="modsNext"
+  ids[#ids+1]="modsDone";ids[#ids+1]="back"
+ elseif self.screen=="settings" then
+  ids={"grid","fullscreen","controls","back"}
+ end
+ local rects={}
+ for _,id in ipairs(ids) do
+  if type(id)=="table" then rects[#rects+1]=id
+  elseif boxes[id] then rects[#rects+1]=boxes[id] end
+ end
+ return rects
+end
+function Home:keyboardNavigate(key)
+ local rects=self:navTargets()
+ if #rects==0 then return nil end
+ if key=="tab" or key=="down" or key=="up" then
+  local direction=key=="up" and -1 or 1
+  self.navIndex=((self.navIndex or 0)-1+direction)%#rects+1
+  local b=rects[self.navIndex]
+  local w,h=love.graphics.getDimensions()
+  local z=math.min(w/1280,h/720)
+  local x=(w-1280*z)/2+(b[1]+b[3]/2)*z
+  local y=(h-720*z)/2+(b[2]+b[4]/2)*z
+  if love.mouse.setPosition then love.mouse.setPosition(x,y) end
+  return "navigate"
+ end
+ if key=="return" or key=="kpenter" then
+  local b=rects[self.navIndex]
+  if b then
+   local w,h=love.graphics.getDimensions()
+   local z=math.min(w/1280,h/720)
+   return self:click((w-1280*z)/2+(b[1]+b[3]/2)*z,
+      (h-720*z)/2+(b[2]+b[4]/2)*z)
+  end
+ end
+end
 function Home:keypressed(key)
   if key=="f5" and (self.screen=="create"
      or self.screen=="mods" or self.screen=="maps") then
@@ -347,6 +414,11 @@ function Home:keypressed(key)
       if from=="invite" then return "join" end
     end
     return nil
+  end
+  if key=="tab" or key=="up" or key=="down"
+    or key=="return" or key=="kpenter" then
+    local action=self:keyboardNavigate(key)
+    if action then return action end
   end
   if self.screen=="home" then
     if key=="1" then self.screen="play";return "play_tab" end
