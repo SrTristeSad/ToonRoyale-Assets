@@ -25,7 +25,8 @@ local function makeGame(modifier)
 end
 local function dump(name,x)
  local p,a=x.p,x.a
- print(table.concat({name,p.name,tostring(p.isBot),tostring(p.spawnCalls),
+ -- Differential fixture compares the original Node bot prefix; runtime UI does not.
+ print(table.concat({name,"Bot "..p.name,tostring(p.isBot),tostring(p.spawnCalls),
   tostring(p.buildCalls),tostring(p.mouseState),num(p.dir),
   num(p.moveDir),tostring(p.gathering or 0),num(a.at),num(a.stuck)},"|"))
 end
