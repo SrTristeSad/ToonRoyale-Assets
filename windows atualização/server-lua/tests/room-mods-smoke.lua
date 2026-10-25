@@ -30,4 +30,32 @@ for _,bad in ipairs({"../private","mais-lobos,,fauna-hostil","mais-lobos,mais-lo
 end
 assert(not pcall(Mods.build,"unknown",{},"server-lua/mods"))
 assert(not pcall(Mods.build,"normal",{"does-not-exist"},"server-lua/mods"))
+-- New core groups are applied to copies of the authoritative game config.
+local forest=Mods.build("normal",{"floresta-densa"},"server-lua/mods")
+assert(forest.config.treesPerArea==17 and forest.config.bushesPerArea==7)
+assert(forest.config.totalRocks==54 and forest.config.goldOres==12)
+assert(Config.treesPerArea~=forest.config.treesPerArea,
+  "a world mod must never mutate the original base map configuration")
+local pack=Mods.build("normal",{"lobos-em-matilha"},"server-lua/mods")
+assert(pack.config.server.roomRules.cooperativeWolves==true)
+assert(normal.config.server.roomRules.cooperativeWolves==false)
+assert(Mods.build("pacifico",{},"server-lua/mods").config.server.roomRules.healthRegenPerSecond==6)
+local parsed=Mods.describe("server-lua/mods","floresta-densa")
+assert(parsed.id=="floresta-densa" and parsed.name=="Floresta Densa")
+-- Mod picker discovery uses the same validation but read-only LÖVE filesystem.
+local directory={"lobos-em-matilha.json","floresta-densa.json","mais-lobos.json",
+  "unauthorized.lua","does-not-exist.json"}
+local fs={
+ getDirectoryItems=function()return directory end,
+ read=function(path)
+  local f=io.open(path,"rb")
+  if not f then return nil end
+  local text=f:read("*a");f:close();return text
+ end
+}
+local installed=Mods.available(fs,"server-lua/mods")
+assert(#installed==3 and installed[1].id=="floresta-densa"
+  and installed[2].id=="lobos-em-matilha"
+  and installed[3].id=="mais-lobos","mod picker must ignore invalid/unreadable files")
+assert(not pcall(Mods.build,"normal",{"../secrets"},"server-lua/mods"))
 print("PASS mods JSON + dificuldade isolados, limites, sem execucao de codigo")
