@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "id": "refugio-personalizado",
+  "name": "Refugio Personalizado (mod)",
+  "description": "Mapa comunitario de exemplo: interior metalico conectado a uma sala de gelo. Nenhum nome de zona e especial.",
+  "mode": "generated",
+  "generation": {
+    "treesPerArea": 7,
+    "bushesPerArea": 3,
+    "totalRocks": 36,
+    "goldOres": 9,
+    "seed": 29387
+  },
+  "surface": [],
+  "spawn": {
+    "x": 3520,
+    "y": 3670
+  },
+  "portals": [
+    {
+      "id": "entrada-refugio",
+      "x": 3520,
+      "y": 3520,
+      "to": "mod-sala-metal",
+      "targetX": 530,
+      "targetY": 710,
+      "style": "hatch",
+      "label": "Refugio"
+    }
+  ],
+  "spaces": [
+    {
+      "id": "mod-sala-metal",
+      "type": "interior",
+      "width": 1300,
+      "height": 1100,
+      "visual": {
+        "floor": "metal",
+        "wall": "brick",
+        "tileSize": 96,
+        "name": "Sala metalica"
+      },
+      "obstacles": [
+        {
+          "x": 80,
+          "y": 80,
+          "width": 1024,
+          "height": 70,
+          "material": "metal"
+        },
+        {
+          "x": 80,
+          "y": 80,
+          "width": 70,
+          "height": 880,
+          "material": "brick"
+        },
+        {
+          "x": 1150,
+          "y": 80,
+          "width": 70,
+          "height": 880,
+          "material": "brick"
+        },
+        {
+          "x": 890,
+          "y": 380,
+          "width": 70,
+          "height": 280,
+          "material": "metal"
+        }
+      ],
+      "portals": [
+        {
+          "id": "sair-refugio",
+          "x": 530,
+          "y": 710,
+          "to": "surface",
+          "targetX": 3520,
+          "targetY": 3520,
+          "style": "hatch",
+          "label": "Sair"
+        },
+        {
+          "id": "porta-gelo",
+          "x": 900,
+          "y": 850,
+          "to": "mod-sala-gelo",
+          "targetX": 400,
+          "targetY": 450,
+          "style": "door",
+          "label": "Sala gelada"
+        }
+      ],
+      "mobs": []
+    },
+    {
+      "id": "mod-sala-gelo",
+      "type": "underground",
+      "width": 1200,
+      "height": 900,
+      "visual": {
+        "floor": "ice",
+        "wall": "stone",
+        "tileSize": 64,
+        "name": "Camara congelada"
+      },
+      "obstacles": [
+        {
+          "x": 80,
+          "y": 80,
+          "width": 70,
+          "height": 740,
+          "material": "ice"
+        },
+        {
+          "x": 950,
+          "y": 100,
+          "width": 100,
+          "height": 480,
+          "material": "stone"
+        }
+      ],
+      "portals": [
+        {
+          "id": "retorno-metal",
+          "x": 400,
+          "y": 450,
+          "to": "mod-sala-metal",
+          "targetX": 900,
+          "targetY": 850,
+          "style": "stairs",
+          "label": "Retornar"
+        }
+      ],
+      "mobs": [
+        {
+          "kind": 4,
+          "x": 770,
+          "y": 550
+        }
+      ]
+    }
+  ]
+}
