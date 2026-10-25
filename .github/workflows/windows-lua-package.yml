@@ -199,6 +199,18 @@ jobs:
           name: Moo-IO-GitHub-Windows-Fontes-Limpas
           path: ${{ runner.temp }}/Moo-IO-GitHub-Source.zip
           if-no-files-found: error
+      - name: Higienizar dados de partida e protocolo gerados durante os testes
+        run: |
+          $ErrorActionPreference='Stop'
+          $root=Join-Path $env:GITHUB_WORKSPACE 'windows atualização'
+          $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
+          $data=Join-Path $out 'server-lua\data'
+          if (Test-Path -LiteralPath $data) {
+            Get-ChildItem -LiteralPath $data -Force |
+              Remove-Item -Recurse -Force
+          }
+          & (Join-Path $root 'scripts\test-lua-release.ps1') -DistDir $out
+          Write-Host 'PASS: ZIP Windows sem tokens ou protocolos temporarios de testes'
       - name: Compactar jogo completo
         run: |
           $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
