@@ -31,17 +31,19 @@ return function()
   assert(home:click(165,362)=="difficulty" and home.difficulty=="pacifico")
   assert(home:click(412,362)=="difficulty" and home.difficulty=="normal")
   assert(home:click(429,409)=="difficulty" and home.difficulty=="extremo")
+  assert(home:click(730,587)=="map_browse" and home.screen=="maps")
   local sawCave=false
   for i,m in ipairs(home.mapCatalog) do
     if m.id=="bunker-e-cavernas" then
-      local n=i
-      home.mapPage=math.floor((n-1)/4)
-      sawCave=home:click(690,256+74*((n-1)%4))=="map_select"
+      local n=i+1
+      home.mapPage=math.floor((n-1)/6)
+      sawCave=home:click(690,256+64*((n-1)%6))=="map_select"
       break
     end
   end
   assert(sawCave and home:mapName()=="Bunker e Cavernas",
     "cave map must be a labeled selectable option")
+  assert(home:click(820,656)=="maps_done" and home.screen=="create")
   assert(home:click(200,577)=="mod_browse")
   assert(home.screen=="mods" and #home.modCatalog>=4,
     "mod installer list should show bundled data-only mods")
