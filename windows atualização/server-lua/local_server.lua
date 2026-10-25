@@ -68,7 +68,17 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
  room.selectedDifficulty=rules.difficulty or "normal"
  room.projectile_manager.mapSpaces=room.mapSpaces
  animals.mapSpaces=room.mapSpaces
- animals.mapAnimations=map and map.animalAnimations or nil
+ room.mobAnimations=rules.animations or {}
+ animals.mapAnimations=room.mobAnimations
+ if map and key=="LC" then
+  for _,zone in ipairs(map.spaces or {}) do
+   for _,mob in ipairs(zone.mobs or {}) do
+    assert(rules.types[mob.kind],
+      "map requires unknown mob "..mob.kind..
+      " (select the species mod before starting this room)")
+   end
+  end
+ end
  if map and key=="LC" then
   room.houseStorePath=houseStorePath
   require("server-lua.world.house_build").load(room)
