@@ -24,7 +24,7 @@ if (-not (Test-Path (Join-Path $root 'assets\custom\img\weapons\hammer_1.png') -
 if ($OutputDir -eq $root -or $OutputDir -eq $LoveDir) { throw 'OutputDir invalido.' }
 if (Test-Path $OutputDir) { Remove-Item $OutputDir -Recurse -Force }
 New-Item -ItemType Directory -Force $OutputDir | Out-Null
-foreach ($folder in @('src','shared','assets','server-lua')) {
+foreach ($folder in @('src','assets','server-lua')) {
   $from = Join-Path $root $folder
   $to = Join-Path $OutputDir $folder
   & robocopy.exe $from $to /E /XJ /R:2 /W:1 /MT:16 /NP /NJH /NJS /NFL /NDL | Out-Null
