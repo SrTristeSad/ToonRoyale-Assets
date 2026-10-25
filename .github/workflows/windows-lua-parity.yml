@@ -510,6 +510,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/animal-decisions-smoke.lua
+      - name: Evolucao real de armas e escolhas dos bots
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/bot-loadout-smoke.lua
       - name: Bots nativos no Player Registry e Room sem socket ficticio
         run: |
           set -euo pipefail
