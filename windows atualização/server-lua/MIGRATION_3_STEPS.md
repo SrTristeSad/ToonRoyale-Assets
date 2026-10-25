@@ -36,7 +36,7 @@ Saída: todos os pacotes conhecidos com regras originais em Lua,
 sem `onUnportedPacket` para funcionalidades de produção, testes diferenciais
 e suíte de regressão completos.
 
-## 2. Servidor Lua executável para Windows: PENDENTE
+## 2. Servidor Lua executável para Windows: EXPERIMENTAL
 
 Unir `Room`, `PlayerRegistry`, `RoomTransport`, `Host`, os serviços
 de conta/moderação/clãs, salvamento, bots e a sala real em um inicializador.
