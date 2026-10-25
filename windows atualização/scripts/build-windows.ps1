@@ -57,4 +57,7 @@ foreach ($bad in @('server','runtime\node','scripts\start-server.ps1','server-lu
 }
 [IO.File]::WriteAllText((Join-Path $OutputDir 'LEIA-ME-PRIMEIRO.txt'),
   "Moo IO Windows - servidor local somente Lua/LÖVE. Extraia e abra MOO-IO.vbs. LAN/VPN privada; sem Node.js ou login V2.")
+# Robocopy exit code 1 means "files copied", not a failure.
+# Prevent a stale external exit code from failing the calling PowerShell CI step.
+$global:LASTEXITCODE = 0
 Write-Host "Pacote Windows Lua pronto: $OutputDir"
