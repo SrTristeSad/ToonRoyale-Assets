@@ -66,5 +66,21 @@ for _,area in ipairs(map.spaces) do
  assert(not room.mapSpaces:canOccupy(area.id,85,85,35),
    "floor collision does not include the outer tiles: "..area.id)
 end
+-- Real dungeon AI: on an angled approach against bunker-02's vertical
+-- wall, the blocked horizontal component must not cancel free movement.
+local wolf
+for _,ai in ipairs(room.ais) do
+ if ai.active and ai.spaceId=="bunker-02" and ai.index==4 then
+  wolf=ai;break end
+end
+assert(wolf and wolf.scale==84)
+wolf.x=800;wolf.y=500
+wolf.xVel=0.7;wolf.yVel=0.7
+wolf.moveCount=0;wolf.waitCount=2000;wolf.hitWait=0
+assert(room.mapSpaces:canOccupy("bunker-02",wolf.x,wolf.y,wolf.scale))
+wolf:update(100)
+assert(wolf.x<=816 and wolf.y>520,
+ "dungeon wolf stopped on both axes or went through physical wall")
+assert(room.mapSpaces:canOccupy("bunker-02",wolf.x,wolf.y,wolf.scale))
 localGame:close()
-print("PASS indoor physics: real Moo speed, blocked walls, sliding, all 4 level boundaries")
+print("PASS indoor physics: original speed, collidable walls, sliding AI, 4 level boundaries")
