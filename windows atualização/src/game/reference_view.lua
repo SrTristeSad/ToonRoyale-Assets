@@ -459,7 +459,13 @@ local function drawMapHelp(world)
   love.graphics.setColor(0.09,0.11,0.09,0.83)
   love.graphics.rectangle("fill",16,h-52,345,36,5,5)
   love.graphics.setColor(0.96,0.95,0.87,1)
-  love.graphics.print("B: CONSTRUIR CASA (70 MADEIRA, 35 PEDRA)",24,h-43)
+  love.graphics.print("B: CASA (70 MADEIRA, 35 PEDRA)",24,h-43)
+ end
+ if world.spaceId and world.spaceId~="surface" then
+  love.graphics.setColor(0.09,0.11,0.09,0.83)
+  love.graphics.rectangle("fill",16,h-52,390,36,5,5)
+  love.graphics.setColor(0.96,0.95,0.87,1)
+  love.graphics.print("H: PAREDE (15 MADEIRA, 5 PEDRA)",24,h-43)
  end
  if world.mapMessage and (world.mapMessageTimer or 0)>0 then
   love.graphics.setColor(0.07,0.10,0.07,0.91)
@@ -558,9 +564,27 @@ local function drawIndoor(world,camera,dt,options)
   local a,b=obstacle.width*camera.zoom,obstacle.height*camera.zoom
   love.graphics.setColor(0.08,0.09,0.08,0.5)
   love.graphics.rectangle("fill",x+4*camera.zoom,y+5*camera.zoom,a,b)
-  love.graphics.setColor(mine and 0.35 or 0.47,
-    mine and 0.36 or 0.32,mine and 0.36 or 0.20)
+  if obstacle.material=="wood" then
+    love.graphics.setColor(0.55,0.35,0.18)
+  else
+    love.graphics.setColor(mine and 0.35 or 0.47,
+      mine and 0.36 or 0.32,mine and 0.36 or 0.20)
+  end
   love.graphics.rectangle("fill",x,y,a,b)
+  if obstacle.material=="wood" then
+    love.graphics.setColor(0.22,0.15,0.09,0.52)
+    local along=(obstacle.width>obstacle.height)
+    local tiles=math.floor((along and obstacle.width or obstacle.height)/40)
+    for i=1,tiles do
+      if along then
+        love.graphics.line(x+i*40*camera.zoom,y,
+          x+i*40*camera.zoom,y+b)
+      else
+        love.graphics.line(x,y+i*40*camera.zoom,
+          x+a,y+i*40*camera.zoom)
+      end
+    end
+  end
   love.graphics.setColor(1,1,1,0.1)
   love.graphics.rectangle("fill",x+3*camera.zoom,y+3*camera.zoom,a-6*camera.zoom,5*camera.zoom)
  end
