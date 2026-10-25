@@ -465,7 +465,7 @@ local function drawMapHelp(world)
   love.graphics.setColor(0.09,0.11,0.09,0.83)
   love.graphics.rectangle("fill",16,h-52,390,36,5,5)
   love.graphics.setColor(0.96,0.95,0.87,1)
-  love.graphics.print("H: PAREDE (15 MADEIRA, 5 PEDRA)",24,h-43)
+  love.graphics.print("H: EDITOR DE PAREDES  |  15 MADEIRA + 5 PEDRA",24,h-43)
  end
  if world.mapMessage and (world.mapMessageTimer or 0)>0 then
   love.graphics.setColor(0.07,0.10,0.07,0.91)
@@ -628,21 +628,6 @@ local function drawIndoor(world,camera,dt,options)
   end
  end
  labels(world,camera,w,h)
- if world.spaceId and world.spaceId:match("^casa%-%d+$") and options then
-  local player=world:localPlayer()
-  local dir=options.localAim
-  if player and type(dir)=="number" and player.x and player.y then
-   local xx=player.x+160*math.cos(dir)
-   local yy=player.y+160*math.sin(dir)
-   local along=math.abs(math.cos(dir))<math.abs(math.sin(dir))
-   local rw,rh=along and 200 or 42,along and 42 or 200
-   local px,py=camera:worldToScreen(xx-rw/2,yy-rh/2)
-   love.graphics.setColor(0.94,0.75,0.24,0.18)
-   love.graphics.rectangle("fill",px,py,rw*camera.zoom,rh*camera.zoom)
-   love.graphics.setColor(0.98,0.83,0.35,0.85)
-   love.graphics.rectangle("line",px,py,rw*camera.zoom,rh*camera.zoom)
-  end
- end
  drawMapHelp(world)
  love.graphics.setColor(0.06,0.07,0.06,0.85)
  love.graphics.rectangle("fill",15,14,250,39,5,5)
