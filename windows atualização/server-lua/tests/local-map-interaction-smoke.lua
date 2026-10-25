@@ -12,6 +12,7 @@ local player={
  id="test-player",sid=1,active=true,alive=true,spaceId="surface",
  x=1950,y=1950,scale=35,xVel=0,yVel=0,speed=0.8,
  moveDir=nil,dir=0,powers={speed=1},shameTimer=0,
+ weaponIndex=0,buildIndex=-1,reloads={[0]=300},hits=0,mouseState=0,
  regenTimer=1000,dmgOverTime={},healCol=0,pps=0,slowMult=1,
  sentTo={["second-player"]=true},visiblePlayers={2},visibleAis={1},
  attrCache={[2]="cached"},lockMove=false,
@@ -25,7 +26,8 @@ local other={id="second-player",alive=true,spaceId="surface",
 local obj={sentTo={["test-player"]=true}}
 local room=setmetatable({key="LC",customMap=map,mapSpaces=Spaces.new(map,Config.mapScale),
  config=Config,nowMs=5000,players={player,other},services={},
- items={weapons={},list={}},object_manager={objects={obj}}},Room)
+ items={weapons={[0]={speed=500,gather=1}},list={},projectiles={}},
+ object_manager={objects={obj}}},Room)
 assert(room:handleInput(player,"j",{})==true)
 assert(player.spaceId=="cabana" and player.x==600 and player.y==900)
 assert(events[#events].name=="j" and events[#events].args[4].type=="interior")
