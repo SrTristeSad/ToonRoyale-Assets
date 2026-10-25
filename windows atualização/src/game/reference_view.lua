@@ -558,6 +558,30 @@ local function drawIndoor(world,camera,dt,options)
  love.graphics.setColor(mine and 0.39 or 0.78,
   mine and 0.37 or 0.67,mine and 0.33 or 0.53,1)
  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
+ -- Lightweight, deterministic floor detail (no external textures).
+ if mine then
+  love.graphics.setColor(0.12,0.12,0.11,0.18)
+  for x=0,area.width,180 do
+   local sx=camera:worldToScreen(x,0)
+   love.graphics.line(sx,y0,sx,y1)
+  end
+  for y=0,area.height,170 do
+   local _,sy=camera:worldToScreen(0,y)
+   love.graphics.line(x0,sy,x1,sy)
+  end
+ else
+  love.graphics.setColor(0.35,0.26,0.15,0.17)
+  for y=0,area.height,82 do
+   local _,sy=camera:worldToScreen(0,y)
+   love.graphics.line(x0,sy,x1,sy)
+  end
+  for y=0,area.height,164 do
+   for x=0,area.width,320 do
+    local sx,sy=camera:worldToScreen(x+(y%328==0 and 160 or 0),y)
+    love.graphics.line(sx,sy,sx,sy+82*camera.zoom)
+   end
+  end
+ end
  if options and options.showGrid~=false then grid(camera,w,h) end
  for _,obstacle in ipairs(area.obstacles or {}) do
   local x,y=camera:worldToScreen(obstacle.x,obstacle.y)
@@ -589,6 +613,14 @@ local function drawIndoor(world,camera,dt,options)
   love.graphics.rectangle("fill",x+3*camera.zoom,y+3*camera.zoom,a-6*camera.zoom,5*camera.zoom)
  end
  mapPortalMarkers(world,camera,true)
+ -- Mob AI and original projectile packets must be drawn inside caves,
+ -- not only on the outdoor surface.
+ drawProjectiles(world,camera,w,h,0)
+ for _,a in ipairs(world:orderedAnimals()) do
+  local kind=world and world:animalKind(a.index) or Animals.byId(a.index)
+  if a.x and a.y and kind then renderAnimal(a,camera,world) end
+ end
+ drawProjectiles(world,camera,w,h,1)
  for _,p in ipairs(world:orderedPlayers()) do
   if p.x and p.y and p.invisible~=1 then
    local aim=(p.sid==world.sid and options) and options.localAim or nil
@@ -596,6 +628,22 @@ local function drawIndoor(world,camera,dt,options)
   end
  end
  labels(world,camera,w,h)
+ if world.spaceId and world.spaceId:match("^casa%-%d+$") and options then
+  local player=world:localPlayer()
+  local dir=options.localAim
+  if player and type(dir)=="number" and player.x and player.y then
+   local xx=player.x+160*math.cos(dir)
+   local yy=player.y+160*math.sin(dir)
+   local along=math.abs(math.cos(dir))<math.abs(math.sin(dir))
+   local rw,rh=along and 200 or 42,along and 42 or 200
+   local px,py=camera:worldToScreen(xx-rw/2,yy-rh/2)
+   love.graphics.setColor(0.94,0.75,0.24,0.18)
+   love.graphics.rectangle("fill",px,py,rw*camera.zoom,rh*camera.zoom)
+   love.graphics.setColor(0.98,0.83,0.35,0.85)
+   love.graphics.rectangle("line",px,py,rw*camera.zoom,rh*camera.zoom)
+  end
+ end
+ drawMapHelp(world)
  love.graphics.setColor(0.06,0.07,0.06,0.85)
  love.graphics.rectangle("fill",15,14,250,39,5,5)
  love.graphics.setColor(1,1,1,1)
