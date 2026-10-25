@@ -186,6 +186,12 @@ function love.load()
     love.event.quit(ok and 0 or 1)
     return
   end
+  if os.getenv("MOO_IO_WEAPON_VISUAL_TEST")=="1" then
+    local ok,err=pcall(function() require("src.test_weapon_visual")() end)
+    if not ok then print("MOO IO WEAPON VISUAL FAIL: "..tostring(err)) end
+    love.event.quit(ok and 0 or 1)
+    return
+  end
   -- Normal opening: stay on Moo IO home; no network or terminal is opened.
   -- CI may inject an invitation to prove that the native Play flow reaches C.
   if os.getenv("MOO_IO_E2E")=="1" then
