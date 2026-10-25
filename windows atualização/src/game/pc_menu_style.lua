@@ -27,12 +27,27 @@ function UI.text(message,x,y,size,color,w,align)
  else love.graphics.print(tostring(message),x,y) end
 end
 -- One-line labels must never spill across buttons, server rows or fields.
+local function trimLastCharacter(value)
+ local i=#value
+ while i>1 do
+  local b=value:byte(i)
+  if not b or b<128 or b>=192 then break end
+  i=i-1
+ end
+ return value:sub(1,i-1)
+end
+local function trimFirstCharacter(value)
+ local b=value:byte(1) or 0
+ local size=b<128 and 1 or b>=240 and 4 or b>=224 and 3
+  or b>=192 and 2 or 1
+ return value:sub(size+1)
+end
 function UI.oneLine(value,maxWidth,size)
  local text=tostring(value or ""):gsub("[\r\n]+"," ")
  local f=UI.font(size or 16)
  if f:getWidth(text)<=maxWidth then return text end
  while #text>0 and f:getWidth(text.."...")>maxWidth do
-  text=text:sub(1,-2)
+  text=trimLastCharacter(text)
  end
  return text.."..."
 end
@@ -106,7 +121,7 @@ function UI.field(x,y,w,h,value,placeholder,focused)
  local max=w-27-font:getWidth(suffix)
  if font:getWidth(out)>max then
   while #out>0 and font:getWidth("..."..out)>max do
-   out=out:sub(2)
+   out=trimFirstCharacter(out)
   end
   out="..."..out
  end
