@@ -77,7 +77,7 @@ function API:handle(method,target,headers,raw,ip)
   local did=type(body.did)=="string" and body.did or nil
   local banned=self.moderation:banEntry(ip,account and account.id or nil,did)
   if truth(banned) or (account and account.verdict=="ban") then
-   return response(403,{error="banned",until=truth(banned) and (banned.until or 0) or 0})
+   return response(403,{error="banned",["until"]=truth(banned) and (banned["until"] or 0) or 0})
   end
   local seconds=self.moderation:lockedFor(ip,account and account.id or nil,did)
   if truth(seconds) then return response(403,{error="locked",seconds=seconds}) end
@@ -203,7 +203,7 @@ function API:handle(method,target,headers,raw,ip)
    if not guest then return invalid("no player",404) end
    if level=="ban" then
     self.moderation:ban({ip=guest.ip,did=guest.did,
-      name=guest.name,reason=reason,until=untilMs},account)
+      name=guest.name,reason=reason,["until"]=untilMs},account)
     if guest.kick then guest.kick("kicked") end
    elseif level=="shadow" then
     guest.shadowed=true
@@ -216,7 +216,7 @@ function API:handle(method,target,headers,raw,ip)
   if not target then return invalid("no player",404) end
   if level=="ban" and untilMs>0 then
    self.moderation:ban({accountId=target.id,name=target.name,
-      reason=reason,until=untilMs},account)
+      reason=reason,["until"]=untilMs},account)
    local date=os.date("!%Y-%m-%d %H:%M",math.floor(untilMs/1000))
    self.moderation:recordVerdict(target,"ban",
       reason.." (until "..date..")",account,{keepBans=true})
@@ -227,7 +227,7 @@ function API:handle(method,target,headers,raw,ip)
   local last=type(target.lastSeen)=="table" and target.lastSeen or {}
   if level=="ban" and truth(body.ip) and truth(last.ip) then
    self.moderation:ban({ip=last.ip,did=last.did,
-     name=target.name,reason=reason,until=untilMs},account)
+     name=target.name,reason=reason,["until"]=untilMs},account)
   end
   if level=="clear" and truth(body.ip) and truth(last.ip) then
    self.moderation:unbanIp(last.ip,last.did)
