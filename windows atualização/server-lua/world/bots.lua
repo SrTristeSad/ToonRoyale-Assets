@@ -77,7 +77,7 @@ function Bots:socialize(a)
   if other~=a and peer.alive and other.prefersGroup
    and peer.spaceId==p.spaceId
    and (not peer.team or tribes.tribes[peer.team])
-   and peer.team~=p.team then
+   and (not peer.team or peer.team~=p.team) then
    local d=dist(p,peer)
    if d<best then friend,best=peer,d end
   end
