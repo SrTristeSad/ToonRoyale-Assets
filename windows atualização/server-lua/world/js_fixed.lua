@@ -18,7 +18,7 @@ local function isExactHalfway(value,d)
   local significant=assert(tonumber(before..after,16),"invalid binary significand")
   local exponent=tonumber(power)-#after*4+d
   while significant%2==0 do
-    significant=significant//2
+    significant=math.floor(significant/2)
     exponent=exponent+1
   end
   -- 10^d = 2^d * 5^d and 5^d is odd, so a denominator of exactly 2
