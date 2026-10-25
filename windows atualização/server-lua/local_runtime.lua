@@ -128,7 +128,10 @@ function Local.new(opts)
   roomCode=assert(opts.roomCode,"room code required"),
   rooms=definitions,capacity=Config.maxPlayers,
   botCount=opts.botCount or 0,
-  build=opts.build or Build.new(),guiHost=opts.guiHost==true,
+  build=opts.build or Build.open(
+   opts.protocolBuildFile or (dir.."/protocol-build.json"),
+   {nowMs=clock,rotate=opts.rotateBuild==true}),
+  guiHost=opts.guiHost==true,
   accounts=accounts,moderation=moderation,servers=servers,
   chat=opts.chat,nowMs=clock,
   onConnect=function(peer,ticket,key)
