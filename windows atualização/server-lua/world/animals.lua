@@ -109,6 +109,7 @@ function Animals:spawn(x,y,angle,index,overrides)
  end
  AI.init(ai,x,y,angle,index,data)
  ai.options.mapSpaces=self.mapSpaces
+ ai.options.mapAnimations=self.mapAnimations
  if overrides then
    for k,v in pairs(overrides) do ai[k]=v end
  end
