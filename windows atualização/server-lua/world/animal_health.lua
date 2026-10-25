@@ -50,6 +50,26 @@ function Health.changeHealth(ai,amount,doer,runFrom,opts)
    end
  end
  if ai.health<=0 then
+   -- Custom local-map death animation: cosmetic packet only, emitted
+   -- BEFORE the classic respawn reset. Clients without the optional
+   -- spritesheet simply keep the original animal presentation.
+   local definitions=opts.mapAnimations
+   local artwork=type(definitions)=="table"
+     and definitions[tostring(ai.index)]
+   if type(artwork)=="table" and type(artwork.death)=="table"
+     and type(opts.send)=="function" then
+     for _,viewer in ipairs(opts.players or {}) do
+       if viewer.alive and type(viewer.id)=="string"
+         and (viewer.spaceId or "surface")==(ai.spaceId or "surface")
+         and type(viewer.x)=="number" and type(viewer.y)=="number" then
+         local dx,dy=viewer.x-ai.x,viewer.y-ai.y
+         if dx*dx+dy*dy<=2000*2000 then
+           opts.send(viewer.id,"j","mob-death",0,0,{
+             sid=ai.sid,index=ai.index,x=ai.x,y=ai.y,dir=ai.dir})
+         end
+       end
+     end
+   end
    if opts.onKill then opts.onKill(ai,doer) end
    local reward=opts.killScore and opts.killScore(ai,doer) or ai.killScore
    -- Admin-spawned animals permanently disappear: no resource drops here.
