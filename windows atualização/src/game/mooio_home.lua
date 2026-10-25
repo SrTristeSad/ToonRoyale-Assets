@@ -121,10 +121,11 @@ function Home.parseInvite(value,code)
 end
 function Home.new()
   local installed=Mods.available(love.filesystem,"server-lua/mods")
+  local maps=Maps.available(love.filesystem,"server-lua/maps")
   return setmetatable({
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
     serverMode="lan",difficulty="normal",modIds="",modCatalog=installed,modPage=0,
-    mapId="",mapCatalog=Maps.available(love.filesystem,"server-lua/maps"),
+    mapId=(maps[1] and maps[1].id or ""),mapCatalog=maps,
     mapPage=0,focus=nil,
     serverAddress="",serverCode="",serverRooms={},serverDirectory=nil,
     serverPage=0,serverSelected=1,
@@ -140,7 +141,7 @@ function Home:scale(x,y)
   return (x-(w-1280*z)/2)/z,(y-(h-720*z)/2)/z
 end
 function Home:mapName()
- if self.mapId=="" or self.mapId=="classico" then return "Mundo classico" end
+ if self.mapId=="" or self.mapId=="classico" then return "Nenhum mapa instalado" end
  for _,m in ipairs(self.mapCatalog) do
   if m.id==self.mapId then return m.name end
  end
@@ -157,6 +158,7 @@ function Home:mapDescription()
 end
 function Home:refreshMaps()
  self.mapCatalog=Maps.available(love.filesystem,"server-lua/maps")
+ if (self.mapId=="" or self.mapId=="classico") and self.mapCatalog[1] then self.mapId=self.mapCatalog[1].id end
  if self.mapId~="" and self.mapId~="classico" then
   local found=false
   for _,m in ipairs(self.mapCatalog) do
@@ -171,7 +173,7 @@ function Home:refreshInstalled()
  self:refreshMaps()
  self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
  self.mapPage=math.min(self.mapPage,
-   math.max(0,math.ceil((#self.mapCatalog+1)/4)-1))
+   math.max(0,math.ceil((#self.mapCatalog)/4)-1))
  self.modPage=math.min(self.modPage,
    math.max(0,math.ceil(#self.modCatalog/4)-1))
  self:setStatus(#self.mapCatalog.." mapas e "..
@@ -262,8 +264,7 @@ function Home:click(sx,sy)
     for row=1,4 do
       if inside(x,y,{629,239+(row-1)*74,534,68}) then
         local i=self.mapPage*4+row
-        local entry=i==1 and {id="",name="Mundo classico"}
-          or self.mapCatalog[i-1]
+        local entry=self.mapCatalog[i]
         if entry then
           self.mapId=entry.id
           self:setStatus("Mapa escolhido: "..entry.name)
@@ -275,13 +276,13 @@ function Home:click(sx,sy)
       self.mapPage=math.max(0,self.mapPage-1);return "map_page"
     end
     if inside(x,y,boxes.chooseMapNext) then
-      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog+1)/4)-1),
+      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog)/4)-1),
         self.mapPage+1)
       return "map_page"
     end
     if inside(x,y,boxes.createSubmit) then
       self.focus=nil
-      local found=self.mapId=="" or self.mapId=="classico"
+      local found=false
       for _,entry in ipairs(self.mapCatalog) do
         if entry.id==self.mapId then found=true;break end
       end
@@ -316,17 +317,13 @@ function Home:click(sx,sy)
       self.mapPage=math.max(0,self.mapPage-1);return "map_page"
     end
     if inside(x,y,boxes.modsNext) then
-      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog+1)/6)-1),
+      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog)/6)-1),
         self.mapPage+1);return "map_page"
     end
     for row=1,6 do
       local n=self.mapPage*6+row
       if inside(x,y,{151,242+(row-1)*64,976,57}) then
-        if n==1 then
-          self.mapId="";self:setStatus("Mapa classico selecionado.")
-          return "map_select"
-        end
-        local entry=self.mapCatalog[n-1]
+        local entry=self.mapCatalog[n]
         if entry then
           self.mapId=entry.id
           self:setStatus("Mapa selecionado: "..entry.name)
@@ -578,9 +575,7 @@ function Home:draw(state,detail,showWorld)
       local selection=self.mapId
       for row=1,4 do
         local n=self.mapPage*4+row
-        local entry=n==1 and {id="",name="Mundo classico",
-          description="Mundo tradicional, sem cavernas.",spaces=0}
-          or self.mapCatalog[n-1]
+        local entry=self.mapCatalog[n]
         if entry then
           local y=239+(row-1)*74
           local active=selection==entry.id
@@ -609,9 +604,7 @@ function Home:draw(state,detail,showWorld)
       printText("Mapas personalizados JSON: gerados ou montados manualmente.",145,213,15,C.muted)
       for row=1,6 do
         local i=self.mapPage*6+row
-        local entry=i==1 and {id="",name="Mundo Classico",
-          description="Geracao tradicional, sem alteracoes.",spaces=0}
-          or self.mapCatalog[i-1]
+        local entry=self.mapCatalog[i]
         if entry then
           local y=242+(row-1)*64
           local active=entry.id==self.mapId
