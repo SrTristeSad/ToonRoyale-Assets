@@ -264,7 +264,7 @@ function Maps.validate(content,wanted)
   assert(type(zone.mobs)=="table" and #zone.mobs<=24,"too many indoor mobs")
   for _,mob in ipairs(zone.mobs) do
    only(mob,{kind=true,x=true,y=true})
-   assert(integer(mob.kind,0,14) and mob.kind~=11,"invalid mob index")
+   assert(integer(mob.kind,0,63) and mob.kind~=11,"invalid mob index")
    assert(integer(mob.x,100,zone.width-100) and integer(mob.y,100,zone.height-100),
     "mob spawn out of zone")
    assert(not blocked(zone,mob.x,mob.y),"mob spawn inside wall")
