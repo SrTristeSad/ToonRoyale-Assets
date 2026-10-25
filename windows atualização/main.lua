@@ -16,6 +16,7 @@ if os.getenv("MOO_IO_LUA_SERVER")=="1" then
       dataDir=os.getenv("MOO_IO_LUA_DATA_DIR") or "server-lua/data",
       difficulty=os.getenv("MOO_IO_DIFFICULTY") or "normal",
       modIds=os.getenv("MOO_IO_MODS") or "",
+       mapId=os.getenv("MOO_IO_MAP_ID") or "",
       guiHost=true,nowMs=function()return math.floor(Socket.gettime()*1000)end,
       log=function(msg)print(msg)end
     })
@@ -702,7 +703,7 @@ homeAction=function(action)
     if client then client:close();client=nil end
     home:setStatus("Iniciando servidor local sem terminal...")
     local ok,err=hosted:start(home.serverMode,home.vpnIP,
-      home.botsEnabled and home.botCount or 0,home.difficulty,home.modIds)
+      home.botsEnabled and home.botCount or 0,home.difficulty,home.modIds,home.mapId)
     if ok then
       home.starting=true;home.hosting=false
       home.hostCode="";home.hostAddress=""
