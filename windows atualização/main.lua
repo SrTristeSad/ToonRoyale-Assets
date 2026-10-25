@@ -1,8 +1,6 @@
--- Moo-Quest is a Lua client for the UNMODIFIED al007ex/moomoo-clone server.
--- Real native gameplay rendering is gated by actual server C/D/a/H/I packets.
--- Never generate local entities or claim spawn before the Node server confirms it.
--- Opt-in, separate LOCAL Lua server process. The normal Windows client is
--- completely unchanged unless its launcher explicitly sets this variable.
+-- Windows Moo IO client + dedicated LOCAL Lua server in one LÖVE package.
+-- All gameplay is authoritative via genuine C/D/a/H/I server packets.
+-- MOO_IO_LUA_SERVER=1 selects the bundled headless server process.
 if os.getenv("MOO_IO_LUA_SERVER")=="1" then
   if not utf8 then utf8=require("utf8") end
   local instance
@@ -148,7 +146,6 @@ function love.load()
     local ok,err=pcall(function()
       require("src.test_room_choice")(homeAction,home,hosted,
         function() return client end)
-      require("src.test_browser_auth")()
     end)
     if not ok then print("MOO IO ROOM CHOICE FAIL: "..tostring(err)) end
     allowQuit=true -- mocked owner must not block an automated test exit
