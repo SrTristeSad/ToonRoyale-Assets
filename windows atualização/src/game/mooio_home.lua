@@ -4,6 +4,7 @@
 local Network=require("src.net.mooio_network")
 local Mods=require("server-lua.world.room_mods")
 local Maps=require("server-lua.world.map_profiles")
+local Deps=require("server-lua.world.map_dependencies")
 local UI=require("src.game.pc_menu_style")
 local Home={}
 Home.__index=Home
@@ -88,7 +89,7 @@ function Home.new()
   return setmetatable({
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
     serverMode="lan",difficulty="normal",modIds="",modCatalog=installed,modPage=0,
-    mapId=(maps[1] and maps[1].id or ""),mapCatalog=maps,
+    mapId="",mapCatalog=maps,
     mapPage=0,focus=nil,navIndex=0,
     serverAddress="",serverCode="",serverRooms={},serverDirectory=nil,
     serverPage=0,serverSelected=1,
@@ -142,6 +143,28 @@ function Home:refreshInstalled()
    math.max(0,math.ceil(#self.modCatalog/4)-1))
  self:setStatus(#self.mapCatalog.." mapas e "..
    #self.modCatalog.." mods de regras encontrados.")
+end
+-- Resolve map-specific mob dependencies before any server process is started.
+-- All lookups use validated metadata from the installed JSON manifests.
+function Home:checkMapMods(auto)
+ if self.mapId=="" or self.mapId=="classico" then return true end
+ local map
+ for _,entry in ipairs(self.mapCatalog) do
+  if entry.id==self.mapId then map=entry;break end
+ end
+ if not map then return false,"Mapa nao instalado. Escolha outro na lista." end
+ local ok,selected=pcall(Mods.ids,self.modIds)
+ if not ok then return false,"Lista de mods invalida." end
+ local nextIds,err,added=Deps.resolve(map,selected,self.modCatalog,8)
+ if not nextIds then return false,err end
+ if #added>0 then
+  if not auto then
+   return false,"O mapa exige mod: "..table.concat(added,", ")
+  end
+  self.modIds=table.concat(nextIds,",")
+  self:setStatus("Mod necessario ativado: "..table.concat(added,", "))
+ end
+ return true
 end
 function Home:roomInvite()
   if self.hostAddress=="" or self.hostCode=="" then return "" end
@@ -241,6 +264,11 @@ function Home:click(sx,sy)
         self:setStatus("Mapa nao instalado. Selecione outro.",true)
         return "map_missing"
       end
+      local valid,reason=self:checkMapMods(true)
+      if not valid then
+        self:setStatus(reason,true)
+        return "map_mod_required"
+      end
       return "create"
     end
   elseif self.screen=="server" then
@@ -277,7 +305,14 @@ function Home:click(sx,sy)
         local entry=n==1 and {id="",name="DESATIVAR MAPA"} or self.mapCatalog[n-1]
         if entry then
           self.mapId=entry.id
-          self:setStatus("Mapa selecionado: "..entry.name)
+          local valid,reason=self:checkMapMods(true)
+          if valid then
+           if self.status:sub(1,22)~="Mod necessario ativado:" then
+            self:setStatus("Mapa selecionado: "..entry.name)
+           end
+          else
+           self:setStatus(reason,true)
+          end
           return "map_select"
         end
       end
@@ -589,7 +624,7 @@ function Home:draw(state,detail,showWorld)
       printText("MUNDO DA PARTIDA",635,207,18,C.green)
       panel(629,239,534,210,C.raised,0)
       printText(self:mapName(),650,282,23,C.white,480)
-      printText("Escolha o mapa na lista ou desative mapas extras.",650,330,15,C.muted,490)
+      printText("Selecione um mapa. Mods exigidos sao ativados automaticamente.",650,330,15,C.muted,490)
       button("chooseMapPrev","ESCOLHER MAPA",true)
       button("chooseMapNext","ABRIR LISTA",false)
       button("createBack","CANCELAR",false)
