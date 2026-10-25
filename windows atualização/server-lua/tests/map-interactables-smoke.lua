@@ -113,5 +113,48 @@ bad.spaces[1].interactables[2].target="not-existing"
 assert(not pcall(Maps.validate,Json.encode(bad),bad.id),
  "unresolved switch target accepted")
 assert(roomServer.rooms.MB.room.mapSpaces:get("mod-sala-metal")==nil)
+-- Surface caches are supported as well, including after the original C
+-- respawn packet. They do not require the interior physics engine.
+local surface=room.mapSpaces:get("surface")
+assert(#surface.interactables==1 and surface.interactables[1].kind=="cache")
+local surfaceEvents={}
+local surfacePlayer={
+ id="surface-looter",alive=true,spaceId="surface",
+ x=3620,y=3660,scale=35,food=0,
+ send=function(_,name,...) surfaceEvents[#surfaceEvents+1]={
+  name=name,args={...}} end,
+ addResource=function(self,kind,amount,auto)
+  assert(kind==1 and amount==12 and auto==true)
+  self.food=self.food+amount
+ end
+}
+room.players[#room.players+1]=surfacePlayer
+local overworld=Client.new()
+local surfaceManifest=Maps.load("server-lua/maps","refugio-personalizado")
+assert(overworld:apply("A",{{map={
+ id=surfaceManifest.id,name=surfaceManifest.name,
+ portals=surfaceManifest.portals,
+ interactables=assert(Json.decode(Json.encode(surface.interactables)))
+}}}))
+assert(overworld:apply("C",{0}))
+assert(#overworld.space.interactables==1,
+ "surface caches vanished after respawn")
+room.nowMs=204000
+assert(room:handleInput(surfacePlayer,"j",{"interact","suprimentos-exterior"}))
+assert(surfacePlayer.food==12)
+for _,event in ipairs(surfaceEvents) do
+ if event.name=="j" and event.args[1]=="interaction-update" then
+  assert(overworld:apply("j",event.args))
+ end
+end
+assert(overworld.space.interactables[1].used,
+ "surface pickup packet never reached surface client")
+assert(room:handleInput(surfacePlayer,"j",{"interact","suprimentos-exterior"})==false
+ and surfacePlayer.food==12)
+local illegal=assert(Json.decode(Json.encode(surfaceManifest)))
+illegal.interactables={{id="gate-outdoor",kind="gate",
+ x=3100,y=3100,width=80,height=80}}
+assert(not pcall(Maps.validate,Json.encode(illegal),illegal.id),
+ "outdoor gate bypassed classic surface physics safety")
 roomServer:close()
 print("PASS map interactivity: reward once, distance, gate physics, two clients, late join and MB isolation")
