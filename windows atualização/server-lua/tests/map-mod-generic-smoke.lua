@@ -90,6 +90,8 @@ assert(client.spaceId=="mod-sala-metal" and client.space.visual.floor=="metal")
 assert(client.space.visual.wall=="brick")
 -- Move off arrival, then traverse the user-defined door into another mod zone.
 player.x=700;player.y=710
+-- The server clears momentum on entry. A real client resends held WASD.
+player.moveDir=0
 room.nowMs=151000
 assert(not room:checkPortalCrossing(player))
 player.x=900;player.y=850
