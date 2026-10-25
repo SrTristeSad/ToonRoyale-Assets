@@ -238,6 +238,16 @@ function Room:usePortal(player)
  if not nearest then return false end
  local destination=self.mapSpaces:destination(from,nearest.id,player.scale)
  if not destination then return false end
+ -- Do not stack two player bodies in a doorway or trap them in the
+ -- collision system on arrival.
+ for _,other in ipairs(self.players) do
+  if other~=player and other.alive
+    and (other.spaceId or "surface")==destination.spaceId then
+   local dx,dy=destination.x-other.x,destination.y-other.y
+   local clearance=player.scale+other.scale
+   if dx*dx+dy*dy<clearance*clearance then return false end
+  end
+ end
  player.nextPortalAt=now+700
  player.spaceId=destination.spaceId
  player.x=destination.x;player.y=destination.y
