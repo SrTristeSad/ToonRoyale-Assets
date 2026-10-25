@@ -126,7 +126,7 @@ function Chat:friendsOnline(account,ids,game)
 end
 function Chat:said(from,game)
  local account=self.store:accountById(tostring(from)) or self.store:nameOwner(tostring(from))
- local list=account and self.data.said[account.id] or nil
+ local list=account and (self.data.said[account.id] or arr()) or nil
  if not list then
   local guest=game.playerBySession(tostring(from))
   list=guest and guest.saidLog or nil
