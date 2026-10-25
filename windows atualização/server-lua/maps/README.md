@@ -7,6 +7,25 @@ Ao criar uma sala local no Windows, use **Jogar → Configurar minha sala** para
 
 O carregamento também funciona para qualquer ID e qualquer quantidade válida de regiões; nomes como `bunker-01`, `caverna-01` e `casa-1` **não têm significado especial para o motor de mapas**. A física, os animais, as portas, o minimapa e o transporte entre andares utilizam os mesmos componentes. IDs duplicados não substituem silenciosamente o mapa integrado. Não são aceitos arquivos Lua executáveis de terceiros.
 
+## Objetos interativos declarativos (JSON)
+
+Mapas de mods podem declarar `interactables` nas regiões `spaces[]` e na superfície. Não há execução de scripts do pacote: o servidor é responsável pelos recursos, colisões e estados.
+
+```json
+"interactables": [
+  {"id":"bau-01","kind":"cache","x":540,"y":550,
+   "label":"Baú de madeira","resource":"wood","amount":35},
+  {"id":"alavanca-01","kind":"lever","x":650,"y":740,
+   "label":"Abrir portão","target":"portao-01"},
+  {"id":"portao-01","kind":"gate","x":820,"y":770,
+   "width":48,"height":175,"material":"metal"}
+]
+```
+
+**Controle:** caminhe até um baú ou alavanca e pressione **F**. O servidor verifica se a pessoa está viva, na região correta, a menos de 150 unidades e sem paredes no caminho. A recompensa de um baú pode ser madeira (`wood`), pedra (`stone`) ou comida (`food`), de 1 a 500 unidades, concedida uma única vez por partida. Uma alavanca aponta para um portão existente na *mesma* região e o abre permanentemente naquela partida. O portão fechado é uma parede de colisão real; sua abertura remove essa parede do servidor e de todos os clientes na região. Jogadores que entrarem depois recebem o estado atualizado.
+
+Limites: até 32 objetos interativos por região; todos precisam de IDs exclusivos. A superfície permite baús de recursos, enquanto portões/alavancas físicas pertencem a regiões interiores ou subterrâneas até que a física de barreiras na superfície seja ampliada. Esses objetos não adicionam execução Lua, imagens externas ou comportamentos arbitrários. O mapa `refugio-personalizado.json` demonstra esses elementos.
+
 ## Visuais, tiles e portais universais
 
 Todo espaço `interior` ou `underground` pode declarar um objeto `visual` opcional e validado. O renderizador usa esses valores, **não o ID da região**:
