@@ -8,6 +8,7 @@ local store={
   return Json.null
  end,
  issueToken=function()return "test-token"end,
+ issueTicket=function()return {} end,
  consumeTicket=function()return Json.null end,
  verifyToken=function()return account end
 }
