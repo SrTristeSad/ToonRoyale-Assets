@@ -14,6 +14,7 @@ local peer={out="",state="http",tcp={getpeername=function()return "127.0.0.1"end
 server.host:request(peer,{method="GET",target="/ping",headers={},body=""})
 assert(peer.out:find("HTTP/1.1 200",1,true))
 assert(peer.out:find('"key":"MB"',1,true))
+now=now+335
 assert(server:update()==true)
 server:close()
 os.execute("rmdir "..dir)
