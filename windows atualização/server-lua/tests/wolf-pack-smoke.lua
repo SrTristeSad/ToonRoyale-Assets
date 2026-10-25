@@ -28,6 +28,32 @@ assert(hard.config.server.roomDifficulty=="dificil")
 assert(classic.types[4].hostile and classic.types[4].chargePlayer)
 assert(peaceful.types[4].hostile==false and peaceful.types[4].chargePlayer==false)
 assert(peaceful.config.server.animalSpawnPlan~=classic.config.server.animalSpawnPlan)
+-- Verify the actual AI.update branch, not only standalone helper functions.
+local AI=require("server-lua.world.ai")
+local function runPack(level)
+ local rules=Mods.build(level,{},"server-lua/mods")
+ local target={x=1050,y=300,alive=true,scale=35,xVel=0,yVel=0}
+ local ally={index=4,sid=0,active=true,alive=true,x=300,y=300,chargeTarget=target}
+ local ais={ally}
+ local opts={
+  config=rules.config,players={target},ais=ais,
+  world={getGridArrays=function()return {}end},
+  randInt=function(low,high)return low end,
+  randFloat=function(low,high)return low end
+ }
+ local wolf=AI.new(1,opts)
+ AI.init(wolf,0,300,0,4,rules.types[4])
+ ais[#ais+1]=wolf
+ wolf:update(1001)
+ return wolf.chargeTarget, wolf, ais, target
+end
+assert(runPack("normal")==nil,
+  "traditional mode cannot acquire a distant target through wolf pack rules")
+local target,wolf,ais=runPack("dificil")
+assert(target and target.alive,
+  "difficult wolves must join their nearby packmate's pursuit")
+local flank=Pack.direction(wolf,target,ais,"dificil")
+assert(type(flank)=="number" and flank==flank)
 local Vitals=require("server-lua.world.vitals")
 local function fake()
  local p={alive=true,shameTimer=0,regenTimer=0,skin={},tail={},
