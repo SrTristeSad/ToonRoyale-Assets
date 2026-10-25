@@ -19,5 +19,11 @@ assert(server:update()==true)
 assert(server.rooms.LC.room.lastTick>10000)
 assert(server.rooms.MB.room.lastTick>10000)
 server:close()
+-- The real protocol pin is now persisted like Node's; clean only test data.
+for _,name in ipairs({"protocol-build.json","accounts.json","bans.json",
+ "moderation.json","chat.json","secret.key","reports.jsonl"}) do
+ os.remove(dir.."/"..name)
+ os.remove(dir.."/"..name..".lua-backup")
+end
 os.execute("rmdir "..dir)
 print("PASS LOCAL Lua boot: LC MB bot registry and controller")
