@@ -450,6 +450,9 @@ function World:apply(name,args)
         local p=self.players[sid] or {sid=sid,scale=35,health=100,maxHealth=100}
         receivePosition(p,x,y,dir/100)
         self.players[sid]=p
+        if sid==self.sid then
+          self.lastKnownPosition={x=x,y=y,spaceId=self.spaceId or "surface"}
+        end
         trackPaintOrder(self,"players",sid)
       end
     end
