@@ -468,8 +468,10 @@ local function drawMapHelp(world)
   love.graphics.setColor(0.08,0.11,0.07,0.85)
   love.graphics.rectangle("fill",16,167,math.min(500,w-32),32,5,5)
   love.graphics.setColor(0.88,0.91,0.72,1)
-  love.graphics.print("DIFICULDADE: "..settings.difficulty:upper()..
-    "   |   MODS ATIVOS: "..mods,25,176)
+  local mobTotal=(tonumber(settings.surfaceAnimals) or 0)
+    +(tonumber(settings.interiorAnimals) or 0)
+  love.graphics.print("MODO: "..settings.difficulty:upper()..
+    "  |  MODS: "..mods.."  |  ANIMAIS: "..mobTotal,25,176)
  end
  if near then
   local player=world:localPlayer()
