@@ -2,6 +2,7 @@
 -- Moo IO: LAN/VPN rooms are hosted by the bundled Lua server.
 -- Gameplay authority lives in the bundled LOCAL Lua room; no client-side fake world.
 local Network=require("src.net.mooio_network")
+local Mods=require("server-lua.world.room_mods")
 local Home={}
 Home.__index=Home
 
@@ -49,7 +50,9 @@ local boxes={
   nickname={155,236,462,52},modeLan={155,312,223,46},
   modeVpn={393,312,224,46},vpnIP={155,368,462,46},
   createLan={155,623,462,53},createVpn={155,623,462,53},
-  difficulty={155,524,462,47},modIds={155,577,462,39},
+  difficulty={155,524,462,47},modIds={155,577,302,39},
+  modBrowse={468,577,149,39},modsPrevious={160,638,240,39},
+  modsNext={419,638,240,39},modsDone={730,638,365,39},
   botsToggle={155,423,462,39},botsMinus={155,475,110,42},
   botsPlus={508,475,109,42},
   roomCopy={155,419,462,55},roomEnter={155,485,226,55},
@@ -107,9 +110,10 @@ function Home.parseInvite(value,code)
   return Network.invite(value)
 end
 function Home.new()
+  local installed=Mods.available(love.filesystem,"server-lua/mods")
   return setmetatable({
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
-    serverMode="lan",difficulty="normal",modIds="",focus=nil,
+    serverMode="lan",difficulty="normal",modIds="",modCatalog=installed,modPage=0,focus=nil,
     serverAddress="",serverCode="",serverRooms={},serverDirectory=nil,
     serverPage=0,serverSelected=1,
     status="",error=false,hosting=false,starting=false,
@@ -134,7 +138,8 @@ end
 function Home:click(sx,sy)
   local x,y=self:scale(sx,sy)
   if self.screen~="home" and inside(x,y,boxes.back) then
-    self.screen="home";self.focus=nil;return "back"
+    self.screen=self.screen=="mods" and "play" or "home"
+    self.focus=nil;return "back"
   end
   if self.screen=="home" then
     if inside(x,y,boxes.homePlay) then
@@ -157,10 +162,22 @@ function Home:click(sx,sy)
       if inside(x,y,boxes.difficulty) then
         local nextLevel={pacifico="normal",normal="dificil",dificil="extremo",extremo="pacifico"}
         self.difficulty=nextLevel[self.difficulty] or "normal"
+        local descriptions={
+          pacifico="Pacífico: vida regenera e animais menos agressivos.",
+          normal="Normal: mesmas regras tradicionais do Moo-IO.",
+          dificil="Difícil: mais animais e lobos que caçam em grupo.",
+          extremo="Extremo: ataques intensos e matilhas mais coordenadas."
+        }
+        self:setStatus(descriptions[self.difficulty])
         self.focus=nil
         return "difficulty"
       end
       if inside(x,y,boxes.modIds) then self.focus="modIds";return "focus" end
+      if inside(x,y,boxes.modBrowse) then
+        self.screen="mods";self.focus=nil;self.modPage=0
+        self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
+        return "mod_browse"
+      end
       if inside(x,y,boxes.botsToggle) then
         self.botsEnabled=not self.botsEnabled
         self.focus=nil
@@ -223,7 +240,10 @@ local function removeLast(s)
   return s:sub(1,i-1)
 end
 function Home:keypressed(key)
-  if key=="escape" then self.screen="home";self.focus=nil;return "back" end
+  if key=="escape" then
+    self.screen=self.screen=="mods" and "play" or "home"
+    self.focus=nil;return "back"
+  end
   if self.focus then
     if key=="backspace" then self[self.focus]=removeLast(self[self.focus]) end
     if key=="v" and (love.keyboard.isDown("lctrl") or love.keyboard.isDown("rctrl")) then
@@ -376,7 +396,8 @@ function Home:draw(state,detail,showWorld)
         local names={pacifico="PACIFICO",normal="NORMAL (CLASSICO)",
           dificil="DIFICIL (LOBOS EM GRUPO)",extremo="EXTREMO"}
         button("difficulty","DIFICULDADE: "..(names[self.difficulty] or "NORMAL"),false)
-        field("modIds",self.modIds,"Mods JSON (ex.: mais-lobos)",self.focus=="modIds")
+        field("modIds",self.modIds,"IDs de mods (opcional)",self.focus=="modIds")
+        button("modBrowse","ESCOLHER",false)
         button(self.serverMode=="vpn" and "createVpn" or "createLan",
           "CRIAR MINHA SALA",true)
       end
