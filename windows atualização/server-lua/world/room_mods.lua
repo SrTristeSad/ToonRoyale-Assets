@@ -120,10 +120,23 @@ function Mods.ids(raw)
  end
  return result
 end
-function Mods.build(level,ids,dir)
+function Mods.build(level,ids,dir,map)
  assert(multipliers[level],"dificuldade desconhecida: "..tostring(level))
  assert(type(ids)=="table" and #ids<=8,"lista de mods invalida")
  local cfg=copy(Config)
+ -- Map defaults precede mods, so an explicitly enabled world mod wins.
+ -- Previously Local.new() applied the map after this function, silently
+ -- undoing world trees/rocks/gold parameters on every custom map.
+ if map then
+  assert(type(map)=="table" and type(map.generation)=="table",
+    "validated custom map required")
+  for field,value in pairs(map.generation) do
+   if field~="seed" then
+    assert(limits.world[field],"unsupported map generation option")
+    cfg[field]=value
+   end
+  end
+ end
  local types=copy(Types)
  local spawns=cfg.server.animalSpawnPlan
  cfg.server.roomDifficulty=level
