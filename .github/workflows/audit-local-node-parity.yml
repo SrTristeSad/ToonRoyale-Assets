@@ -1,5 +1,7 @@
 name: Auditoria diferencial servidor LOCAL Node vs Lua
 on:
+  push:
+    branches: [jogo-windows-lua-completo]
   workflow_dispatch:
 permissions:
   contents: read
