@@ -240,7 +240,7 @@ function World:apply(name,args)
   elseif name=="j" then
     if args[1]=="mob-death" then
       local data=args[4]
-      if not self.map or type(data)~="table"
+      if not self.animationCatalog or type(data)~="table"
         or not validId(data.sid) or not validId(data.index)
         or not number(data.x) or not number(data.y)
         or not number(data.dir) then return false end
