@@ -22,7 +22,7 @@ function Brain.assess(ai,delta,players,animals,cfg)
  local near,dmin=nil,math.huge
  local radius=(ai.viewRange or 350)*(ai.hostile and 1 or 0.55)
  for _,p in ipairs(players) do
-  if compatible(ai,p) and not (p.powers and p.powers.invisible)
+  if compatible(ai,p) and not (p.powers and p.powers.invisible and p.powers.invisible~=0)
    and not (p.skin and p.skin.bullRepel and ai.chargePlayer) then
    local d=distance(ai,p)
    if d<radius and d<dmin then near,dmin=p,d end
