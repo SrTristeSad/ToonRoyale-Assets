@@ -156,7 +156,10 @@ function AI:update(delta)
        end
         -- Wolves cooperate only in custom difficult/extreme rooms.
         local difficulty=cfg.server and cfg.server.roomDifficulty
-        if self.index==4 and (difficulty=="dificil" or difficulty=="extremo") then
+        local roomRules=cfg.server and cfg.server.roomRules
+        local groupAI=roomRules and roomRules.cooperativeWolves
+        if groupAI==nil then groupAI=difficulty=="dificil" or difficulty=="extremo" end
+        if self.index==4 and groupAI then
           local allyTarget=Pack.sharedTarget(self,opts.ais)
           if allyTarget and type(allyTarget.x)=="number"
             and type(allyTarget.y)=="number"
@@ -187,10 +190,15 @@ function AI:update(delta)
      speed=speed*1.42
    elseif self.chargeTarget and self.chargeTarget.alive then
      local difficulty=cfg.server and cfg.server.roomDifficulty
-      if self.index==4 and (difficulty=="dificil" or difficulty=="extremo") then
+      local roomRules=cfg.server and cfg.server.roomRules
+      local groupAI=roomRules and roomRules.cooperativeWolves
+      local predictive=roomRules and roomRules.predictiveHostiles
+      if groupAI==nil then groupAI=difficulty=="dificil" or difficulty=="extremo" end
+      if predictive==nil then predictive=difficulty=="dificil" or difficulty=="extremo" end
+      if self.index==4 and groupAI then
         self.targetDir=Pack.direction(self,self.chargeTarget,opts.ais,difficulty)
           or dir(self.chargeTarget.x,self.chargeTarget.y,self.x,self.y)
-      elseif self.hostile and (difficulty=="dificil" or difficulty=="extremo") then
+      elseif self.hostile and predictive then
         self.targetDir=AI.predictiveDirection(self,self.chargeTarget,difficulty)
 
       else
