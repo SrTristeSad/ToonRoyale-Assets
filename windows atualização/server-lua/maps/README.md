@@ -7,6 +7,42 @@ Ao criar uma sala local no Windows, use **Jogar → Configurar minha sala** para
 
 O carregamento também funciona para qualquer ID e qualquer quantidade válida de regiões; nomes como `bunker-01`, `caverna-01` e `casa-1` **não têm significado especial para o motor de mapas**. A física, os animais, as portas, o minimapa e o transporte entre andares utilizam os mesmos componentes. IDs duplicados não substituem silenciosamente o mapa integrado. Não são aceitos arquivos Lua executáveis de terceiros.
 
+## Geração original e distribuição aleatória (recomendado)
+
+Os mapas em `"mode": "generated"` usam **exatamente o gerador de recursos do MooMoo.io presente no núcleo**: árvores/arbustos distribuídos nas células do mundo, pedras e minério de ouro espalhados pelo mapa, respeitando colisões e água. Em vez de posicionar tudo manualmente, deixe `"generation": {}` para manter as quantidades normais de `shared/config`. Os mods de regras podem alterar essas quantidades para a sala Lua sem mudar o algoritmo.
+
+Para espalhar entradas e recursos **a cada partida**, declare `"placement": "random"` e **não informe** `x` nem `y`:
+
+```json
+{
+  "mode": "generated",
+  "generation": {},
+  "portals": [
+    {
+      "id": "entrada-laboratorio",
+      "placement": "random",
+      "to": "laboratorio",
+      "targetX": 600,
+      "targetY": 700,
+      "style": "hatch"
+    }
+  ],
+  "surface": [
+    {"placement": "random", "kind": 2, "scale": 85, "count": 8}
+  ],
+  "interactables": [
+    {"id": "suprimento-perdido", "kind": "cache",
+     "placement": "random", "resource": "food", "amount": 10}
+  ]
+}
+```
+
+O fragmento acima mostra apenas os campos relevantes, não o manifesto completo. Os interiores continuam declarando geometria local, paredes, portões e conexões internas. **O servidor sorteia as entradas na superfície**, separa entradas diferentes no mapa, procura pontos sem colisões, atualiza automaticamente as passagens de retorno do interior e sincroniza todos os jogadores. A posição dos recursos também deixa de ser uma lista fixa de coordenadas.
+
+`generation.seed` é **opcional**: se omitida, o mundo muda entre as partidas; se especificada, permite reproduzir exatamente a mesma geração para testes e desafios. O campo `spawn` também é opcional: sem ele, reaparece o fluxo original de spawn do MooMoo.io, sem colocar o jogador num único ponto previamente marcado.
+
+Mapas antigos com `x`/`y` explícitos continuam aceitos por compatibilidade, particularmente em `mode: "authored"`. O que mudou é o padrão dos mapas gerados fornecidos com o jogo: eles não trazem mais locais fixos de entradas, spawn ou recursos. A interface também deixou de revelar à distância as coordenadas ou distâncias das entradas.
+
 ## Objetos interativos declarativos (JSON)
 
 Mapas de mods podem declarar `interactables` nas regiões `spaces[]` e na superfície. Não há execução de scripts do pacote: o servidor é responsável pelos recursos, colisões e estados.
