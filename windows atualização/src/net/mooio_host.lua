@@ -165,7 +165,7 @@ function Host:update(dt)
     end
     if self.process and kernel.WaitForSingleObject(self.process,0)==0 then
       self.state="failed"
-      self.error=self.progress.. " (server/data/mooio-host.log)"
+      self.error=self.progress.." ("..Paths.log(self.root or "")..")"
       kernel.CloseHandle(self.process)
       self.process=nil
       return
