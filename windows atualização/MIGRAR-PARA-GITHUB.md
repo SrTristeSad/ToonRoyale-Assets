@@ -13,6 +13,7 @@ oficial é modificado automaticamente** ao gerar os pacotes.
 - `src/`: cliente LÖVE e conexão LAN/VPN e servidor V2 existente.
 - `server-lua/`: servidor autoritativo, mapas JSON e mods JSON.
 - `assets/`: artes, sprites e opções de animação.
+- `docs/`: instruções de VPN e demais informações preservadas do Windows original.
 - `scripts/start-server-lua.ps1`: host Lua local no Windows.
 - `scripts/tls-relay.mjs`: conexão TLS para servidor V2 **existente**.
 - Scripts de importação JSON/PNG, compilação e validação para quem mantém o código.
@@ -24,6 +25,7 @@ oficial é modificado automaticamente** ao gerar os pacotes.
 - A pasta `server/` com o servidor Node.js histórico.
 - `shared/`, `package.json`, `tools/`, `tests/` e `support/`: referências
   e ferramentas do ambiente anterior, sem dependência do runtime Lua.
+- `server-lua/MIGRATION_3_STEPS.md`: guia de protótipo superado pelo plano atual.
 - `server-lua/tests/` e `src/test_*.lua`: testes mantidos na cópia de
   desenvolvimento, não no produto nem no arquivo de fontes destinado à migração.
 - Binários `love.exe`, `node.exe` e DLLs no pacote **de código-fonte**.
