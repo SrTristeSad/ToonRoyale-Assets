@@ -1,0 +1,63 @@
+name: Auditoria diferencial servidor LOCAL Node vs Lua
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout do jogo Lua
+        uses: actions/checkout@v4
+        with:
+          path: lua-game
+      - name: Checkout da referencia Node local original sem V2
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: node-reference
+      - name: Instalar Lua 5.4
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.4
+      - name: Comparar execução original Node contra os mesmos cenários Lua
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd lua-game
+          ln -s "$GITHUB_WORKSPACE/node-reference/windows atualização/server" server
+          ln -s "$GITHUB_WORKSPACE/node-reference/windows atualização/shared" shared
+          mkdir -p audit-results
+          failed=0
+          for base in equipment-reference player-inventory-reference bots-reference \
+            input-reference movement-reference weapon-reference \
+            spawn-point-reference object-cleanup-reference \
+            environment-reference economy-reference catalogue-reference \
+            game-loop-reference; do
+            echo "::group::$base"
+            if node "server-lua/tests/$base.mjs" >"audit-results/$base.node" 2>"audit-results/$base.node.err" &&
+               lua5.4 "server-lua/tests/$base.lua" >"audit-results/$base.lua" 2>"audit-results/$base.lua.err"; then
+              if diff -u "audit-results/$base.node" "audit-results/$base.lua" >"audit-results/$base.diff"; then
+                echo "PASS $base"
+              else
+                echo "DIFFERENCE $base"; head -60 "audit-results/$base.diff"
+                failed=$((failed+1))
+              fi
+            else
+              echo "EXECUTION FAILED $base"
+              cat "audit-results/$base.node.err" "audit-results/$base.lua.err" 2>/dev/null || :
+              failed=$((failed+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "$failed differences or execution errors"
+          if [ "$failed" -gt 0 ]; then exit 1; fi
+      - name: Guardar comparacao para auditoria
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Moo-IO-Node-vs-Lua-Differential-Results
+          path: lua-game/audit-results/
+          if-no-files-found: warn
+          retention-days: 7
