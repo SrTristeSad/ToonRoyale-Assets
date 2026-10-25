@@ -201,9 +201,11 @@ function Room:bindPlayer(player)
   if not found then self.players[#self.players+1]=player end
   player.update=function(actor,delta)
     if actor.spaceId and actor.spaceId~="surface" then
-      return Indoor.step(actor,delta,self)
+      local updated=Indoor.step(actor,delta,self)
+      if actor.alive then self:checkPortalCrossing(actor) end
+      return updated
     end
-    return PlayerUpdate.step(actor,delta,{
+    local updated=PlayerUpdate.step(actor,delta,{
       items=self.items,config=self.config,
       players=self.players,ais=self.ais,world=self.object_manager,
       nowMs=self.nowMs,
@@ -213,13 +215,44 @@ function Room:bindPlayer(player)
         return self.projectile_manager:addProjectile(...)
       end
     })
+    if actor.alive then self:checkPortalCrossing(actor) end
+    return updated
   end
   return player
 end
 
+-- Crossing the doorway with normal WASD movement changes map. Each
+-- doorway triggers only on ENTER, not while idling inside its radius; the
+-- destination doorway is disarmed until the player walks away. This makes
+-- bunkers and caves behave like connected rooms, with no action key.
+function Room:checkPortalCrossing(player)
+ if self.key~="LC" or not self.customMap or not self.mapSpaces
+   or not player.alive then return false end
+ local zone=self.mapSpaces:get(player.spaceId or "surface")
+ if not zone then return false end
+ local nearest,distance
+ for _,portal in ipairs(zone.portals or {}) do
+  local dx,dy=player.x-portal.x,player.y-portal.y
+  local d=dx*dx+dy*dy
+  if d<=85*85 and (not distance or d<distance) then
+   nearest,distance=portal,d
+  end
+ end
+ if not nearest then
+  player.portalInside=nil
+  return false
+ end
+ -- No automatic ping-pong after arrival. The player has to leave the
+ -- arrival circle before stepping into that passage again.
+ if player.portalInside==nearest.id then return false end
+ player.portalInside=nearest.id
+ if self.nowMs<(player.nextPortalAt or 0) then return false end
+ return self:usePortal(player,nearest.id)
+end
+
 -- Server-side portal routing: the client sends no coordinates and cannot
 -- choose an arbitrary destination. Classic rooms have no such action.
-function Room:usePortal(player)
+function Room:usePortal(player,requestedPortal)
  if self.key~="LC" or not self.customMap or not self.mapSpaces
    or not player.alive then return false end
  local now=self.nowMs
@@ -231,7 +264,9 @@ function Room:usePortal(player)
  for _,portal in ipairs(zone.portals or {}) do
   local dx,dy=player.x-portal.x,player.y-portal.y
   local d=dx*dx+dy*dy
-  if d<=150*150 and (not dist or d<dist) then
+  if d<=(requestedPortal and 85*85 or 150*150)
+     and (not requestedPortal or requestedPortal==portal.id)
+     and (not dist or d<dist) then
    nearest=portal;dist=d
   end
  end
@@ -249,6 +284,13 @@ function Room:usePortal(player)
   end
  end
  player.nextPortalAt=now+700
+ local destZone=self.mapSpaces:get(destination.spaceId)
+ local arrivalPortal
+ for _,portal in ipairs(destZone.portals or {}) do
+  local dx,dy=destination.x-portal.x,destination.y-portal.y
+  if dx*dx+dy*dy<=120*120 then arrivalPortal=portal.id;break end
+ end
+ player.portalInside=arrivalPortal
  player.spaceId=destination.spaceId
  player.x=destination.x;player.y=destination.y
  player.xVel=0;player.yVel=0
