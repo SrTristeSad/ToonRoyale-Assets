@@ -68,6 +68,10 @@ jobs:
             luajit -b "$file" /tmp/moo-luajit-check.out
           done
           echo 'PASS compilacao LuaJIT 5.1 de cliente e servidor'
+      - name: Mods JSON e dificuldade de animais - isolados por sala
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/room-mods-smoke.lua
       - name: Processo LOCAL Lua completo - HTTP, ticket, WebSocket, io-init e shutdown
         run: |
           set -euo pipefail
