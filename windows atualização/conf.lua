@@ -7,5 +7,8 @@ function love.conf(t)
   t.window.resizable = true
   t.window.minwidth = 800
   t.window.minheight = 480
+  if os.getenv("MOO_IO_LUA_SERVER") == "1" then
+    t.window = false
+  end
   t.console = false
 end
