@@ -53,7 +53,9 @@ local function checkPortals(portals,source,lookup,max)
  local fromW,fromH=dims(source)
  local seen={}
  for _,p in ipairs(portals) do
-  only(p,{id=true,x=true,y=true,to=true,targetX=true,targetY=true})
+  only(p,{id=true,x=true,y=true,to=true,targetX=true,targetY=true,style=true})
+  assert(p.style==nil or p.style=="house" or p.style=="bunker" or p.style=="cave",
+    "unsupported entrance style")
   assert(id(p.id) and not seen[p.id],"duplicate/invalid portal")
   seen[p.id]=true
   local dest=p.to=="surface" and nil or lookup[p.to]
