@@ -7,11 +7,12 @@ $DistDir=[IO.Path]::GetFullPath($DistDir)
 $required=@(
   'love.exe','main.lua','conf.lua','server-lua\local_server.lua',
   'scripts\start-server-lua.ps1','src\net\mooio_paths.lua',
-  'src\game\mooio_home.lua'
+  'src\game\mooio_home.lua','src\net\browser_auth.lua',
+  'src\net\tls_bridge.lua','src\net\tls_relay_windows.lua',
+  'scripts\tls-relay.mjs','runtime\node\node.exe'
 )
 $forbidden=@(
-  'server','runtime\node','scripts\start-server.ps1',
-  'src\net\browser_auth.lua','src\test_browser_auth.lua','server-lua\tests'
+  'server','scripts\start-server.ps1','server-lua\tests'
 )
 foreach ($path in $required) {
   if (-not (Test-Path (Join-Path $DistDir $path))) { throw "Missing runtime file: $path" }
@@ -25,9 +26,15 @@ if ($paths -notmatch 'start-server-lua\.ps1' -or $paths -match 'return join\(roo
 }
 $main=Get-Content (Join-Path $DistDir 'main.lua') -Raw
 $homeSource=Get-Content (Join-Path $DistDir 'src\game\mooio_home.lua') -Raw
-if (($main+$homeSource) -match 'BrowserAuth|pendingBrowserLogin|v2_login|provider_lite|provider_firebase|V2 Lite|ENTRAR NA CONTA V2') {
-  throw 'V2 login/provider code leaked into release UI'
+if (($main+$homeSource) -match 'provider_lite|provider_firebase|MOO_IO_V2_PRIVATE_ROOM') {
+  throw 'V2 hosting leaked into client release'
+}
+if ($main -notmatch 'BrowserAuth.begin' -or $homeSource -notmatch 'v2_login' -or
+    $main -notmatch 'secure=secure==true') {
+  throw 'Verified V2 joining was not bundled in the client'
 }
 $conf=Get-Content (Join-Path $DistDir 'conf.lua') -Raw
 if ($conf -match 'visible\s*=\s*false') { throw 'Invalid LÖVE 11.5 window visible setting' }
-Write-Host 'PASS: Lua-only release static contract'
+$node=Join-Path $DistDir 'runtime\node\node.exe'
+if ((& $node --version) -notmatch '^v22[.]') { throw 'Bundled TLS relay Node v22 missing' }
+Write-Host 'PASS: Lua host + V2 join over verified TLS; no V2 hosting in release'
