@@ -14,7 +14,8 @@ const packageJson=JSON.parse(read("package.json"));
 
 assert.match(client,/local\s+Paths=require\("src\.net\.mooio_paths"\)/);
 assert.match(client,/local\s+script=Paths\.script\(root\)/);
-assert.match(client,/Host:start\(mode,requestedIP,requestedBots,difficulty,modIds\)/);
+assert.match(client,/Host:start\(mode,requestedIP,requestedBots,difficulty,modIds,mapId\)/);
+assert.match(client,/MOO_IO_MAP_ID/);
 assert.match(client,/MOO_IO_DIFFICULTY/);
 assert.match(client,/MOO_IO_MODS/);
 assert.match(paths,/scripts\/start-server-lua\.ps1/);
