@@ -7,7 +7,8 @@ if os.getenv("MOO_IO_LUA_SERVER")=="1" then
   if not utf8 then utf8=require("utf8") end
   local instance
   function love.load()
-    if love.window then love.window.setMode(1,1,{visible=false}) end
+    -- Headless mode is configured in conf.lua before LÖVE creates modules.
+    -- Do not call love.window.setMode: visible is not a supported 11.5 flag.
     local Local=require("server-lua.local_server")
     local Socket=require("socket")
     local ip=assert(os.getenv("MOO_IO_BIND_IP"),"MOO_IO_BIND_IP required")
