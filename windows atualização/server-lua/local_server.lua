@@ -88,9 +88,10 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
     end
    end
    for _,zone in ipairs(map.spaces or {}) do
-     for _,mob in ipairs(zone.mobs or {}) do
+     for i,mob in ipairs(zone.mobs or {}) do
        animals:spawn(mob.x,mob.y,0,mob.kind,{
-         spaceId=zone.id,startX=mob.x,startY=mob.y
+         spaceId=zone.id,startX=mob.x,startY=mob.y,
+         mapSpawnId=zone.id..":"..i
        })
      end
    end
