@@ -17,8 +17,8 @@ end
 local function goodRoot(root)
   if root=="" then return false end
   return existsFile(join(root,"main.lua"))
-    and existsFile(join(root,"server/src/index.js"))
-    and existsFile(join(root,"scripts/start-server.ps1"))
+    and existsFile(join(root,"server-lua/local_server.lua"))
+    and existsFile(join(root,"scripts/start-server-lua.ps1"))
 end
 function Paths.find(fs)
   fs=fs or (love and love.filesystem)
@@ -44,13 +44,9 @@ function Paths.find(fs)
   return nil,"Instalacao incompleta: extraia o ZIP inteiro e abra MOO-IO.vbs na pasta do projeto."
 end
 function Paths.script(root)
-  if os.getenv("MOO_IO_LOCAL_SERVER_RUNTIME")=="lua" then
-    return join(root,"scripts/start-server-lua.ps1")
-  end
-  return join(root,"scripts/start-server.ps1")
+  return join(root,"scripts/start-server-lua.ps1")
 end
 function Paths.log(root)
-  if os.getenv("MOO_IO_LOCAL_SERVER_RUNTIME")=="lua" then return join(root,"server-lua/data/lua-host.log") end
-  return join(root,"server/data/mooio-host.log")
+  return join(root,"server-lua/data/lua-host.log")
 end
 return Paths
