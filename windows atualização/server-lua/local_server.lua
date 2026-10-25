@@ -65,7 +65,17 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
  room.mapSpaces=Spaces.new(map,gameConfig.mapScale)
  room.customMap=map
  room.projectile_manager.mapSpaces=room.mapSpaces
+ animals.mapSpaces=room.mapSpaces
  animals:ensureAnimals()
+ if map and key=="LC" then
+   for _,zone in ipairs(map.spaces or {}) do
+     for _,mob in ipairs(zone.mobs or {}) do
+       animals:spawn(mob.x,mob.y,0,mob.kind,{
+         spaceId=zone.id,startX=mob.x,startY=mob.y
+       })
+     end
+   end
+ end
  local registry=Registry.new(room,{
   botCount=botCount,
   randomString=function(length)
