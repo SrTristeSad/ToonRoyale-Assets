@@ -8,6 +8,14 @@ local function run()
  assert(View.doorOpenRatio(130)>0.49)
  assert(View.doorOpenRatio(75)==1)
  assert(View.doorOpenRatio(nil)==0)
+ local floorPlan=assert(View.dungeonMapGeometry(
+   {width=2000,height=1000},{x=1000,y=500},174))
+ assert(math.abs(floorPlan.x-87)<0.001
+   and math.abs(floorPlan.y-87)<0.001
+   and floorPlan.scale>0
+   and floorPlan.top>0,
+   "floor plan must use exact level-world scale and centered avatar")
+ assert(View.dungeonMapGeometry(nil,{},174)==nil)
  local world=World.new()
  local portal={id="entrar-cabana",x=1950,y=1950,to="cabana",
   targetX=600,targetY=900}
@@ -42,7 +50,7 @@ local function run()
  love.graphics.push("all")
  love.graphics.setCanvas(interior)
  love.graphics.clear(0,0,0,1)
- View.draw(world,camera,0.016,{showGrid=true,localAim=0})
+ View.draw(world,camera,0.016,{showGrid=true,localAim=0,showDungeonMap=true})
  love.graphics.pop()
  local a=surface:newImageData()
  local b=interior:newImageData()
