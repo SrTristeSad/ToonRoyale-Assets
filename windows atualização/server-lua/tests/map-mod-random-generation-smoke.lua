@@ -35,4 +35,21 @@ for _,portal in ipairs(dungeon.portals) do
  assert(portal.placement=="random" and portal.x==nil and portal.y==nil,
   "surface entrances must not use fixed coordinates")
 end
+-- Generated maps cannot silently pin any surface resource or entrance.
+local Json=require("server-lua.vendor.dkjson")
+local function rejected(field,object)
+ local map={schemaVersion=1,id="test-generated",name="Generated Test",
+  mode="generated",generation={},surface={},spaces={},portals={}}
+ map[field]=object
+ local ok=pcall(Maps.validate,Json.encode(map))
+ assert(not ok,"generated map accepted fixed "..field)
+end
+rejected("surface",{{kind=2,scale=85,x=1000,y=1000}})
+rejected("spawn",{x=1000,y=1000})
+rejected("portals",{{id="entry-one",to="surface",x=1000,y=1000,targetX=1000,targetY=1000}})
+rejected("interactables",{{id="cache-one",kind="cache",resource="food",amount=5,x=1000,y=1000}})
+local auto=Maps.validate(Json.encode({schemaVersion=1,id="test-auto",
+ name="Auto Placement",mode="generated",generation={},spaces={},
+ surface={{kind=2,scale=85,count=3}},portals={},interactables={}}))
+assert(auto.surface[1].placement=="random","automatic surface placement missing")
 print("PASS map and mod integration: original generator, random positions, mod quantities")
