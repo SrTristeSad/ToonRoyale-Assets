@@ -16,6 +16,7 @@ local Chat=require("server-lua.world.local_chat")
 local Build=require("server-lua.protocol.build")
 local Mods=require("server-lua.world.room_mods")
 local Maps=require("server-lua.world.map_profiles")
+local Deps=require("server-lua.world.map_dependencies")
 local Spaces=require("server-lua.world.map_spaces")
 local Local={}
 Local.__index=Local
@@ -70,15 +71,6 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
  animals.mapSpaces=room.mapSpaces
  room.mobAnimations=rules.animations or {}
  animals.mapAnimations=room.mobAnimations
- if map and key=="LC" then
-  for _,zone in ipairs(map.spaces or {}) do
-   for _,mob in ipairs(zone.mobs or {}) do
-    assert(rules.types[mob.kind],
-      "map requires unknown mob "..mob.kind..
-      " (select the species mod before starting this room)")
-   end
-  end
- end
  if map and key=="LC" then
    -- A normal game uses the original 51-animal total, not 51 outdoors
    -- plus six additional animals below ground. Count authored mobs
@@ -145,6 +137,13 @@ function Local.new(opts)
  local profile=Mods.build(opts.difficulty or "normal",
    Mods.ids(opts.modIds or ""),opts.modDir or "server-lua/mods",map)
  profile.map=map
+ -- Validate dependencies BEFORE writing accounts or instantiating a world.
+ -- Headless callers get a recoverable startup failure rather than a crash
+ -- after the room has already been partially allocated.
+ if map then
+  local supported,why=Deps.validateTypes(map,profile.types)
+  assert(supported,why)
+ end
  local now=opts.nowMs or stamp
  local entropy=Random.bytes(4)
  local a,b,c,d=entropy:byte(1,4)
