@@ -24,8 +24,8 @@ if ($paths -notmatch 'start-server-lua\.ps1' -or $paths -match 'return join\(roo
   throw 'Client startup must target only the bundled Lua server'
 }
 $main=Get-Content (Join-Path $DistDir 'main.lua') -Raw
-$home=Get-Content (Join-Path $DistDir 'src\game\mooio_home.lua') -Raw
-if (($main+$home) -match 'BrowserAuth|pendingBrowserLogin|v2_login|provider_lite|provider_firebase|V2 Lite|ENTRAR NA CONTA V2') {
+$homeSource=Get-Content (Join-Path $DistDir 'src\game\mooio_home.lua') -Raw
+if (($main+$homeSource) -match 'BrowserAuth|pendingBrowserLogin|v2_login|provider_lite|provider_firebase|V2 Lite|ENTRAR NA CONTA V2') {
   throw 'V2 login/provider code leaked into release UI'
 }
 $conf=Get-Content (Join-Path $DistDir 'conf.lua') -Raw
