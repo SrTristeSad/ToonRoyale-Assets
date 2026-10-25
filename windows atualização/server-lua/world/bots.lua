@@ -46,12 +46,55 @@ function Bots:create(index)
  })
  assert(player,"Room bot could not reserve a player slot")
  player.isBot=true
- player:setUserData({name="Bot "..names[index+1],skin=index%7})
+ player:setUserData({name=names[index+1],skin=index%7})
  player:spawn(false)
  local a={p=player,index=index,target=nil,targetUntil=0,wander=nil,at=0,
-  prevX=player.x,prevY=player.y,stuck=0,detour=0,detourDir=0,respawn=0}
+  prevX=player.x,prevY=player.y,stuck=0,detour=0,detourDir=0,respawn=0,
+  lastTarget=nil,lastMode=nil,holdUntil=0,
+  socialAt=12500+index*3400,prefersGroup=index%3~=0}
  self.agents[#self.agents+1]=a
  return a
+end
+-- Optional groups use the real in-world tribe manager. A bot may remain
+-- independent, create a tribe, join a nearby friend, or later leave. This is
+-- never a rule requiring every bot to form a team.
+function Bots:socialize(a)
+ local tribes=self.game.tribes
+ if not tribes or type(tribes.create)~="function" then return false end
+ local p=a.p
+ if not p.alive or not a.prefersGroup then return false end
+ if p.team then
+  if math.random()<0.08 then
+   tribes:leaveTribe(p)
+   return true
+  end
+  return false
+ end
+ if math.random()>0.46 then return false end
+ local friend,best=nil,650
+ for _,other in ipairs(self.agents) do
+  local peer=other.p
+  if other~=a and peer.alive and other.prefersGroup
+   and peer.spaceId==p.spaceId
+   and (not peer.team or tribes.tribes[peer.team])
+   and peer.team~=p.team then
+   local d=dist(p,peer)
+   if d<best then friend,best=peer,d end
+  end
+ end
+ if not friend then return false end
+ if friend.team then
+  local tribe=tribes.tribes[friend.team]
+  if not tribe or tribe.clan then return false end
+  tribes:requestJoin(p,friend.team)
+  tribes:answerRequest(tribe.owner,p.sid,true)
+  return p.team==friend.team
+ end
+ local name="Tribo"..a.index
+ if not tribes:create(name,p) then return false end
+ tribes:requestJoin(friend,name)
+ tribes:answerRequest(p,friend.sid,true)
+ return true
 end
 function Bots:tick(delta)
  self.elapsed=self.elapsed+delta
@@ -73,6 +116,10 @@ function Bots:decide(a,delta)
  end
  a.respawn=0
  a.at=a.at+delta
+ if a.at>=a.socialAt and game.tribes then
+  a.socialAt=a.at+15000+math.random()*17000
+  self:socialize(a)
+ end
  if player.health<player.maxHealth*0.74 and player.food>=10 and a.at>=850 then
   player.buildIndex=0
   player:buildItem(Catalogue.list[0])
@@ -97,10 +144,13 @@ function Bots:decide(a,delta)
   end
  end
  local target,mode=nil,"wander"
- local weak=player.health<player.maxHealth*0.37
+ local enhanced=game.config and game.config.server~=nil
+ local weak=player.health<player.maxHealth*(enhanced and 0.49 or 0.37)
  if threat and distance<480 then
   target=threat
-  mode=weak and "flee" or "fight"
+  local opponentStrong=enhanced and threat.isPlayer
+    and (threat.health or 100)>player.health*1.5
+  mode=(weak or opponentStrong) and "flee" or "fight"
  else
   local best=math.huge
   for _,object in ipairs(game.game_objects) do
@@ -144,6 +194,26 @@ function Bots:decide(a,delta)
   end
   target=a.wander
  end
+ -- Reduce target thrashing between resource nodes and enemies; a real
+ -- imminent threat can always interrupt gathering or roaming.
+ if enhanced then
+  if mode=="gather" and a.lastTarget and a.lastTarget.active
+    and a.lastMode=="gather" and a.at<a.holdUntil
+    and dist(player,a.lastTarget)<620 then
+    target=a.lastTarget
+  end
+  if a.lastTarget~=target or a.lastMode~=mode then
+    a.lastTarget=target;a.lastMode=mode;a.holdUntil=a.at+1700
+  end
+  if player.team and mode=="wander" and math.random()<0.32 then
+    for _,mate in ipairs(game.players) do
+      if mate~=player and mate.alive and mate.team==player.team
+        and dist(player,mate)>180 and dist(player,mate)<1000 then
+        target=mate;mode="follow";break
+      end
+    end
+  end
+ end
  local direction,d=angle(player,target),dist(player,target)
  if mode=="flee" then direction=direction+pi end
  if mode=="fight" and d<94 and player.health>35 then
@@ -160,7 +230,8 @@ function Bots:decide(a,delta)
  if a.at<a.detour then direction=a.detourDir end
  a.prevX=player.x;a.prevY=player.y
  player.dir=angle(player,target)
- if (mode=="gather" and d<85) or (mode=="wander" and d<45) then
+ if (mode=="gather" and d<85) or (mode=="wander" and d<45)
+  or (mode=="follow" and d<180) then
   player.moveDir=nil
  else player.moveDir=direction end
  player.mouseState=0
