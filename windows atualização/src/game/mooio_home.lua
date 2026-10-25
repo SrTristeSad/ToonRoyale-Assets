@@ -49,15 +49,15 @@ local boxes={
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43},
   playConfigure={155,418,462,63},
   -- One compact, centred setup panel. No giant map preview.
-  chooseLan={352,246,265,40},chooseVpn={630,246,265,40},
-  createVpnIP={352,295,543,34},
-  easyDiff={352,358,265,35},normalDiff={630,358,265,35},
-  hardDiff={352,400,265,35},extremeDiff={630,400,265,35},
-  createBots={352,444,543,36},createBotsMinus={352,489,107,37},
-  createBotsPlus={788,489,107,37},
-  createMods={352,539,543,43},
-  chooseMapNext={352,589,543,43},
-  createBack={352,644,191,34},createSubmit={554,644,341,34}
+  chooseLan={367,246,265,40},chooseVpn={645,246,265,40},
+  createVpnIP={367,295,543,34},
+  easyDiff={367,358,265,35},normalDiff={645,358,265,35},
+  hardDiff={367,400,265,35},extremeDiff={645,400,265,35},
+  createBots={367,444,543,36},createBotsMinus={367,489,107,37},
+  createBotsPlus={803,489,107,37},
+  createMods={367,539,543,43},
+  chooseMapNext={367,589,543,43},
+  createBack={367,644,191,34},createSubmit={569,644,341,34}
 }
 local function button(id,text,primary)
  local box=boxes[id]
@@ -605,17 +605,17 @@ function Home:draw(state,detail,showWorld)
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
     elseif self.screen=="create" then
-      printText("F5: atualizar mapas e mods",352,176,13,C.amber,543,"center")
-      panel(329,202,591,482,C.panel,0)
-      printText("CONEXAO",352,215,15,C.green)
+      printText("F5: atualizar mapas e mods",367,176,13,C.amber,543,"center")
+      panel(344,202,591,482,C.panel,0)
+      printText("CONEXAO",367,215,15,C.green)
       button("chooseLan",self.serverMode=="lan" and "LAN ATIVA" or "LAN",self.serverMode=="lan")
       button("chooseVpn",self.serverMode=="vpn" and "VPN ATIVA" or "VPN",self.serverMode=="vpn")
       if self.serverMode=="vpn" then
         field("createVpnIP",self.vpnIP,"IP do computador na VPN",self.focus=="vpnIP")
       else
-        printText("Amigos na mesma rede local.",352,300,15,C.muted,543,"center")
+        printText("Amigos na mesma rede local.",367,300,15,C.muted,543,"center")
       end
-      printText("DIFICULDADE",352,337,14,C.green)
+      printText("DIFICULDADE",367,337,14,C.green)
       local opts={{"easyDiff","PACIFICO","pacifico"},
         {"normalDiff","NORMAL","normal"},{"hardDiff","DIFICIL","dificil"},
         {"extremeDiff","EXTREMO","extremo"}}
@@ -623,7 +623,7 @@ function Home:draw(state,detail,showWorld)
       button("createBots",self.botsEnabled and "BOTS: ATIVADOS" or "BOTS: DESATIVADOS",self.botsEnabled)
       button("createBotsMinus","-")
       printText("QUANTIDADE "..(self.botsEnabled and self.botCount or 0).."/8",
-        459,495,17,C.white,329,"center")
+        474,495,17,C.white,329,"center")
       button("createBotsPlus","+")
       button("createMods",self.modIds=="" and "MODS: NENHUM - ESCOLHER" or "MODS: PERSONALIZADOS - EDITAR",false)
       button("chooseMapNext",self.mapId=="" and "MAPA: DESATIVADO - ESCOLHER"
