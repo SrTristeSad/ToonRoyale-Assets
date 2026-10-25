@@ -11,9 +11,24 @@ end
 function Spaces.new(map,mapScale)
  local self=setmetatable({zones={},name=map and map.name or "Classico"},Spaces)
  self.zones.surface={id="surface",type="surface",width=mapScale,
-  height=mapScale,obstacles={},portals=copy(map and map.portals or {})}
+  height=mapScale,obstacles={},portals=copy(map and map.portals or {}),
+  interactables=copy(map and map.interactables or {})}
  for _,space in ipairs(map and map.spaces or {}) do
   self.zones[space.id]=copy(space)
+ end
+ for _,zone in pairs(self.zones) do
+  zone.interactables=zone.interactables or {}
+  for _,obj in ipairs(zone.interactables) do
+   if obj.kind=="gate" then
+    obj.closed=true
+    zone.obstacles[#zone.obstacles+1]={
+     x=obj.x-obj.width/2,y=obj.y-obj.height/2,
+     width=obj.width,height=obj.height,material=obj.material or "metal",
+     interactiveGateId=obj.id
+    }
+   elseif obj.kind=="cache" then obj.used=false
+   elseif obj.kind=="lever" then obj.used=false end
+  end
  end
  return self
 end
