@@ -71,6 +71,7 @@ return function()
   for _,page in ipairs({"home","play","server","settings"}) do
     home.screen=page
     home:draw("idle","")
+    love.graphics.setCanvas()
     local frame=canvas:newImageData()
     local _,_,_,opacity=frame:getPixel(140,300)
     assert(opacity>0.95, "screen "..page.." did not render an opaque UI")
@@ -79,11 +80,13 @@ return function()
       frame:encode("png",file)
       print("UI CAPTURE "..file.." -> "..love.filesystem.getSaveDirectory())
     end
+    love.graphics.setCanvas(canvas)
   end
   home.screen="play"
   home.roomOverlay=true
   home:draw("idle","")
   home:drawRoomOverlay()
+  love.graphics.setCanvas()
   if os.getenv("MOO_IO_CAPTURE_UI")=="1" then
     canvas:newImageData():encode("png","ui-invite-overlay.png")
   end
