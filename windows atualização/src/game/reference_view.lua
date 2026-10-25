@@ -189,6 +189,13 @@ local function renderAnimal(a,camera,world,animatedOnly)
     rendered=Assets.draw("animals",kind.src..".png",
       x,y,radius*2,radius*2,angle,alpha)
   end
+  if not rendered and type(a.index)=="number" and a.index>=15
+    and not animatedOnly then
+    -- An optional community sprite may be missing. Keep the new species
+    -- visible as a native wolf until its own PNG is installed locally.
+    rendered=Assets.draw("animals","wolf_1.png",
+      x,y,radius*2,radius*2,angle,alpha)
+  end
   if not rendered then
     local candidate=Animals.fallbackArt and Animals.fallbackArt[kind.src]
     if candidate then
