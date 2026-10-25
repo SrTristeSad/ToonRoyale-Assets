@@ -63,6 +63,27 @@ jobs:
             if (-not (Test-Path (Join-Path $out $file))) { throw "Importacao falhou: $file" }
           }
           Write-Host 'PASS importacao de mapa e mod externos para pasta do jogo ja construido'
+      - name: Importar spritesheet PNG opcional no jogo ja empacotado
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
+          $install=Join-Path $out 'scripts\import-animation.ps1'
+          if (-not (Test-Path (Join-Path $out 'INSTALAR-ANIMACAO.bat'))) {
+            throw 'Instalador de spritesheets ausente no ZIP'
+          }
+          Add-Type -AssemblyName System.Drawing
+          $image=New-Object Drawing.Bitmap(64,64)
+          try {
+            $path=Join-Path $env:RUNNER_TEMP 'mob-teste.png'
+            $image.Save($path,[System.Drawing.Imaging.ImageFormat]::Png)
+          } finally { $image.Dispose() }
+          & $install -Source $path
+          $installed=Join-Path $out 'assets\custom\img\animals\animations\mob-teste.png'
+          if (-not (Test-Path $installed)) { throw 'Spritesheet nao instalada' }
+          if ((Get-Item $installed).Length -ne (Get-Item $path).Length) {
+            throw 'Spritesheet instalada com dados alterados'
+          }
+          Write-Host 'PASS instalador PNG: dimensoes, assinatura e copia preservada'
       - name: Smoke do executavel Windows - iniciar sala e encerrar
         run: |
           $ErrorActionPreference='Stop'
@@ -106,6 +127,7 @@ jobs:
           $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
           Remove-Item -LiteralPath (Join-Path $out 'server-lua\mods\maps\mapa-importado-teste.json') -Force
           Remove-Item -LiteralPath (Join-Path $out 'server-lua\mods\mod-importado-teste.json') -Force
+          Remove-Item -LiteralPath (Join-Path $out 'assets\custom\img\animals\animations\mob-teste.png') -Force
       - name: Compactar jogo completo
         run: |
           $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
