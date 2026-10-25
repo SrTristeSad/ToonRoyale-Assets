@@ -531,38 +531,9 @@ end
 local function drawMapHelp(world)
  if not world.map then return end
  local w,h=love.graphics.getDimensions()
- local near=world.spaceId=="surface"
- local mapName=world.map.name or world.map.id or "Personalizado"
- love.graphics.setColor(0.07,0.10,0.07,0.86)
- love.graphics.rectangle("fill",16,69,math.min(500,w-32),54,5,5)
- love.graphics.setColor(0.96,0.93,0.79,1)
- love.graphics.print("MAPA: "..mapName:upper(),25,76)
- love.graphics.setColor(0.66,0.88,0.53,1)
- love.graphics.print(near and "SUPERFICIE" or ("REGIAO: "..world.spaceId:upper()),25,99)
- local settings=world.roomSettings
- if settings and type(settings.difficulty)=="string" then
-  local mods=type(settings.mods)=="table" and #settings.mods or 0
-  love.graphics.setColor(0.08,0.11,0.07,0.85)
-  love.graphics.rectangle("fill",16,167,math.min(500,w-32),32,5,5)
-  love.graphics.setColor(0.88,0.91,0.72,1)
-  local mobTotal=(tonumber(settings.surfaceAnimals) or 0)
-    +(tonumber(settings.interiorAnimals) or 0)
-  local modName=""
-  if mods>0 and type(settings.mods[1])=="string" then
-   modName=" ("..settings.mods[1]:sub(1,18)
-     ..(mods>1 and " +"..(mods-1) or "")..")"
-  end
-  love.graphics.print("MODO: "..settings.difficulty:upper()..
-    "  |  MODS: "..mods..modName.."  |  ANIMAIS: "..mobTotal,25,176)
- end
+ -- Keep the playable viewport clear of permanent map/mod debug overlays.
  -- No remote entrance locator or item-distance HUD: discover features
  -- by exploring the procedurally generated surface as in MooMoo.io.
- if near then
-  love.graphics.setColor(0.09,0.11,0.09,0.83)
-  love.graphics.rectangle("fill",16,h-52,345,36,5,5)
-  love.graphics.setColor(0.96,0.95,0.87,1)
-  love.graphics.print("B: CASA (70 MADEIRA, 35 PEDRA)",24,h-43)
- end
  if world.spaceId and world.spaceId:match("^casa%-%d+$") then
   love.graphics.setColor(0.09,0.11,0.09,0.83)
   love.graphics.rectangle("fill",16,h-52,390,36,5,5)
