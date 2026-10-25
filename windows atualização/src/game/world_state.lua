@@ -2,6 +2,7 @@
 -- Packet layouts: al007ex/moomoo-clone/server/src/moomoo/server.js (pinned baseline).
 local Catalog=require("src.game.catalog")
 local C=require("src.game.config")
+local DeathMarker=require("src.game.death_marker")
 local Animation=require("src.game.reference_animation")
 local Mob=require("src.game.mob_animations")
 local CombatText=require("src.game.reference_combat_text")
@@ -165,7 +166,7 @@ function World.new()
     updateSeconds=nil,restartSeconds=nil,pongCount=0,
     profiles={},lifeStats={},
     xp=0,maxXP=0,age=1,upgradePoints=0,upgradeAge=0,
-    minimapData={},mapPings={},mapMarker=nil,lastDeath=nil,
+    minimapData={},mapPings={},mapMarker=nil,lastDeath=nil,lastKnownPosition=nil,
     serverAnimals={},teams={},tribe=nil,tribeOwner=false,tribeMembers={},joinRequests={},
     store=freeStore(),
     packets=0,lastPacket=nil
@@ -401,6 +402,7 @@ function World:apply(name,args)
     -- The Node sends a fresh D after every C. Do not render the previous
     -- life's position while waiting for its new authoritative D snapshot.
     self.players[self.sid]=nil
+    self.lastKnownPosition=nil
     -- server/src/moomoo/modules/player.js::spawn initializes this in Node;
     -- the JavaScript client's Player.spawn() mirrors it locally.
     -- The server does not send V on each new spawn, only when inventory changes.
@@ -434,6 +436,9 @@ function World:apply(name,args)
     p.dive=(validId(d[15]) and d[15]<=3) and d[15] or 0
     p.invisible=d[16];p.disguised=d[17]
     self.players[id]=p
+    if id==self.sid then
+      self.lastKnownPosition={x=p.x,y=p.y,spaceId=self.spaceId or "surface"}
+    end
     trackPaintOrder(self,"players",id)
     return true
   elseif name=="a" then
@@ -641,8 +646,13 @@ function World:apply(name,args)
     return true
   elseif name=="P" then
     local player=self:localPlayer()
-    if player and number(player.x) and number(player.y) then
-      self.lastDeath={x=player.x,y=player.y}
+    local position=player and number(player.x) and number(player.y)
+      and {x=player.x,y=player.y} or self.lastKnownPosition
+    if position then
+      -- Only server-confirmed positions are eligible. Preserve the layer
+      -- where the player actually died; never map cave X/Y onto the surface.
+      self.lastDeath=DeathMarker.make(position.x,position.y,
+        position.spaceId or self.spaceId)
     end
     self.dead=true;self.spawned=false
     -- The reference stops rendering the defeated player immediately.
