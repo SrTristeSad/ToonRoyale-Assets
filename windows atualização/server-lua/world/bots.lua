@@ -140,7 +140,7 @@ function Bots:decide(a,delta)
  if player.health<player.maxHealth*0.84 and player.food>=10
    and a.at-a.lastHeal>=850 then
   player.buildIndex=0
-  player:buildItem(catalogue.list[0])
+  player:buildItem((catalogue.list and catalogue.list[0]) or Catalogue.list[0])
   player.buildIndex=-1
   a.lastHeal=a.at
  end
