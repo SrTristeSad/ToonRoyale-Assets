@@ -53,7 +53,6 @@ local Profile=require("src.game.reference_profile")
 local Upgrades=require("src.game.reference_upgrades")
 local Assets=require("src.game.reference_assets")
 local Camera=require("src.camera")
-local HouseEditor=require("src.game.house_editor")
 local Input=require("src.input")
 local Pack=require("src.protocol.msgpack")
 local client=nil
@@ -66,7 +65,6 @@ local uiSmokeTime=0
 local uiSmokeClicked=false
 local uiSmokeDrawn=false
 local world=World.new()
-local houseEditor=HouseEditor.new()
 local camera=nil
 local menuCamera=nil
 local menuPreview=nil
@@ -134,7 +132,7 @@ local function updateGamepad()
  local pressed=joy:getGamepadAxis("triggerright")>=0.52
  if phase=="playing" and client and client.state=="spawn_confirmed"
    and not died and not pause:isOpen() and not chatOpen
-   and not panels:isOpen() and not clans:isOpen() and not houseEditor.active then
+   and not panels:isOpen() and not clans:isOpen() then
   if pressed and not gamepadAttack then
    gamepadAttack=true
    if not mouseAttack and not spaceAttack then client:send("F",{1,gamepadAim or 0}) end
@@ -374,7 +372,6 @@ function love.update(dt)
       world:apply(packet.name,packet.args)
       serverPackets=serverPackets+1
       if packet.name=="j" and world.justChangedSpace then
-        houseEditor:reset()
         world.justChangedSpace=false
         if camera then camera.hasTarget=false end
         movementClock=0;lastMove=false;lastAim=nil
@@ -568,10 +565,6 @@ function love.draw()
     View.draw(world,camera,frameDelta,
       {showGrid=menu.grid,showDungeonMap=showDungeonMap,
        localAim=View.localAim(lockDir,currentAttackDir(),lastAim)})
-    if houseEditor.active then
-      local mx,my=love.mouse.getPosition()
-      houseEditor:draw(world,camera,mx,my)
-    end
     Hud.draw(world,chatOpen,chatDraft,
       chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen())
     panels:draw(world)
@@ -985,12 +978,7 @@ function love.keypressed(key)
     return
   end
 
-  if phase=="playing" and key=="escape" and houseEditor.active then
-    houseEditor:reset()
-    return
-  end
   if phase=="playing" and key=="escape" then
-    houseEditor:reset()
     stopPlayerControls()
     panels:close();clans:close()
     if profile:isOpen() then closeProfile() end
