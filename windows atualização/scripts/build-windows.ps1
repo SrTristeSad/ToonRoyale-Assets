@@ -1,7 +1,8 @@
-# Build a self-contained Windows LÖVE/LuaSocket distribution (no Node or V2).
+# Complete Windows LÖVE/Lua local host + V2 HTTPS client. Node binary is TLS transport ONLY.
 [CmdletBinding()]
 param(
   [Parameter(Mandatory=$true)][string]$LoveDir,
+  [string]$TlsNodeExe = '',
   [string]$OutputDir = ''
 )
 $ErrorActionPreference = 'Stop'
@@ -31,6 +32,21 @@ foreach ($folder in @('src','shared','assets','server-lua')) {
 }
 New-Item -ItemType Directory -Force (Join-Path $OutputDir 'scripts') | Out-Null
 Copy-Item (Join-Path $root 'scripts\start-server-lua.ps1') (Join-Path $OutputDir 'scripts\start-server-lua.ps1') -Force
+Copy-Item (Join-Path $root 'scripts\tls-relay.mjs') (Join-Path $OutputDir 'scripts\tls-relay.mjs') -Force
+# Only a TLS relay uses this executable; no Node game engine is shipped.
+if (-not $TlsNodeExe) {
+  $cmd=Get-Command node.exe -ErrorAction SilentlyContinue
+  if (-not $cmd) { throw 'Node.js 22 x64 necessario somente para a ponte TLS do cliente V2.' }
+  $TlsNodeExe=$cmd.Source
+}
+if (-not (Test-Path $TlsNodeExe -PathType Leaf)) { throw 'node.exe TLS ausente.' }
+$version=(& $TlsNodeExe --version)
+if ($LASTEXITCODE -ne 0 -or $version -notmatch '^v22[.]') {
+  throw "Versao de Node TLS nao suportada: $version (requer Node 22)."
+}
+$nodeDir=Join-Path $OutputDir 'runtime\node'
+New-Item -ItemType Directory -Force $nodeDir | Out-Null
+Copy-Item $TlsNodeExe (Join-Path $nodeDir 'node.exe') -Force
 foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','README.md','LICENSE','NOTICE.md')) {
   Copy-Item (Join-Path $root $file) (Join-Path $OutputDir $file) -Force
 }
@@ -39,7 +55,7 @@ if (Test-Path (Join-Path $root 'licenses')) {
 }
 Copy-Item (Join-Path $LoveDir '*') $OutputDir -Recurse -Force
 # Keep the Windows release free from Node differential fixtures and tests.
-foreach ($relative in @('server-lua\tests','src\test_browser_auth.lua','src\net\browser_auth.lua')) {
+foreach ($relative in @('server-lua\tests','src\test_browser_auth.lua','src\test_tls_bridge.lua')) {
   $target=Join-Path $OutputDir $relative
   if (Test-Path $target) { Remove-Item $target -Recurse -Force }
 }
@@ -47,16 +63,11 @@ foreach ($relative in @('server-lua\tests','src\test_browser_auth.lua','src\net\
 $luaData = Join-Path $OutputDir 'server-lua\data'
 if (Test-Path $luaData) { Remove-Item $luaData -Recurse -Force }
 New-Item -ItemType Directory -Force $luaData | Out-Null
-# Remove the obsolete browser authentication module from release artifacts.
-foreach ($file in @('src\net\browser_auth.lua','src\test_browser_auth.lua')) {
-  $target=Join-Path $OutputDir $file
-  if (Test-Path $target) { Remove-Item $target -Force }
-}
-foreach ($bad in @('server','runtime\node','scripts\start-server.ps1','server-lua\tests','src\net\browser_auth.lua')) {
+foreach ($bad in @('server','scripts\start-server.ps1','server-lua\tests')) {
   if (Test-Path (Join-Path $OutputDir $bad)) { throw "Node/V2 inesperado no pacote: $bad" }
 }
 [IO.File]::WriteAllText((Join-Path $OutputDir 'LEIA-ME-PRIMEIRO.txt'),
-  "Moo IO Windows - servidor local somente Lua/LÖVE. Extraia e abra MOO-IO.vbs. LAN/VPN privada; sem Node.js ou login V2.")
+  "Moo IO Windows: hospede salas com o servidor Lua ou entre em salas V2 existentes pelo convite HTTPS. node.exe embutido e usado SOMENTE como ponte TLS no cliente, nao como servidor do jogo.")
 # Robocopy exit code 1 means "files copied", not a failure.
 # Prevent a stale external exit code from failing the calling PowerShell CI step.
 $global:LASTEXITCODE = 0
