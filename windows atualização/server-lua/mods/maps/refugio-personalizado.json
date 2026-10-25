@@ -114,8 +114,8 @@
         {
           "id": "portao-metal",
           "kind": "gate",
-          "x": 820,
-          "y": 770,
+          "x": 750,
+          "y": 730,
           "width": 48,
           "height": 175,
           "material": "metal",
