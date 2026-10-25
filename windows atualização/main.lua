@@ -40,6 +40,7 @@ local Pause=require("src.game.mooio_pause")
 local Host=require("src.net.mooio_host")
 local Auth=require("src.net.local_auth")
 local BrowserAuth=require("src.net.browser_auth")
+local Directory=require("src.net.server_directory")
 local TLS=require("src.net.tls_bridge")
 local Config=require("src.game.config")
 local Hud=require("src.game.reference_hud")
@@ -664,6 +665,31 @@ homeAction=function(action)
     else
       home:setStatus("Escolha CRIAR MINHA SALA ou ENTRAR EM OUTRA SALA.")
     end
+  elseif action=="server_browse" then
+    local directory,why=Directory.fetch(home.serverAddress)
+    if not directory then
+      home.serverRooms={};home.serverDirectory=nil;home.serverSelected=1;home.serverPage=0
+      home:setStatus(why or "Nao foi possivel consultar as salas.",true)
+    else
+      home.serverDirectory=directory
+      home.serverRooms=directory.rooms
+      home.serverSelected=1;home.serverPage=0
+      home.serverCode=""
+      home:setStatus(#directory.rooms.." salas encontradas. Escolha uma para entrar.")
+    end
+  elseif action=="server_join" then
+    local selected=home.serverRooms[home.serverSelected]
+    if not selected then home:setStatus("Escolha uma sala na lista.",true);return end
+    if not selected.online then home:setStatus("A sala escolhida esta offline.",true);return end
+    local target,why=Directory.target(home.serverDirectory,selected,home.serverCode)
+    if not target then home:setStatus(why,true);return end
+    -- V2 is a remote server; never spawn a V2 worker in this client.
+    -- Reuse the existing browser-based authorization and genuine game session.
+    home.invite=target.invite;home.joinCode=""
+    home.screen="play"
+    homeAction("v2_login")
+  elseif action=="server_select" or action=="server_page" then
+    home:setStatus("Selecione a sala e clique ENTRAR NA SALA.")
   elseif action=="server_to_play" then
     home.screen="play"
     home:setStatus("Use IP LAN/VPN ou convite seguro https://sala.dominio/CODIGO.")
