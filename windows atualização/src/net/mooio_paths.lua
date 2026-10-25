@@ -31,6 +31,8 @@ function Paths.find(fs)
       candidates[#candidates+1]=value
     end
   end
+  -- Explicit root supplied by the Windows launcher is authoritative.
+  if type(os.getenv)=="function" then add(os.getenv("MOO_IO_PROJECT_ROOT")) end
   -- getSource() points to the game FOLDER when launched as love.exe <folder>.
   -- getSourceBaseDirectory() points to the containing folder, not the project.
   if type(fs.getSource)=="function" then add(fs.getSource()) end
@@ -38,6 +40,9 @@ function Paths.find(fs)
   if type(fs.getWorkingDirectory)=="function" then add(fs.getWorkingDirectory()) end
   for _,candidate in ipairs(candidates) do
     if goodRoot(candidate) then return candidate end
+    -- A full GitHub repository archive nests the game in this subfolder.
+    local nested=join(candidate,"windows atualização")
+    if goodRoot(nested) then return nested end
   end
   -- LÖVE archives are readable for graphics but not executable as
   -- filesystem scripts. Do not shell out to an arbitrary guessed path.
