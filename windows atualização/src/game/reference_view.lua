@@ -911,7 +911,6 @@ function View.draw(world,camera,dt,options)
   love.graphics.setColor(0,0,70/255,0.35)
   love.graphics.rectangle("fill",0,0,w,h)
   love.graphics.setColor(1,1,1,1)
-  DeathMarker.drawWorld(world,camera,w,h)
   labels(world,camera,w,h)
   if world.map then
     mapPortalMarkers(world,camera,false)
