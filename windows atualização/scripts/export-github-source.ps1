@@ -25,7 +25,7 @@ foreach ($dir in @('src','assets','server-lua','licenses','docs')) {
   }
   Copy-Item -LiteralPath $from -Destination $to -Recurse -Force
 }
-foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs',
+foreach ($file in @('.gitignore','main.lua','conf.lua','MOO-IO.vbs',
   'README.md','LICENSE','NOTICE.md','MIGRAR-PARA-GITHUB.md')) {
   $from=Join-Path $root $file
   if (-not (Test-Path -LiteralPath $from -PathType Leaf)) { throw "Missing $file" }
