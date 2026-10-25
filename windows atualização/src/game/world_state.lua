@@ -153,6 +153,7 @@ end
 function World.new()
   return setmetatable({
     sid=nil,spawned=false,dead=false,players={},objects={},
+    map=nil,spaceId="surface",space=nil,justChangedSpace=false,
     objectSlots={},objectSlotBySid={},objectSlotCount=0,
     animals={},projectiles={},
     entityPaintOrder={players={},animals={}},
@@ -179,6 +180,16 @@ function World:apply(name,args)
     -- permitted animal display metadata before any gameplay spawn.
     local handshake=args[1]
     if type(handshake)~="table" then return false end
+    -- The local Lua host advertises this only when LC runs a custom map.
+    -- V2 and classic servers omit it and retain their original rendering.
+    if type(handshake.map)=="table" and type(handshake.map.id)=="string"
+       and type(handshake.map.portals)=="table" then
+      self.map={id=handshake.map.id,portals=handshake.map.portals}
+      self.spaceId="surface"
+      self.space={id="surface",type="surface",portals=self.map.portals}
+    else
+      self.map=nil;self.spaceId="surface";self.space=nil
+    end
     local kinds=handshake.animals
     if type(kinds)=="table" then
       local received={}
@@ -199,6 +210,30 @@ function World:apply(name,args)
           self.teams[#self.teams+1]={sid=team.sid,owner=team.owner,clan=team.clan==true}
         end
       end
+    end
+    return true
+  elseif name=="j" then
+    -- Authoritative zone switch from the authenticated LOCAL Lua host.
+    local id,x,y,zone=args[1],args[2],args[3],args[4]
+    if not self.map or type(id)~="string" or type(zone)~="table"
+      or zone.id~=id or not number(x) or not number(y)
+      or type(zone.portals)~="table" or type(zone.obstacles)~="table"
+      or not number(zone.width) or not number(zone.height)
+      or zone.width<=0 or zone.height<=0 or zone.width>14400
+      or zone.height>14400 or x<0 or y<0
+      or x>zone.width or y>zone.height then return false end
+    local own=self.players[self.sid]
+    self.spaceId=id;self.space=zone;self.justChangedSpace=true
+    self.players={};self.animals={};self.objects={};self.projectiles={}
+    self.objectSlots={};self.objectSlotBySid={};self.objectSlotCount=0
+    self.entityPaintOrder={players={},animals={}}
+    self.entityPaintTracked={players={},animals={}}
+    self.bossEffects={};self.combatText={}
+    if own then
+      own.x=x;own.y=y;own.fromX=x;own.fromY=y
+      own.toX=x;own.toY=y;own.visualX=x;own.visualY=y;own.interp=1
+      self.players[self.sid]=own
+      trackPaintOrder(self,"players",self.sid)
     end
     return true
   elseif name=="g" then
@@ -258,6 +293,8 @@ function World:apply(name,args)
   elseif name=="C" then
     if not validId(args[1]) then return false end
     self.sid=args[1];self.spawned=true;self.dead=false
+    self.spaceId="surface";self.justChangedSpace=false
+    self.space=self.map and {id="surface",type="surface",portals=self.map.portals} or nil
     -- The Node sends a fresh D after every C. Do not render the previous
     -- life's position while waiting for its new authoritative D snapshot.
     self.players[self.sid]=nil
