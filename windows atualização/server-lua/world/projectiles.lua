@@ -119,6 +119,7 @@ function Projectiles:updateOne(proj,delta)
   local targets={}
   local function candidate(target)
     if target.alive and target~=proj.owner
+      and (target.spaceId or "surface")=="surface"
       and not (truthy(proj.owner.team) and target.team==proj.owner.team) then
       if lineInRect(target.x-target.scale,target.y-target.scale,
         target.x+target.scale,target.y+target.scale,
