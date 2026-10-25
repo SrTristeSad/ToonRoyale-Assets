@@ -100,13 +100,14 @@ end
 -- Stateless interaction manifests. Runtime state belongs only to the
 -- LOCAL Room; JSON files cannot specify callbacks, Lua or asset paths.
 local resources={wood=true,stone=true,food=true}
-local interactiveKinds={cache=true,lever=true,gate=true}
+local interactiveKinds={cache=true,lever=true,gate=true,node=true,switch=true}
 local function checkInteractables(list,w,h,zone)
  assert(type(list)=="table" and #list<=32,"too many map interactables")
  local lookup={}
  for _,obj in ipairs(list) do
   only(obj,{id=true,kind=true,x=true,y=true,width=true,height=true,
-    label=true,material=true,resource=true,amount=true,target=true})
+    label=true,material=true,resource=true,amount=true,target=true,
+    charges=true,cooldownMs=true})
   assert(id(obj.id) and not lookup[obj.id],"invalid or duplicate interaction ID")
   assert(interactiveKinds[obj.kind],"unsupported interaction kind")
   assert(zone or obj.kind=="cache",
@@ -119,17 +120,32 @@ local function checkInteractables(list,w,h,zone)
   if obj.kind=="cache" then
    assert(resources[obj.resource] and integer(obj.amount,1,500),
      "invalid cache reward")
-   assert(obj.target==nil and obj.width==nil and obj.height==nil,
+   assert(obj.target==nil and obj.width==nil and obj.height==nil
+     and obj.charges==nil and obj.cooldownMs==nil,
      "cache cannot control gates")
-  elseif obj.kind=="lever" then
+  elseif obj.kind=="node" then
+   assert(resources[obj.resource] and integer(obj.amount,1,500)
+     and integer(obj.charges,1,20)
+     and integer(obj.cooldownMs,0,120000),
+     "invalid harvest node resource, charges or cooldown")
+   assert(obj.target==nil and obj.width==nil and obj.height==nil,
+     "harvest node cannot control a gate")
+  elseif obj.kind=="lever" or obj.kind=="switch" then
    assert(id(obj.target) and obj.resource==nil and obj.amount==nil
-     and obj.width==nil and obj.height==nil,"invalid lever target")
+     and obj.width==nil and obj.height==nil and obj.charges==nil,
+     "invalid mechanism target")
+   if obj.kind=="switch" then
+    assert(integer(obj.cooldownMs,0,120000),"invalid switch cooldown")
+   else
+    assert(obj.cooldownMs==nil,"one-way lever cannot set cooldown")
+   end
   else
    assert(integer(obj.width,24,240) and integer(obj.height,24,240)
      and obj.x+obj.width/2<w-30 and obj.y+obj.height/2<h-30
      and obj.x-obj.width/2>30 and obj.y-obj.height/2>30,
      "invalid gate size or placement")
-   assert(obj.target==nil and obj.amount==nil and obj.resource==nil,
+   assert(obj.target==nil and obj.amount==nil and obj.resource==nil
+     and obj.charges==nil and obj.cooldownMs==nil,
      "gate cannot hold reward")
   end
   if obj.kind~="gate" then
@@ -146,7 +162,7 @@ local function checkInteractables(list,w,h,zone)
   lookup[obj.id]=obj
  end
  for _,obj in ipairs(list) do
-  if obj.kind=="lever" then
+  if obj.kind=="lever" or obj.kind=="switch" then
    assert(lookup[obj.target] and lookup[obj.target].kind=="gate",
      "lever must target a gate in the same zone")
   end
