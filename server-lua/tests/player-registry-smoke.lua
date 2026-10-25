@@ -14,7 +14,7 @@ local items={
  list={[0]={id=0,group={id=0}},[3]={id=3,group=group}}
 }
 local room=Room.new({nowMs=10000,items=items,
- services={ensureAnimals=function()end}})
+ services={ensureAnimals=function()end},broadcast=function()end})
 local n=0
 local registry=Registry.new(room,{
  hats={{id=0,price=0},{id=5,price=200}},
