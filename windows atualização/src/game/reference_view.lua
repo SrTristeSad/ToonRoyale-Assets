@@ -462,6 +462,15 @@ local function drawMapHelp(world)
  love.graphics.print("MAPA: "..mapName:upper(),25,76)
  love.graphics.setColor(0.66,0.88,0.53,1)
  love.graphics.print(near and "SUPERFICIE" or ("REGIAO: "..world.spaceId:upper()),25,99)
+ local settings=world.roomSettings
+ if settings and type(settings.difficulty)=="string" then
+  local mods=type(settings.mods)=="table" and #settings.mods or 0
+  love.graphics.setColor(0.08,0.11,0.07,0.85)
+  love.graphics.rectangle("fill",16,167,math.min(500,w-32),32,5,5)
+  love.graphics.setColor(0.88,0.91,0.72,1)
+  love.graphics.print("DIFICULDADE: "..settings.difficulty:upper()..
+    "   |   MODS ATIVOS: "..mods,25,176)
+ end
  if near then
   local player=world:localPlayer()
   if player and player.x and player.y and world.spaceId=="surface" then
@@ -478,7 +487,7 @@ local function drawMapHelp(world)
     love.graphics.setColor(0.07,0.10,0.07,0.88)
     love.graphics.rectangle("fill",16,129,math.min(500,w-32),33,5,5)
     love.graphics.setColor(0.96,0.88,0.55,1)
-    love.graphics.print("ENTRADA "..kind..": "..dist.." DE DISTANCIA  |  G",25,138)
+    love.graphics.print("ENTRADA "..kind..": "..dist.."  -  ENTRE CAMINHANDO",25,138)
    end
   end
  end
@@ -507,27 +516,17 @@ local function mapPortalMarkers(world,camera,indoor)
  for _,p in ipairs(portals) do
   if type(p.x)=="number" and type(p.y)=="number" then
    local x,y=camera:worldToScreen(p.x,p.y)
-   local size=(indoor and 50 or 60)*camera.zoom
-   love.graphics.setColor(0.17,0.13,0.07,1)
-   love.graphics.circle("fill",x,y,size+5*camera.zoom)
-   love.graphics.setColor(0.94,0.72,0.26,1)
-   love.graphics.circle("fill",x,y,size)
-   love.graphics.setColor(0.18,0.14,0.07,1)
-   love.graphics.rectangle("fill",x-size*0.46,y-size*0.2,size*0.92,size*0.4)
-  end
- end
- local player=world:localPlayer()
- if not player or not player.x then return end
- for _,p in ipairs(portals) do
-  if type(p.x)=="number" and type(p.y)=="number" then
-   local dx,dy=player.x-p.x,player.y-p.y
-   if dx*dx+dy*dy<=150*150 then
-    local w=love.graphics.getWidth()
-    love.graphics.setColor(0.08,0.10,0.08,0.87)
-    love.graphics.rectangle("fill",w/2-177,76,354,38,5,5)
-    love.graphics.setColor(0.96,0.93,0.78,1)
-    love.graphics.printf("G  -  USAR PASSAGEM",w/2-170,87,340,"center")
-    break
+   local u=camera.zoom
+   -- A physical floor-level doorway, not a golden action button.
+   if indoor then
+    love.graphics.setColor(0.08,0.09,0.08,0.68)
+    love.graphics.rectangle("fill",x-85*u,y-72*u,170*u,144*u,8*u,8*u)
+    love.graphics.setColor(0.44,0.39,0.28,1)
+    love.graphics.rectangle("line",x-84*u,y-72*u,168*u,144*u,7*u,7*u)
+    love.graphics.setColor(0.11,0.17,0.14,0.72)
+    love.graphics.rectangle("fill",x-48*u,y-34*u,96*u,68*u)
+    love.graphics.setColor(0.66,0.76,0.58,0.9)
+    love.graphics.rectangle("line",x-48*u,y-34*u,96*u,68*u)
    end
   end
  end
@@ -570,7 +569,7 @@ local function drawHouses(world,camera)
    love.graphics.circle("fill",x,y+167*u,24*u)
    end -- house roof
    if portal.style=="cave" or portal.style=="bunker" then
-    local label=portal.style=="cave" and "CAVERNA - G" or "BUNKER - G"
+    local label=portal.style=="cave" and "ENTRADA CAVERNA" or "PORTA BUNKER"
     love.graphics.setColor(0.08,0.10,0.08,0.85)
     love.graphics.rectangle("fill",x-94*u,y-191*u,188*u,31*u,5*u,5*u)
     love.graphics.setColor(0.97,0.87,0.55,1)
@@ -592,16 +591,40 @@ local function drawIndoor(world,camera,dt,options)
  love.graphics.setColor(mine and 0.39 or 0.78,
   mine and 0.37 or 0.67,mine and 0.33 or 0.53,1)
  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
- -- Lightweight, deterministic floor detail (no external textures).
- if mine then
-  love.graphics.setColor(0.12,0.12,0.11,0.18)
-  for x=0,area.width,180 do
-   local sx=camera:worldToScreen(x,0)
-   love.graphics.line(sx,y0,sx,y1)
+ -- The cave is natural rock, bunkers use industrial floor plating.
+ -- Interior textures are stable procedural geometry, with no new PNGs.
+ local bunker=area.id and area.id:match("^bunker")~=nil
+ local cave=mine and not bunker
+ if cave then
+  love.graphics.setColor(0.23,0.245,0.22,1)
+  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
+  for gy=0,area.height,155 do
+   for gx=0,area.width,165 do
+    local sx,sy=camera:worldToScreen(gx,gy)
+    local jitter=(gx*17+gy*13)%67
+    love.graphics.setColor(0.11,0.13,0.12,0.12+(jitter%4)*0.018)
+    love.graphics.polygon("fill",sx+13*camera.zoom,sy,
+      sx+(111+jitter%19)*camera.zoom,sy+16*camera.zoom,
+      sx+146*camera.zoom,sy+102*camera.zoom,
+      sx+37*camera.zoom,sy+138*camera.zoom)
+    love.graphics.setColor(0.48,0.49,0.44,0.2)
+    love.graphics.line(sx+17*camera.zoom,sy+28*camera.zoom,
+      sx+67*camera.zoom,sy+38*camera.zoom,
+      sx+88*camera.zoom,sy+71*camera.zoom)
+   end
   end
-  for y=0,area.height,170 do
+ elseif bunker then
+  love.graphics.setColor(0.14,0.19,0.20)
+  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
+  for y=0,area.height,190 do
    local _,sy=camera:worldToScreen(0,y)
+   love.graphics.setColor(0.32,0.39,0.4,0.5)
    love.graphics.line(x0,sy,x1,sy)
+  end
+  for x=0,area.width,260 do
+   local sx=camera:worldToScreen(x,0)
+   love.graphics.setColor(0.35,0.42,0.42,0.35)
+   love.graphics.line(sx,y0,sx,y1)
   end
  else
   love.graphics.setColor(0.35,0.26,0.15,0.17)
@@ -609,14 +632,8 @@ local function drawIndoor(world,camera,dt,options)
    local _,sy=camera:worldToScreen(0,y)
    love.graphics.line(x0,sy,x1,sy)
   end
-  for y=0,area.height,164 do
-   for x=0,area.width,320 do
-    local sx,sy=camera:worldToScreen(x+(y%328==0 and 160 or 0),y)
-    love.graphics.line(sx,sy,sx,sy+82*camera.zoom)
-   end
-  end
  end
- if options and options.showGrid~=false then grid(camera,w,h) end
+ -- The open-world grid does not cover indoor floors and cave art.
  for _,obstacle in ipairs(area.obstacles or {}) do
   local x,y=camera:worldToScreen(obstacle.x,obstacle.y)
   local a,b=obstacle.width*camera.zoom,obstacle.height*camera.zoom
@@ -624,11 +641,20 @@ local function drawIndoor(world,camera,dt,options)
   love.graphics.rectangle("fill",x+4*camera.zoom,y+5*camera.zoom,a,b)
   if obstacle.material=="wood" then
     love.graphics.setColor(0.55,0.35,0.18)
+  elseif cave then
+    love.graphics.setColor(0.29,0.30,0.27)
+  elseif bunker then
+    love.graphics.setColor(0.32,0.37,0.39)
   else
     love.graphics.setColor(mine and 0.35 or 0.47,
       mine and 0.36 or 0.32,mine and 0.36 or 0.20)
   end
   love.graphics.rectangle("fill",x,y,a,b)
+  if cave and obstacle.material~="wood" then
+   love.graphics.setColor(0.54,0.56,0.49,0.55)
+   love.graphics.rectangle("line",x+3*camera.zoom,y+3*camera.zoom,
+     math.max(2,a-6*camera.zoom),math.max(2,b-6*camera.zoom))
+  end
   if obstacle.material=="wood" then
     love.graphics.setColor(0.22,0.15,0.09,0.52)
     local along=(obstacle.width>obstacle.height)
@@ -666,7 +692,7 @@ local function drawIndoor(world,camera,dt,options)
  love.graphics.setColor(0.06,0.07,0.06,0.85)
  love.graphics.rectangle("fill",15,14,250,39,5,5)
  love.graphics.setColor(1,1,1,1)
- love.graphics.print(mine and "SUBSOLO" or "INTERIOR",27,24)
+ love.graphics.print(cave and "CAVERNA" or (bunker and "BUNKER" or "INTERIOR"),27,24)
 end
 
 function View.draw(world,camera,dt,options)
