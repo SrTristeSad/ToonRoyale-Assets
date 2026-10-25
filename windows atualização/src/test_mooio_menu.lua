@@ -16,21 +16,31 @@ return function()
   assert(home.screen=="play")
   assert(not home.starting and not home.hosting,"JOGAR only displays room options")
   assert(not home.botsEnabled,"Bots cannot turn on automatically")
-  assert(home:click(174,443)=="bots_toggle")
+  assert(home:click(210,446)=="configure")
+  assert(home.screen=="create","room options must have their own screen")
+  assert(home:mapName()=="Mundo classico")
+  assert(#home.mapCatalog>=3,"built-in cave and cabin maps must be installed")
+  assert(home:click(160,463)=="bots_toggle")
   assert(home.botsEnabled and home.botCount==2)
-  assert(home:click(552,488)=="bots_count")
-  assert(home.botCount==3)
-  assert(home:click(199,493)=="bots_count")
-  assert(home.botCount==2)
+  assert(home:click(500,515)=="bots_count" and home.botCount==3)
+  assert(home:click(156,515)=="bots_count" and home.botCount==2)
   assert(home.difficulty=="normal")
-  assert(home:click(240,545)=="difficulty" and home.difficulty=="dificil")
-  assert(home:click(240,545)=="difficulty" and home.difficulty=="extremo")
-  assert(home:click(240,545)=="difficulty" and home.difficulty=="pacifico")
-  assert(home:click(240,545)=="difficulty" and home.difficulty=="normal")
-  assert(home:click(200,594)=="focus")
-  home:textinput("mais-lobos")
-  assert(home.modIds=="mais-lobos","mod manifest ID must be editable")
-  assert(home:click(520,592)=="mod_browse")
+  assert(home:click(160,409)=="difficulty" and home.difficulty=="dificil")
+  assert(home:click(165,362)=="difficulty" and home.difficulty=="pacifico")
+  assert(home:click(412,362)=="difficulty" and home.difficulty=="normal")
+  assert(home:click(429,409)=="difficulty" and home.difficulty=="extremo")
+  local sawCave=false
+  for i,m in ipairs(home.mapCatalog) do
+    if m.id=="bunker-e-cavernas" then
+      local n=i+1
+      home.mapPage=math.floor((n-1)/4)
+      sawCave=home:click(690,256+74*((n-1)%4))=="map_select"
+      break
+    end
+  end
+  assert(sawCave and home:mapName()=="Bunker e Cavernas",
+    "cave map must be a labeled selectable option")
+  assert(home:click(200,577)=="mod_browse")
   assert(home.screen=="mods" and #home.modCatalog>=4,
     "mod installer list should show bundled data-only mods")
   local toggle=home.modCatalog[1].id
@@ -38,12 +48,12 @@ return function()
     "installed mod must be selectable without entering its ID")
   assert(home.modIds:find(toggle,1,true)~=nil,
     "mod picker selection must be forwarded to room configuration")
-  assert(home:click(862,656)=="mods_done" and home.screen=="play")
-  assert(home:click(174,646)=="create","LAN room must have a create action")
-  assert(home:click(169,330)=="mode_lan")
-  assert(home:click(412,330)=="mode_vpn")
+  assert(home:click(862,656)=="mods_done" and home.screen=="create")
+  assert(home:click(169,262)=="mode_lan")
+  assert(home:click(412,262)=="mode_vpn")
   assert(home.serverMode=="vpn")
-  assert(home:click(172,646)=="create","VPN room must remain accessible in Jogar")
+  assert(home:click(710,647)=="create","VPN room must be created explicitly")
+  home.screen="play"
   home.hosting=true;home.hostAddress="192.168.1.7:8080";home.hostCode="abcd1234567890"
   assert(home:roomInvite()=="192.168.1.7:8080/abcd1234567890")
   assert(home:click(175,440)=="copy","host must have invitation sharing")
@@ -98,7 +108,7 @@ return function()
   -- Render each page to an offscreen canvas to catch graphical/layout crashes.
   local canvas=love.graphics.newCanvas(1280,720)
   love.graphics.setCanvas(canvas)
-  for _,page in ipairs({"home","play","mods","server","settings"}) do
+  for _,page in ipairs({"home","play","create","mods","server","settings"}) do
     home.screen=page
     home:draw("idle","")
     love.graphics.setCanvas()
