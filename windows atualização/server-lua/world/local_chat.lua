@@ -79,4 +79,61 @@ function Chat:publicMessage(entry)
  if entry.system then result.system=true end
  return result
 end
+function Chat:history(account,kind,withName)
+ local list
+ if kind=="clan" then
+  if not account.clan or account.clan==Json.null then return {error="no clan"} end
+  list=self.data.clans[account.clan] or {}
+ else
+  local other=self.store:nameOwner(withName)
+  if not other then return {error="not found"} end
+  local left,right=account.id,other.id
+  if left>right then left,right=right,left end
+  list=self.data.whispers[left.."|"..right] or {}
+ end
+ local messages=arr()
+ for _,entry in ipairs(list) do
+  if not entry.shadow or (entry.from and entry.from.id==account.id) then
+   messages[#messages+1]=self:publicMessage(entry)
+  end
+ end
+ return {messages=messages}
+end
+function Chat:clanOnline(account,game)
+ local clan=account.clan and self.store.data.clans[account.clan]
+ if not clan then return {error="no clan"} end
+ local online=arr()
+ for _,member in ipairs(clan.members) do
+  local other=self.store:accountById(member.id)
+  local where=other and game.sessionFor(other.id)
+  if where then online[#online+1]={name=other.name,server=where.server} end
+ end
+ return {online=online}
+end
+function Chat:friendsOnline(account,ids,game)
+ local mine={}
+ for _,friend in ipairs(self.store:friendsOf(account.id)) do mine[friend.id]=true end
+ local online=arr()
+ for i=1,math.min(type(ids)=="table" and #ids or 0,500) do
+  local id=ids[i]
+  if mine[id] then
+   local friend=self.store:accountById(id)
+   local where=friend and game.sessionFor(friend.id)
+   if where then online[#online+1]={id=friend.id,name=friend.name,server=where.server} end
+  end
+ end
+ return {online=online}
+end
+function Chat:said(from,game)
+ local account=self.store:accountById(tostring(from)) or self.store:nameOwner(tostring(from))
+ local list=account and self.data.said[account.id] or nil
+ if not list then
+  local guest=game.playerBySession(tostring(from))
+  list=guest and guest.saidLog or nil
+ end
+ if not list then return nil end
+ local result=arr()
+ for i=#list,1,-1 do result[#result+1]=list[i] end
+ return result
+end
 return Chat
