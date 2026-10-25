@@ -48,7 +48,8 @@ local boxes={
   homeSettings={95,446,400,68},
   nickname={155,236,462,52},modeLan={155,312,223,46},
   modeVpn={393,312,224,46},vpnIP={155,368,462,46},
-  createLan={155,530,462,53},createVpn={155,530,462,53},
+  createLan={155,623,462,53},createVpn={155,623,462,53},
+  difficulty={155,524,462,47},modIds={155,577,462,39},
   botsToggle={155,423,462,39},botsMinus={155,475,110,42},
   botsPlus={508,475,109,42},
   roomCopy={155,419,462,55},roomEnter={155,485,226,55},
@@ -101,7 +102,7 @@ end
 function Home.new()
   return setmetatable({
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
-    serverMode="lan",focus=nil,
+    serverMode="lan",difficulty="normal",modIds="",focus=nil,
     status="",error=false,hosting=false,starting=false,
     hostAddress="",hostCode="",connectionState="idle",serverLog="",
     showGrid=true,fullscreen=false,sessionTitle="",
@@ -144,6 +145,13 @@ function Home:click(sx,sy)
       if self.serverMode=="vpn" and inside(x,y,boxes.vpnIP) then
         self.focus="vpnIP";return "focus"
       end
+      if inside(x,y,boxes.difficulty) then
+        local nextLevel={normal="dificil",dificil="extremo",extremo="normal"}
+        self.difficulty=nextLevel[self.difficulty] or "normal"
+        self.focus=nil
+        return "difficulty"
+      end
+      if inside(x,y,boxes.modIds) then self.focus="modIds";return "focus" end
       if inside(x,y,boxes.botsToggle) then
         self.botsEnabled=not self.botsEnabled
         self.focus=nil
