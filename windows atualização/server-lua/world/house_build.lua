@@ -247,21 +247,27 @@ function House.build(room,player)
  end
  return success(player,"Casa construida e salva. Use G para entrar.")
 end
-function House.wall(room,player)
- if not allowed(room,player) then
-  return fail(player,"Paredes so podem ser colocadas em mapas personalizados.")
- end
+local function ownedHouse(room,player)
  local id=player.spaceId
  local house
  for _,h in ipairs(room.builtHouses or {}) do
   if h.id==id then house=h;break end
  end
- if not house then return fail(player,"Entre em uma casa construida para erguer paredes.") end
+ if not house then return nil,"Entre em uma casa construida para editar." end
  local account=ownerAccount(player)
  if house.ownerId~=player.id and not
    (account and house.ownerAccount==account) then
-  return fail(player,"Somente o dono pode modificar esta casa.")
+  return nil,"Somente o dono pode modificar esta casa."
  end
+ return house
+end
+function House.wall(room,player,request)
+ if not allowed(room,player) then
+  return fail(player,"Paredes so podem ser colocadas em mapas personalizados.")
+ end
+ local id=player.spaceId
+ local house,reason=ownedHouse(room,player)
+ if not house then return fail(player,reason) end
  if room.nowMs<(player.nextWallAt or 0) then
   return fail(player,"Aguarde para construir outra parede.")
  end
@@ -277,6 +283,23 @@ function House.wall(room,player)
  local xx=player.x+160*math.cos(direction)
  local yy=player.y+160*math.sin(direction)
  local horizontal=math.abs(math.cos(direction))<math.abs(math.sin(direction))
+ if request~=nil then
+  if type(request)~="table" or
+    not integer(request.x,0,4096) or not integer(request.y,0,4096)
+    or request.x%20~=0 or request.y%20~=0
+    or (request.orientation~="h" and request.orientation~="v") then
+   return fail(player,"Posicao ou orientacao invalida.")
+  end
+  xx,yy=request.x,request.y
+  horizontal=request.orientation=="h"
+  local dx,dy=xx-player.x,yy-player.y
+  if dx*dx+dy*dy>300*300 then
+   return fail(player,"A parede deve ficar perto do jogador.")
+  end
+  if room.mapSpaces:lineBlocked(id,player.x,player.y,xx,yy) then
+   return fail(player,"Nao e permitido construir atraves de paredes.")
+  end
+ end
  local w,h=horizontal and 200 or 42,horizontal and 42 or 200
  local rect={x=math.floor(xx-w/2+0.5),y=math.floor(yy-h/2+0.5),
   width=w,height=h,material="wood"}
@@ -315,5 +338,41 @@ function House.wall(room,player)
   end
  end
  return success(player,"Parede colocada e salva.")
+end
+function House.removeWall(room,player,index)
+ if not allowed(room,player) then
+  return fail(player,"Edicao apenas em mapas personalizados.")
+ end
+ local house,reason=ownedHouse(room,player)
+ if not house then return fail(player,reason) end
+ if not integer(index,4,3+MAX_WALLS) then
+  return fail(player,"Indice de parede invalido.")
+ end
+ if room.nowMs<(player.nextWallAt or 0) then
+  return fail(player,"Aguarde antes de editar outra parede.")
+ end
+ local zone=assert(room.mapSpaces:get(house.id))
+ local wall=zone.obstacles[index]
+ if not wall or wall.material~="wood" then
+  return fail(player,"Esta parede nao pode ser demolida.")
+ end
+ local x=math.max(wall.x,math.min(player.x,wall.x+wall.width))
+ local y=math.max(wall.y,math.min(player.y,wall.y+wall.height))
+ if (x-player.x)^2+(y-player.y)^2>300*300 then
+  return fail(player,"Aproxime-se da parede para demolir.")
+ end
+ table.remove(zone.obstacles,index)
+ local saved,why=House.save(room)
+ if not saved then
+  table.insert(zone.obstacles,index,wall)
+  return fail(player,"Falha ao salvar demolicao: "..tostring(why):sub(1,60))
+ end
+ player.nextWallAt=room.nowMs+350
+ for _,viewer in ipairs(room.players) do
+  if viewer.spaceId==house.id then
+   viewer:send("j","remove-wall",0,0,{spaceId=house.id,index=index})
+  end
+ end
+ return success(player,"Parede demolida e alteracao salva.")
 end
 return House
