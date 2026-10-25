@@ -87,6 +87,9 @@ function AI:update(delta)
  assert(type(delta)=="number" and delta>=0 and delta==delta,
    "valid original server tick required")
  if not self.active then return end
+ local spaceId=self.spaceId or "surface"
+ local inside=spaceId~="surface"
+ local spaces=inside and opts.mapSpaces or nil
  if truth(self.spawnCounter) then
    self.spawnCounter=self.spawnCounter-delta
    if self.spawnCounter<=0 then
@@ -144,7 +147,7 @@ function AI:update(delta)
      if truth(self.chargePlayer) then
        local target,closest
        for _,player in ipairs(players) do
-         if player.alive
+         if player.alive and (player.spaceId or "surface")==spaceId
            and not (player.skin and truth(player.skin.bullRepel))
            and not (player.powers and truth(player.powers.invisible))
            and (not self.secret or player.x<0) then
@@ -161,7 +164,8 @@ function AI:update(delta)
         if groupAI==nil then groupAI=difficulty=="dificil" or difficulty=="extremo" end
         if self.index==4 and groupAI then
           local allyTarget=Pack.sharedTarget(self,opts.ais)
-          if allyTarget and type(allyTarget.x)=="number"
+          if allyTarget and (allyTarget.spaceId or "surface")==spaceId
+            and type(allyTarget.x)=="number"
             and type(allyTarget.y)=="number"
             and distance(self.x,self.y,allyTarget.x,allyTarget.y)<=self.viewRange*1.4
             and not (allyTarget.powers and truth(allyTarget.powers.invisible))
@@ -188,7 +192,8 @@ function AI:update(delta)
      and not (self.runFrom.isPlayer and not self.runFrom.alive) then
      self.targetDir=dir(self.x,self.y,self.runFrom.x,self.runFrom.y)
      speed=speed*1.42
-   elseif self.chargeTarget and self.chargeTarget.alive then
+   elseif self.chargeTarget and self.chargeTarget.alive
+     and (self.chargeTarget.spaceId or "surface")==spaceId then
      local difficulty=cfg.server and cfg.server.roomDifficulty
       local roomRules=cfg.server and cfg.server.roomRules
       local groupAI=roomRules and roomRules.cooperativeWolves
@@ -238,9 +243,15 @@ function AI:update(delta)
      assert(type(self.keepInSecret)=="function","original secret AI boundary required")
      self:keepInSecret(prevX,prevY)
    end
-   for _,grid in ipairs(world:getGridArrays(self.x,self.y,self.scale)) do
-     for _,obj in ipairs(grid) do
-       if obj.active then checkCollision(self,obj,multiplier,opts) end
+   if inside and spaces then
+     if not spaces:canOccupy(spaceId,self.x,self.y,self.scale) then
+       self.x=prevX;self.y=prevY;self.xVel=0;self.yVel=0
+     end
+   else
+     for _,grid in ipairs(world:getGridArrays(self.x,self.y,self.scale)) do
+       for _,obj in ipairs(grid) do
+         if obj.active then checkCollision(self,obj,multiplier,opts) end
+       end
      end
    end
  end
@@ -254,6 +265,7 @@ function AI:update(delta)
        self.xVel=self.xVel+self.leapForce*math.cos(self.dir)
        self.yVel=self.yVel+self.leapForce*math.sin(self.dir)
      end
+     if not inside then
      for _,grid in ipairs(world:getGridArrays(self.x,self.y,self.hitRange or 0)) do
        for _,obj in ipairs(grid) do
          if truth(obj.health) then
@@ -267,6 +279,7 @@ function AI:update(delta)
          end
        end
      end
+     end -- Underground mobs never damage above-ground structures.
      for _,player in ipairs(players) do
        if player:canSee(self) then
          assert(type(opts.send)=="function","real Server.send required")
@@ -277,7 +290,7 @@ function AI:update(delta)
  end
  if (charging or hitting) and not self.submerged then
    for _,player in ipairs(players) do
-     if player and player.alive and (player.spaceId or "surface")=="surface" then
+     if player and player.alive and (player.spaceId or "surface")==spaceId then
        local d=distance(self.x,self.y,player.x,player.y)
        if truth(self.hitRange) then
          if not truth(self.hitWait) and d<=self.hitRange+player.scale then
@@ -306,6 +319,18 @@ function AI:update(delta)
 
  if truth(self.xVel) then self.xVel=self.xVel*cfg.playerDecel^delta end
  if truth(self.yVel) then self.yVel=self.yVel*cfg.playerDecel^delta end
+ if inside and spaces then
+   local zone=assert(spaces:get(spaceId),"unknown AI zone")
+   if self.x-self.scale<0 then self.x=self.scale;self.xVel=0
+   elseif self.x+self.scale>zone.width then
+     self.x=zone.width-self.scale;self.xVel=0
+   end
+   if self.y-self.scale<0 then self.y=self.scale;self.yVel=0
+   elseif self.y+self.scale>zone.height then
+     self.y=zone.height-self.scale;self.yVel=0
+   end
+   return
+ end
  if not self.secret then
    if self.x-self.scale<0 then self.x=self.scale;self.xVel=0
    elseif self.x+self.scale>cfg.mapScale then
