@@ -1,5 +1,5 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
--- Hidden Windows Node host, driven from the native LÖVE client.
+-- Hidden Windows Lua host, driven from the native LÖVE client.
 local SecureRandom=require("src.net.secure_random")
 local Network=require("src.net.mooio_network")
 local Paths=require("src.net.mooio_paths")
@@ -124,7 +124,7 @@ function Host:start(mode,requestedIP,requestedBots)
   local launched=kernel.CreateProcessA(nil,cmd,nil,nil,0,0x08000000,nil,root,startup,info)
   local lastError=launched==0 and tonumber(kernel.GetLastError()) or 0
   for _,key in ipairs(keys) do setenv(key,originals[key]) end
-  if launched==0 then return false,"Nao foi possivel iniciar o Node (Windows "..lastError..")" end
+  if launched==0 then return false,"Nao foi possivel iniciar o servidor Lua (Windows "..lastError..")" end
   kernel.CloseHandle(info[0].hThread)
   self.process=info[0].hProcess
   self.state="starting"
@@ -154,7 +154,7 @@ function Host:update(dt)
       for i=math.max(1,#lines-4),#lines do selected[#selected+1]=lines[i] end
       self.lastLog=table.concat(selected,"\n")
       if content:find("MOOIO_PHASE_STARTING",1,true) then
-        self.progress=os.getenv("MOO_IO_LOCAL_SERVER_RUNTIME")=="lua" and "Iniciando servidor Lua..." or "Iniciando servidor Node.js..."
+        self.progress="Iniciando servidor Lua..."
       end
       local reason=content:match("MOOIO_PHASE_ERROR%s+([^\n]+)")
       if reason then
@@ -197,8 +197,8 @@ function Host:stop()
   if self.process then
     -- A graceful /shutdown request can fail (adapter/firewall/closed
     -- control port). Never report "room closed" while keeping the
-    -- child Node server running in the background.
-    local grace=os.getenv("MOO_IO_LOCAL_SERVER_RUNTIME")=="lua" and 4000 or 1500
+    -- child Lua server running in the background.
+    local grace=4000
     if not wasReady or kernel.WaitForSingleObject(self.process,grace)~=0 then
       kernel.TerminateProcess(self.process,1)
       kernel.WaitForSingleObject(self.process,500)
