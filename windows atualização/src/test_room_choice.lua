@@ -2,8 +2,8 @@
 return function(perform,home,hosted,getClient)
   assert(home.screen=="home" and hosted.state=="idle")
   local starts,lastCount=0,-1
-  hosted.start=function(self,mode,ip,bots,difficulty,modIds)
-    assert(difficulty=="dificil" and modIds=="", "room preset must reach server launcher")
+  hosted.start=function(self,mode,ip,bots,difficulty,modIds,mapId)
+    assert(difficulty=="dificil" and modIds=="" and mapId=="", "room preset must reach server launcher")
     starts=starts+1
     lastCount=bots
     self.state="starting"
@@ -21,6 +21,9 @@ return function(perform,home,hosted,getClient)
   assert(home:click(210,491)=="bots_count")
   assert(home.botCount==2)
   assert(home:click(220,545)=="difficulty" and home.difficulty=="dificil")
+  assert(home:click(530,548)=="map_browse" and home.screen=="maps")
+  assert(home:click(170,263)=="map_select" and home.mapId=="")
+  assert(home:click(850,650)=="maps_done" and home.screen=="play")
   assert(home:click(180,646)=="create")
   perform("create")
   assert(starts==1 and lastCount==2 and home.starting,
