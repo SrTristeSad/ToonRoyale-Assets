@@ -501,7 +501,7 @@ function Home:textinput(chars)
     self.vpnIP=(self.vpnIP..chars):sub(1,15)
   end
 end
-local function decorate(showWorld) UI.backdrop(showWorld) end
+local function decorate(showWorld,isHome) UI.backdrop(showWorld,isHome) end
 local titles={
  play={"JOGAR","Crie sua sala ou entre na partida de um amigo"},
  create={"CRIAR NOVA SALA","Conexao, dificuldade, jogadores e conteudo"},
@@ -517,21 +517,23 @@ function Home:draw(state,detail,showWorld)
   local z=math.min(w/1280,h/720)
   love.graphics.translate((w-1280*z)/2,(h-720*z)/2)
   love.graphics.scale(z)
-  decorate(showWorld)
+  decorate(showWorld,self.screen=="home")
   if self.screen=="home" then
-    -- Classic PC title layout: wide world backdrop, centered logo, stacked
-    -- native beveled buttons. Graphics/text are original to Moo-IO.
-    love.graphics.setColor(0,0,0,0.50)
-    love.graphics.rectangle("fill",0,51,1280,207)
-    -- Stable centered logo: do not overlap subtitle or button area.
-    printText("MOO IO",364,93,90,{0,0,0,0.65},560,"center")
+    -- The backdrop must be a continuous view of the world, not a huge
+    -- opaque banner cutting across trees, river and other scenery.
+    -- Text gets its OWN shadow, keeping contrast without a rectangular band.
+    printText("MOO IO",364,94,90,{0.005,0.012,0.01,0.91},560,"center")
+    printText("MOO IO",358,89,90,{0.005,0.012,0.01,0.66},560,"center")
     printText("MOO IO",360,89,90,C.white,560,"center")
-    printText("SEU MUNDO, SEUS AMIGOS",360,221,19,C.muted,560,"center")
+    printText("SEU MUNDO, SEUS AMIGOS",362,223,19,{0.015,0.027,0.020,0.88},560,"center")
+    printText("SEU MUNDO, SEUS AMIGOS",360,221,19,C.white,560,"center")
     button("homePlay","JOGAR",false)
     button("homeServers","MULTIPLAYER",false)
     button("homeSettings","OPCOES",false)
     button("homeQuit","SAIR DO JOGO",false)
+    printText("Moo-IO  |  Windows Lua",22,683,16,{0,0,0,0.85},470)
     printText("Moo-IO  |  Windows Lua",20,681,16,C.white,470)
+    printText("LAN  |  VPN  |  V2",829,683,16,{0,0,0,0.85},433,"right")
     printText("LAN  |  VPN  |  V2",827,681,16,C.white,433,"right")
     love.graphics.pop()
     return
