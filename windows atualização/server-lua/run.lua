@@ -9,6 +9,8 @@ local server=Local.new({
  roomCode=assert(os.getenv("MOO_IO_ROOM_CODE"),"MOO_IO_ROOM_CODE required"),
  mode=os.getenv("MOO_IO_NETWORK_MODE")=="vpn" and "vpn" or "lan",
  botCount=os.getenv("MOO_IO_BOT_COUNT") or "0",
+ difficulty=os.getenv("MOO_IO_DIFFICULTY") or "normal",
+ modIds=os.getenv("MOO_IO_MODS") or "",
  dataDir=assert(os.getenv("MOO_IO_LUA_DATA_DIR"),"MOO_IO_LUA_DATA_DIR required"),
  protocolBuildFile=os.getenv("PROTOCOL_BUILD_FILE"),
  rotateBuild=(os.getenv("ROTATE_BUILD")~=nil
