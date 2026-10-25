@@ -154,6 +154,19 @@ function World:loadMap(profile)
    "overlapping custom map object")
   self:addObject(o.x,o.y,o.scale,o.kind)
  end
+ -- Keep the surface approach to each authored door free of spawned resources.
+ -- A generated tree cannot block a portal on one machine but not another.
+ for _,portal in ipairs(profile.portals or {}) do
+  for _,obj in ipairs(self.objects) do
+   if obj.active then
+    local dx,dy=obj.x-portal.x,obj.y-portal.y
+    local clearance=(obj.scale or 0)+105
+    if dx*dx+dy*dy<clearance*clearance then
+      self:disableObject(obj)
+    end
+   end
+  end
+ end
  return self.objects
 end
 
