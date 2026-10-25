@@ -26,8 +26,18 @@ function Spaces.new(map,mapScale)
      width=obj.width,height=obj.height,material=obj.material or "metal",
      interactiveGateId=obj.id
     }
-   elseif obj.kind=="cache" then obj.used=false
-   elseif obj.kind=="lever" then obj.used=false end
+   elseif obj.kind=="cache" or obj.kind=="lever" then
+    obj.used=false
+   elseif obj.kind=="node" then
+    obj.remaining=obj.charges
+    obj.nextReadyAt=0
+    obj.used=false
+    obj.version=0
+   elseif obj.kind=="switch" then
+    obj.used=false
+    obj.nextReadyAt=0
+    obj.version=0
+   end
   end
  end
  return self
