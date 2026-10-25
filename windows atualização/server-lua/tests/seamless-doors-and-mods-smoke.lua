@@ -61,7 +61,18 @@ room.players[#room.players+1]=player
 room.nowMs=200000
 assert(not room:checkPortalCrossing(player),"must not teleport from too far away")
 player.y=4760
-assert(room:checkPortalCrossing(player),"walking toward bunker must enter")
+-- Another player occupying the destination must block the passage but
+-- never permanently latch its trigger while the entrance remains occupied.
+local blocker={id="door-blocker",alive=true,spaceId="bunker-01",
+ x=750,y=850,scale=35}
+room.players[#room.players+1]=blocker
+assert(not room:checkPortalCrossing(player),
+ "an occupied bunker arrival pad must reject entry")
+assert(player.spaceId=="surface" and player.portalInside==nil,
+ "failed crossing must remain armed")
+table.remove(room.players)
+assert(room:checkPortalCrossing(player),
+ "walking into the same doorway must work when destination clears")
 assert(player.spaceId=="bunker-01" and player.x==750)
 assert(packets[#packets].name=="j" and packets[#packets].args[1]=="bunker-01")
 room.nowMs=202000
