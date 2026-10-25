@@ -314,7 +314,7 @@ function Home:draw(state,detail,showWorld)
     button("back","< VOLTAR",false)
     if self.screen=="play" then
       printText("JOGAR",132,158,31,C.white)
-      panel(130,194,505,402,C.panel,0)
+      panel(130,194,505,493,C.panel,0)
       panel(672,194,477,402,C.panel,0)
       printText("01  CRIAR MINHA SALA",155,204,19,C.green)
       field("nickname",self.nickname,"Seu apelido",self.focus=="nickname")
