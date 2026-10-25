@@ -93,13 +93,17 @@ function Gather.step(player,opts)
   end
 
   for _,target in ipairs(players) do
-    if target~=player and target.alive and not truthy(target.submerged)
+    if target~=player and target.alive
+       and (target.spaceId or "surface")== (player.spaceId or "surface")
+       and not truthy(target.submerged)
        and not (truthy(target.team) and target.team==player.team) then
       Gather.hitActor(player,target,weapon,variant,poison,weapons,cfg,opts)
     end
   end
   for _,target in ipairs(ais) do
-    if target~=player and target.alive and not truthy(target.submerged)
+    if target~=player and target.alive
+       and (target.spaceId or "surface")== (player.spaceId or "surface")
+       and not truthy(target.submerged)
        and not (truthy(target.team) and target.team==player.team) then
       Gather.hitActor(player,target,weapon,variant,poison,weapons,cfg,opts)
     end
