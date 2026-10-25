@@ -145,6 +145,18 @@ function World:generate()
   return self.objects
 end
 
+-- Optional custom map generation; classic generate() remains byte-for-byte.
+function World:loadMap(profile)
+ if not profile then return self:generate() end
+ if profile.mode=="generated" then self:generate() end
+ for _,o in ipairs(profile.surface or {}) do
+  assert(self:canPlace(o.x,o.y,o.scale,0.6,nil,true),
+   "overlapping custom map object")
+  self:addObject(o.x,o.y,o.scale,o.kind)
+ end
+ return self.objects
+end
+
 -- ObjectManager.getGridArrays: same nine-cell order and edge checks.
 -- This is called once per player's collision-substep during game updates.
 function World:getGridArrays(xPos,yPos,scale)
