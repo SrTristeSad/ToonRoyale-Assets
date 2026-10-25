@@ -84,6 +84,13 @@ function Input.handle(ctx,player,name,args)
     return
   elseif name=="F" then
     if not player.alive then return end
+    -- Item placement still belongs to the classic surface ObjectManager.
+    -- Until structures are zone-aware, ignore attempted indoor building
+    -- rather than writing a house item into surface world coordinates.
+    if player.spaceId and player.spaceId~="surface" then
+      player.mouseState=0;player.hits=0
+      return
+    end
     local angle=args[2]
     if angle~=nil and angle~=MP.null and not finite(angle) then
       return bad(player,name,"build dir")
@@ -155,7 +162,8 @@ function Input.handle(ctx,player,name,args)
     player.pingCooldown=cfg.mapPingTime
     local px,py=math.floor(x+0.5),math.floor(y+0.5)
     for _,other in ipairs(roster) do
-      if other==player or (truthy(player.team) and other.team==player.team) then
+      if (other.spaceId or "surface")==(player.spaceId or "surface")
+         and (other==player or (truthy(player.team) and other.team==player.team)) then
         other:send("9",px,py)
       end
     end
