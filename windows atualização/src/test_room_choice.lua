@@ -13,7 +13,7 @@ return function(perform,home,hosted,getClient)
     return true
   end
   hosted.update=function() end
-  assert(home:click(110,298)=="play_tab")
+  assert(home:click(640,310)=="play_tab")
   perform("play_tab")
   assert(home.screen=="play" and starts==0 and not home.hosting)
   assert(home:click(200,440)=="configure")
