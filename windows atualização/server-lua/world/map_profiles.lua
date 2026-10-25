@@ -109,6 +109,8 @@ local function checkInteractables(list,w,h,zone)
     label=true,material=true,resource=true,amount=true,target=true})
   assert(id(obj.id) and not lookup[obj.id],"invalid or duplicate interaction ID")
   assert(interactiveKinds[obj.kind],"unsupported interaction kind")
+  assert(zone or obj.kind=="cache",
+    "surface interactive gates require collision-aware surface physics")
   assert(integer(obj.x,120,w-120) and integer(obj.y,120,h-120),
     "interaction out of map bounds")
   assert(obj.label==nil or validText(obj.label,40),"invalid interaction label")
