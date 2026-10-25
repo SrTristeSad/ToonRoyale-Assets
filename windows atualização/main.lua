@@ -288,6 +288,15 @@ function love.load()
     love.event.quit(ok and 0 or 1)
     return
   end
+  if os.getenv("MOO_IO_CONTROL_SETTINGS_TEST")=="1" then
+    local ok,err=pcall(function()
+      require("src.test_control_settings")()
+    end)
+    if not ok then print("MOO IO CONTROL SETTINGS FAIL: "..tostring(err)) end
+    allowQuit=true
+    love.event.quit(ok and 0 or 1)
+    return
+  end
   if os.getenv("MOO_IO_GAMEPAD_TEST")=="1" then
     local ok,err=pcall(function()
       require("src.test_gamepad_controls")(
@@ -1119,6 +1128,20 @@ local function gamepadAction(joystick,physical)
  elseif physical=="dpright" then love.keypressed("2")
  elseif physical=="dpdown" then love.keypressed("3")
  elseif physical=="dpleft" then love.keypressed("4")
+ end
+end
+function love.gamepadaxis(joystick,axis,value)
+ if controls:isOpen() and joystick==activeGamepad()
+  and controls.waiting and controls.waiting.kind=="button"
+  and axis=="triggerright" and value>=0.75 then
+  controls:captureButton(joystick,"righttrigger")
+ end
+end
+function love.joystickaxis(joystick,index,value)
+ if controls:isOpen() and joystick==activeGamepad()
+  and controls.waiting and controls.waiting.kind=="button"
+  and index==6 and value>=0.75 and not Pad.isMapped(joystick) then
+  controls:captureButton(joystick,"righttrigger")
  end
 end
 function love.gamepadpressed(joystick,button)
