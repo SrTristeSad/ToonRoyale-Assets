@@ -5,6 +5,7 @@ local Mob={}
 local states={idle=true,walk=true,attack=true,hurt=true,death=true}
 local sheets={}
 local warned={}
+local quads=setmetatable({},{__mode="k"})
 local function isFinite(v)
  return type(v)=="number" and v==v and v~=math.huge and v~=-math.huge
 end
@@ -134,14 +135,21 @@ function Mob.draw(entity,set,x,y,size,angle,alpha,imageLoader)
    or type(frame.row)~="number" or frame.row<0 then return false end
  local imageW,imageH=image:getWidth(),image:getHeight()
  if w*frame.frame>imageW or h*(frame.row+1)>imageH then return false end
- local quad=love.graphics.newQuad((frame.frame-1)*w,frame.row*h,
+ local cache=quads[image]
+ if not cache then cache={};quads[image]=cache end
+ local key=w..":"..h..":"..frame.row..":"..frame.frame
+ local quad=cache[key]
+ if not quad then
+  quad=love.graphics.newQuad((frame.frame-1)*w,frame.row*h,
     w,h,imageW,imageH)
+  cache[key]=quad
+ end
  love.graphics.setColor(1,1,1,alpha or 1)
  love.graphics.draw(image,quad,x,y,angle or 0,
    size/w,size/h,w/2,h/2)
  return true
 end
 function Mob.clearCache()
- sheets={};warned={}
+ sheets={};warned={};quads=setmetatable({},{__mode="k"})
 end
 return Mob
