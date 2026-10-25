@@ -89,6 +89,10 @@ function Local.new(opts)
  opts=opts or {}
  assert(type(opts.dataDir)=="string" and opts.dataDir~="",
   "separate LOCAL Lua data directory required")
+ -- Validate difficulty and every enabled mod before creating accounts,
+ -- directories, AI actors or the generated world.
+ local profile=Mods.build(opts.difficulty or "normal",
+   Mods.ids(opts.modIds or ""),opts.modDir or "server-lua/mods")
  local now=opts.nowMs or stamp
  local entropy=Random.bytes(4)
  local a,b,c,d=entropy:byte(1,4)
@@ -98,8 +102,6 @@ function Local.new(opts)
  moderation:migrateIds(accounts.migratedIds)
  local log=opts.log or function()end
  local rooms={}
- local profile=Mods.build(opts.difficulty or "normal",
-   Mods.ids(opts.modIds or ""),opts.modDir or "server-lua/mods")
  rooms.LC=addWorld("LC",Config.maxPlayers,opts.botCount or 0,
   accounts,moderation,now,log,profile)
  rooms.MB=addWorld("MB",80,0,accounts,moderation,now,log)
