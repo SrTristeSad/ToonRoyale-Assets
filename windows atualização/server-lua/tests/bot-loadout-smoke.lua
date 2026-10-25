@@ -69,6 +69,14 @@ level() -- age 7 item
 level() -- age 8: axe upgrades only if owns its prerequisite
 assert(p.age==8 and p.weapons[0]==2,
  "upgraded axe must require original hand axe")
+-- An archer archetype makes a different legitimate age-8 choice.
+local archer={upgradePoints=1,upgrAge=8,
+ weapons={[0]=3,[1]=9},items={0,3,6,10}}
+assert(Loadout.choose(archer,Catalogue,6)==12,
+ "ranged bot should prefer crossbow when prerequisites allow it")
+archer.weapons[1]=12;archer.upgrAge=9
+assert(Loadout.choose(archer,Catalogue,6)==13,
+ "ranged bot should later consider repeater crossbow progression")
 -- Dead bots cannot spend points until respawn.
 p.alive=false;p.upgradePoints=1
 assert(not Loadout.upgrade(p,Catalogue,1))
