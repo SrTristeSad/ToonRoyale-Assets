@@ -38,7 +38,11 @@ function Input.handle(ctx,player,name,args)
     "decoded MessagePack packet required")
   assert(ctx.items and ctx.items.weapons and ctx.items.list,
     "source item catalogue mandatory for authoritative input validation")
-  if name=="M" then
+  if name=="j" then
+    if ctx.gameKey~="LC" or not ctx.game or not ctx.game.customMap
+       or #args~=0 then return bad(player,name,"world space unsupported") end
+    return ctx.game:usePortal(player)
+  elseif name=="M" then
     local data=args[1]
     if type(data)~="table" or data==MP.null or #data>0 then
       return bad(player,name,"bad spawn data")
