@@ -2,6 +2,7 @@
 -- Leaves pure reference AI untouched when no roomDifficulty was selected.
 -- No client-side authority and no global forced pack behavior.
 local Brain={}
+local Angles=require("server-lua.world.atan2")
 local function distance(a,b)
  local dx,dy=a.x-b.x,a.y-b.y
  return math.sqrt(dx*dx+dy*dy)
@@ -95,8 +96,7 @@ function Brain.steer(ai,heading,spaces,animals,cfg)
    end
   end
   if ax*ax+ay*ay>1 then
-   local desired=(math.atan2 and math.atan2(ay,ax))
-     or (math.atan and math.atan(ay,ax)) or heading
+   local desired=Angles.atan2(ay,ax)
    return heading*0.7+desired*0.3
   end
  end
