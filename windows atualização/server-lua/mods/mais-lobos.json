@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "mais-lobos",
+  "name": "Mais Lobos",
+  "description": "Aumenta a quantidade e agressividade dos lobos na sala Lua.",
+  "requiresClient": "base",
+  "changes": {
+    "spawns": {
+      "4": {
+        "desired": 18
+      }
+    },
+    "animals": {
+      "4": {
+        "dmg": 16,
+        "viewRange": 1150
+      }
+    }
+  }
+}
