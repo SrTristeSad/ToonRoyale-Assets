@@ -15,6 +15,8 @@ local Moderation=require("server-lua.anticheat.moderation_store")
 local Chat=require("server-lua.world.local_chat")
 local Build=require("server-lua.protocol.build")
 local Mods=require("server-lua.world.room_mods")
+local Maps=require("server-lua.world.map_profiles")
+local Spaces=require("server-lua.world.map_spaces")
 local Local={}
 Local.__index=Local
 local function stamp()return math.floor(Socket.gettime()*1000)end
@@ -32,8 +34,11 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
  local players,ais={},{}
  local rules=profile or {config=Config,types=require("server-lua.world.animal_types")}
  local gameConfig=rules.config
- local world=World.new({config=gameConfig,random=math.random})
- world:generate()
+ local map=rules.map
+ local random=map and map.generation.seed
+  and Maps.random(map.generation.seed) or math.random
+ local world=World.new({config=gameConfig,random=random})
+ world:loadMap(map)
  local room
  local function broadcast(name,...)
   for _,player in ipairs(players) do player:send(name,...) end
@@ -56,6 +61,8 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
   crabKillers=crabKillers,broadcast=broadcast,key=key
  })
  room.animal_manager=animals
+ room.mapId=map and map.id or "classico"
+ room.mapSpaces=Spaces.new(map,gameConfig.mapScale)
  animals:ensureAnimals()
  local registry=Registry.new(room,{
   botCount=botCount,
@@ -93,6 +100,10 @@ function Local.new(opts)
  -- directories, AI actors or the generated world.
  local profile=Mods.build(opts.difficulty or "normal",
    Mods.ids(opts.modIds or ""),opts.modDir or "server-lua/mods")
+ if opts.mapId and opts.mapId~="" and opts.mapId~="classico" then
+  profile.map=Maps.load(opts.mapDir or "server-lua/maps",opts.mapId)
+  Maps.apply(profile.config,profile.map)
+ end
  local now=opts.nowMs or stamp
  local entropy=Random.bytes(4)
  local a,b,c,d=entropy:byte(1,4)
