@@ -2,6 +2,7 @@
 -- Literal behavior port of server/src/mooio/bots.js (LOCAL non-V2 server).
 -- Bots use actual Player/Room mechanics, not simulated combat/resources.
 local Catalogue=require("server-lua.world.catalogue")
+local Loadout=require("server-lua.world.bot_loadout")
 local Bots={}
 Bots.__index=Bots
 local names={"Lince","Ari","Raposa","Falcao","Rubi","Tora","Lua","Caio"}
@@ -116,6 +117,14 @@ function Bots:decide(a,delta)
  end
  a.respawn=0
  a.at=a.at+delta
+ -- Real age points, no artificial levels or free weapons. Each step invokes
+ -- the same Equipment.handle("H") validation used by a human player.
+ if type(player.upgradePoints)=="number" and player.upgradePoints>0
+   and player.weapons and player.items and type(player.addItem)=="function" then
+  for _=1,3 do
+   if not Loadout.upgrade(player,game.items or Catalogue,a.index+1) then break end
+  end
+ end
  if a.at>=a.socialAt and game.tribes then
   a.socialAt=a.at+15000+math.random()*17000
   self:socialize(a)
@@ -127,12 +136,17 @@ function Bots:decide(a,delta)
   a.at=0
  end
  local threat,distance=nil,math.huge
+ local extra=player.weapons and player.weapons[1]
+ local secondary=extra and (game.items or Catalogue).weapons[extra]
+ local longRange=(secondary and secondary.projectile~=nil)
+   and Loadout.attackRange(secondary,game.items or Catalogue) or 490
+ local sight=math.min(840,math.max(490,longRange))
  for _,opponent in ipairs(game.players) do
   if opponent~=player and opponent.alive
      and (opponent.spaceId or "surface")==(player.spaceId or "surface")
      and not (truth(player.team) and opponent.team==player.team) then
    local d=dist(player,opponent)
-   if d<distance and d<490 then threat,distance=opponent,d end
+   if d<distance and d<sight then threat,distance=opponent,d end
   end
  end
  for _,animal in ipairs(game.ais) do
@@ -148,7 +162,7 @@ function Bots:decide(a,delta)
  local target,mode=nil,"wander"
  local enhanced=game.config and game.config.server~=nil
  local weak=player.health<player.maxHealth*(enhanced and 0.49 or 0.37)
- if threat and distance<480 then
+ if threat and distance<sight then
   target=threat
   local opponentStrong=enhanced and threat.isPlayer
     and (threat.health or 100)>player.health*1.5
@@ -253,9 +267,17 @@ function Bots:decide(a,delta)
   player.moveDir=nil
  else player.moveDir=direction end
  player.mouseState=0
- local weapon=game.items and game.items.weapons or Catalogue.weapons
- local selected=weapon[player.weaponIndex]
- local range=nilOr(selected and selected.range,70)
+ local catalogue=game.items or Catalogue
+ if player.weapons then
+  local best=Loadout.chooseWeapon(player,catalogue,mode,d,a.index+1)
+  if catalogue.weapons[best] then
+   player.weaponIndex=best
+   -- Selecting a weapon dismisses any previously selected buildable item.
+   player.buildIndex=-1
+  end
+ end
+ local selected=catalogue.weapons[player.weaponIndex]
+ local range=Loadout.attackRange(selected,catalogue)
  if (mode=="fight" or mode=="gather" or mode=="hunt")
   and d<range+nilOr(target.scale,0)*0.8+20 and mode~="flee" then
   player.mouseState=1
