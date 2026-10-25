@@ -7,6 +7,21 @@ Ao criar uma sala local no Windows, use **Jogar → Configurar minha sala** para
 
 O carregamento também funciona para qualquer ID e qualquer quantidade válida de regiões; nomes como `bunker-01`, `caverna-01` e `casa-1` **não têm significado especial para o motor de mapas**. A física, os animais, as portas, o minimapa e o transporte entre andares utilizam os mesmos componentes. IDs duplicados não substituem silenciosamente o mapa integrado. Não são aceitos arquivos Lua executáveis de terceiros.
 
+## Posicionamento na superficie (contrato atualizado)
+
+Em mapas com `"mode": "generated"`, a superficie e sempre procedural.
+Nao informe `x`/`y` em `surface[]`, `portals[]` e `interactables[]`.
+O servidor assume `"placement": "random"` automaticamente; o campo pode
+ser omitido. O campo `spawn` nao e aceito nesses mapas: jogadores usam
+o nascimento original do MooMoo.io. `generation.seed` continua opcional
+para reproduzir testes; omiti-lo permite mapas diferentes a cada partida.
+
+As coordenadas `targetX`/`targetY` e a geometria dentro de `spaces[]`
+permanecem: indicam destinos locais, paredes e portas, nao pontos fixos
+da superficie. Mapas legados `"mode": "authored"` continuam aceitando
+posicoes manuais. Mods de regras `world` mudam quantidades antes da geracao,
+sem alterar o algoritmo original de distribuicao.
+
 ## Geração original e distribuição aleatória (recomendado)
 
 Os mapas em `"mode": "generated"` usam **exatamente o gerador de recursos do MooMoo.io presente no núcleo**: árvores/arbustos distribuídos nas células do mundo, pedras e minério de ouro espalhados pelo mapa, respeitando colisões e água. Em vez de posicionar tudo manualmente, deixe `"generation": {}` para manter as quantidades normais de `shared/config`. Os mods de regras podem alterar essas quantidades para a sala Lua sem mudar o algoritmo.
