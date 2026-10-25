@@ -327,6 +327,9 @@ function World:apply(name,args)
       or x>zone.width or y>zone.height then return false end
     local own=self.players[self.sid]
     self.spaceId=id;self.space=zone;self.justChangedSpace=true
+    -- The authenticated server gave the exact arrival position with the
+    -- new floor; this becomes the reliable fallback for a quick death.
+    self.lastKnownPosition={x=x,y=y,spaceId=id}
     self.players={};self.animals={};self.objects={};self.projectiles={}
     self.objectSlots={};self.objectSlotBySid={};self.objectSlotCount=0
     self.entityPaintOrder={players={},animals={}}
