@@ -63,7 +63,7 @@ for _,s in ipairs(cases) do
    x=125.5,y=200.5,team=s.team,pingCooldown=s.pingCooldown or 0,
    buildIndex=s.buildIndex or -1,weaponIndex=0,
    autoGather=0,lockDir=false,
-   itemCounts={},items={0,3,6,10},weapons={[0]=0},
+   itemCounts={},items={0,3,6,10},weapons={0},
    attrCache={old=1},
    anticheat={
      invalid=function(_,name,why)events[#events+1]="INVALID:"..name..":"..why end,
