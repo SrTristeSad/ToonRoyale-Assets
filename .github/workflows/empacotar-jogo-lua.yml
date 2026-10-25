@@ -1,0 +1,63 @@
+name: Empacotar Moo-IO Windows com servidor LOCAL Lua
+on:
+  push:
+    branches: [jogo-windows-lua-completo]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-portable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar runtime oficial LÖVE 11.5 Win64
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --connect-timeout 20 \
+            https://github.com/love2d/love/releases/download/11.5/love-11.5-win64.zip \
+            -o /tmp/love-11.5-win64.zip
+          unzip -t /tmp/love-11.5-win64.zip >/dev/null
+      - name: Criar ZIP completo de jogo + runtime + servidor Lua
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil,zipfile
+          root=Path.cwd()
+          dest=root/"dist"/"Moo-IO-Windows-Lua"
+          dest.mkdir(parents=True,exist_ok=True)
+          for folder in ("assets","src","server-lua","scripts","licenses"):
+              if (root/folder).is_dir():
+                  shutil.copytree(root/folder,dest/folder,dirs_exist_ok=True)
+          for name in ("main.lua","conf.lua","MOO-IO.vbs","MOO-IO-Lua-Teste.vbs","MOO-IO.bat",
+                       "LICENSE","NOTICE.md","LEIA-ME-TESTE-LUA.md"):
+              shutil.copy2(root/name,dest/name)
+          with zipfile.ZipFile("/tmp/love-11.5-win64.zip") as love:
+              for f in love.infolist():
+                  if f.is_dir(): continue
+                  relative=Path(f.filename)
+                  if len(relative.parts)<2 or relative.parts[0]!="love-11.5-win64": continue
+                  target=dest.joinpath(*relative.parts[1:])
+                  if ".." in relative.parts: raise ValueError("Invalid zip path")
+                  target.parent.mkdir(parents=True,exist_ok=True)
+                  with love.open(f) as source,target.open("wb") as out:
+                      shutil.copyfileobj(source,out)
+          required=("love.exe","main.lua","server-lua/local_server.lua","server-lua/run.lua",
+                    "scripts/start-server-lua.ps1","assets/custom/img/weapons/hammer_1.png")
+          for rel in required:
+              assert (dest/rel).is_file(),rel
+          assert not (dest/"server/src/index.js").exists()
+          outzip=root/"dist"/"Moo-IO-Windows-Lua-Completo.zip"
+          with zipfile.ZipFile(outzip,"w",zipfile.ZIP_DEFLATED,compresslevel=6) as output:
+              for f in dest.rglob("*"):
+                  if f.is_file(): output.write(f,f.relative_to(root/"dist"))
+          print("READY",outzip,"files",sum(f.is_file() for f in dest.rglob("*")),
+                "bytes",outzip.stat().st_size)
+          PY
+      - name: Publicar arquivo de teste do Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: Moo-IO-Windows-Lua-Completo
+          path: dist/Moo-IO-Windows-Lua-Completo.zip
+          if-no-files-found: error
+          retention-days: 30
