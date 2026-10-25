@@ -83,10 +83,36 @@ assert(zone.obstacles[#zone.obstacles].material=="wood")
 assert(player.wood==65 and player.stone==60)
 local lastRect=zone.obstacles[#zone.obstacles]
 local clientZone={id=zone.id,type="interior",
- width=zone.width,height=zone.height,portals=zone.portals,obstacles={}}
+ width=zone.width,height=zone.height,portals=zone.portals,
+ obstacles={zone.obstacles[1],zone.obstacles[2],zone.obstacles[3]}}
 assert(c:apply("j",{"casa-1",550,450,clientZone}))
 assert(c:apply("j",{"add-wall",0,0,{spaceId="casa-1",rect=lastRect}}))
-assert(#c.space.obstacles==1 and c.space.obstacles[1].material=="wood")
+assert(#c.space.obstacles==4 and c.space.obstacles[4].material=="wood")
+room.nowMs=211000
+local oldWood,oldStone=player.wood,player.stone
+assert(room:handleInput(player,"j",{"wall",{x=12000,y=700,orientation="h"}})==false)
+assert(player.wood==oldWood and player.stone==oldStone,
+ "untrusted coordinates cannot spend resources")
+assert(room:handleInput(player,"j",{"wall",{x=500,y=700,orientation="h"}})==true)
+assert(#zone.obstacles==5 and zone.obstacles[5].x==400
+ and zone.obstacles[5].width==200,"mouse-positioned horizontal wall missing")
+assert(player.wood==50 and player.stone==55)
+assert(c:apply("j",{"add-wall",0,0,{spaceId="casa-1",
+ rect=zone.obstacles[5]}}) and #c.space.obstacles==5)
+room.nowMs=212000
+assert(room:handleInput(player,"j",{"remove-wall",3})==false,
+ "client demolished a permanent structural wall")
+assert(room:handleInput(player,"j",{"remove-wall",5})==true)
+assert(#zone.obstacles==4 and player.wood==50 and player.stone==55,
+ "wall demolition removed wrong wall or refunded resources")
+assert(c:apply("j",{"remove-wall",0,0,{spaceId="casa-1",index=5}}))
+assert(#c.space.obstacles==4,
+ "client did not remove same wall index as server")
+local randomUser={id="intruder",alive=true,spaceId="casa-1",
+ x=550,y=450,send=function()end,account=nil}
+room.nowMs=213000
+assert(room:handleInput(randomUser,"j",{"remove-wall",4})==false,
+ "unregistered guest was able to remove a house wall")
 local saved=assert(io.open(folder.."/houses-cabana-e-mina.json","rb"))
 local bytes=saved:read("*a");saved:close()
 assert(bytes:find("walls",1,true),"house file does not save walls")
