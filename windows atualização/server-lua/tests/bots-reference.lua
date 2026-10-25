@@ -60,7 +60,7 @@ repeatWander.a.targetUntil=0
 repeatWander.b:decide(repeatWander.a,270)
 print("WANDER_REPEAT|"..num(firstX).."|"..num(firstY)..
  "|"..num(repeatWander.a.wander.x).."|"..
- num(repeatWander.a.wander.y).."|"..tostring(repeatWander.a.heading))
+ num(repeatWander.a.wander.y).."|"..num(repeatWander.a.heading))
 math.random=function()return 0.5 end
 local dead=makeGame(function(p)p.alive=false end)
 dead.b:decide(dead.a,2200);dead.b:decide(dead.a,2200)
