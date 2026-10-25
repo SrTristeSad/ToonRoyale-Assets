@@ -1,5 +1,12 @@
 # Moo-IO — Windows (servidor local Lua)
 
+## Duas maneiras de jogar multiplayer
+
+**Jogar:** crie sua propria sala com o servidor Lua local, ou entre diretamente na sala de um amigo usando o convite `IP:porta/CODIGO` pela rede LAN/VPN.
+
+**Servidores:** informe o endereco `IP:porta` de um **servidor V2 existente** (LAN/VPN) e clique **Buscar salas**. O jogo consulta `GET /api/public/rooms`, exibe nome, tipo, jogadores e vagas das salas disponíveis e permite escolher qual delas acessar. Salas publicas no catalogo ja incluem o convite; salas privadas pedem o codigo enviado pelo dono. A autorizacao V2 continua acontecendo no navegador. Para servidores abertos na Internet, utilize a entrada `https://sala.dominio` com certificado valido. O cliente nao inicia nenhum processo de servidor V2.
+
+
 ## Entrar em servidores V2 existentes
 
 O cliente Windows permite entrar em salas LAN/VPN pelo IP/porta/código e em servidores V2 externos pelo convite `https://sala.dominio/CODIGO`. Use **Jogar → Entrar em outra sala**; quando a sala exigir login, selecione **Entrar com conta V2 (navegador)**. O aplicativo abre o navegador para cadastro/autorização PKCE; a senha nunca é digitada no jogo. Ao autorizar, o cliente recebe um token da sala e estabelece um WebSocket com os mesmos pacotes do Moo-IO.
