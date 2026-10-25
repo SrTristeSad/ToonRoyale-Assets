@@ -555,27 +555,8 @@ local function drawMapHelp(world)
   love.graphics.print("MODO: "..settings.difficulty:upper()..
     "  |  MODS: "..mods..modName.."  |  ANIMAIS: "..mobTotal,25,176)
  end
- if near then
-  local player=world:localPlayer()
-  if player and player.x and player.y and world.spaceId=="surface" then
-   local nearest,dist
-   for _,portal in ipairs(world.map.portals or {}) do
-    if type(portal.x)=="number" and type(portal.y)=="number" then
-     local dx,dy=portal.x-player.x,portal.y-player.y
-     local d=math.floor(math.sqrt(dx*dx+dy*dy))
-     if not dist or d<dist then nearest=portal;dist=d end
-    end
-   end
-   if nearest then
-    local label=nearest.label or nearest.to or "PASSAGEM"
-    love.graphics.setColor(0.07,0.10,0.07,0.88)
-    love.graphics.rectangle("fill",16,129,math.min(500,w-32),33,5,5)
-    love.graphics.setColor(0.96,0.88,0.55,1)
-    love.graphics.print("PASSAGEM "..label:upper():sub(1,22)..
-      ": "..dist.."  -  ENTRE CAMINHANDO",25,138)
-   end
-  end
- end
+ -- No remote entrance locator or item-distance HUD: discover features
+ -- by exploring the procedurally generated surface as in MooMoo.io.
  if near then
   love.graphics.setColor(0.09,0.11,0.09,0.83)
   love.graphics.rectangle("fill",16,h-52,345,36,5,5)
