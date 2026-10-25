@@ -103,6 +103,7 @@ local chatOpen=false
 local chatDraft=""
 local mouseAttack=false
 local spaceAttack=false
+local showDungeonMap=true
 local lockDir=false
 local angle
 local function currentAttackDir()
@@ -517,7 +518,7 @@ function love.draw()
     -- Match browser renderPlayers(): the local avatar aims at the cursor
     -- immediately, while the Node remains authoritative for D/F combat.
     View.draw(world,camera,frameDelta,
-      {showGrid=menu.grid,
+      {showGrid=menu.grid,showDungeonMap=showDungeonMap,
        localAim=View.localAim(lockDir,currentAttackDir(),lastAim)})
     if houseEditor.active then
       local mx,my=love.mouse.getPosition()
@@ -956,6 +957,13 @@ function love.keypressed(key)
     mouseAttack=false;spaceAttack=false
     client:send("e",{})
     client:send("F",{0,Pack.null})
+    return
+  end
+  if key=="m" and phase=="playing" and client
+     and client.state=="spawn_confirmed" and world.map
+     and world.spaceId~="surface" and not panels:isOpen()
+     and not chatOpen then
+    showDungeonMap=not showDungeonMap
     return
   end
   if key=="h" and phase=="playing" and client
