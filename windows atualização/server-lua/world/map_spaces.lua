@@ -17,6 +17,29 @@ function Spaces.new(map,mapScale)
  end
  return self
 end
+-- New match-built rooms are owned by the room, not a shared global map.
+function Spaces:addZone(zone)
+ assert(type(zone)=="table" and type(zone.id)=="string"
+  and zone.id:match("^[a-z][a-z0-9%-]+$") and #zone.id<=48
+  and zone.type=="interior" and self.zones[zone.id]==nil,
+  "invalid or duplicate built zone")
+ assert(type(zone.width)=="number" and type(zone.height)=="number"
+  and zone.width>=256 and zone.height>=256
+  and zone.width<=4096 and zone.height<=4096,
+  "invalid built zone geometry")
+ self.zones[zone.id]=copy(zone)
+ return self.zones[zone.id]
+end
+function Spaces:addSurfacePortal(portal)
+ assert(type(portal)=="table" and type(portal.id)=="string"
+  and type(portal.to)=="string" and self.zones[portal.to],
+  "invalid new surface portal")
+ local surface=self.zones.surface
+ for _,entry in ipairs(surface.portals) do
+  assert(entry.id~=portal.id,"duplicate portal ID")
+ end
+ surface.portals[#surface.portals+1]=copy(portal)
+end
 function Spaces:get(id)
  return self.zones[id or "surface"]
 end
