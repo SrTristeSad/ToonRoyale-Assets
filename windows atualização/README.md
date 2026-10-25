@@ -22,9 +22,13 @@ Convites públicos exigem DNS, HTTPS/WSS, certificados válidos e o gateway V2 j
 
 Selecione o nível na tela **Criar minha sala**. O nível pertence à sala, não à conta do jogador. O Normal mantém todas as regras tradicionais.
 
-## Mods de dados
+## Núcleo de mods de dados
 
-Os mods do servidor local são arquivos JSON instalados em `server-lua/mods/`, sem código executável. Na criação da sala, informe os IDs separados por vírgula (por exemplo `mais-lobos,fauna-hostil`). Eles podem ajustar atributos dos animais e a população de cada tipo; os clientes convidados não precisam instalar mods para esses ajustes. Consulte `server-lua/mods/README.md`. Mods só entram em vigor ao reiniciar a sala.
+Os mods são arquivos JSON instalados em `server-lua/mods/`. Em **Jogar → Criar minha sala**, escolha primeiro **Pacífico**, **Normal**, **Difícil** ou **Extremo** e depois clique em **Escolher** para ativar os mods instalados. Também é possível informar os IDs no campo de texto.
+
+O núcleo suporta mudanças na população/atributos de animais, na geração do mapa (árvores, pedras e minérios) e nas regras do mundo (regeneração de vida e IA cooperativa). Essas configurações são próprias da sala e são validadas antes de gerar o mapa. O modo Normal sem mods preserva as regras tradicionais.
+
+Incluídos: `mais-lobos`, `fauna-hostil`, `floresta-densa` e `lobos-em-matilha`. Não são executados scripts de terceiros nem distribuídos novos assets para os convidados. Consulte `server-lua/mods/README.md` para o esquema e limites da API. Alterações de mods ou dificuldade exigem recriar a sala.
 
 **Moo-IO** é um jogo multiplayer de sobrevivência e combate em 2D, com visão de cima. Explore o mapa, reúna recursos, construa estruturas, equipe armas e enfrente animais e outros jogadores.
 
