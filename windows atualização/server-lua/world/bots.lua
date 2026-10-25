@@ -128,14 +128,16 @@ function Bots:decide(a,delta)
  end
  local threat,distance=nil,math.huge
  for _,opponent in ipairs(game.players) do
-  if opponent~=player and opponent.alive and
-     not (truth(player.team) and opponent.team==player.team) then
+  if opponent~=player and opponent.alive
+     and (opponent.spaceId or "surface")==(player.spaceId or "surface")
+     and not (truth(player.team) and opponent.team==player.team) then
    local d=dist(player,opponent)
    if d<distance and d<490 then threat,distance=opponent,d end
   end
  end
  for _,animal in ipairs(game.ais) do
   if animal.alive and animal.active and not truth(animal.spawnCounter)
+    and (animal.spaceId or "surface")==(player.spaceId or "surface")
     and not truth(animal.submerged) and animal.index<7 then
    local d=dist(player,animal)
    if d<distance and d<380 and (truth(animal.hostile) or animal.index==4) then
@@ -154,7 +156,8 @@ function Bots:decide(a,delta)
  else
   local best=math.huge
   for _,object in ipairs(game.game_objects) do
-   if object.active and not truth(object.isItem) and
+   if (player.spaceId==nil or player.spaceId=="surface")
+     and object.active and not truth(object.isItem) and
       not truth(object.dontGather) and
       object.type>=0 and object.type<=3 then
     local d=dist(player,object)
@@ -170,6 +173,7 @@ function Bots:decide(a,delta)
   else
    for _,animal in ipairs(game.ais) do
     if animal.alive and animal.active and not truth(animal.spawnCounter)
+      and (animal.spaceId or "surface")==(player.spaceId or "surface")
       and not truth(animal.submerged) and animal.index<=1 then
      local d=dist(player,animal)
      if d<400 and (player.food<35 or player.health<70) then
@@ -228,6 +232,20 @@ function Bots:decide(a,delta)
   a.stuck=0
  end
  if a.at<a.detour then direction=a.detourDir end
+ if enhanced and (player.spaceId==nil or player.spaceId=="surface") then
+  local limit=nilOr(game.config and game.config.mapScale,14400)
+  local aheadX=player.x+math.cos(direction)*170
+  local aheadY=player.y+math.sin(direction)*170
+  if aheadX<85 or aheadX>limit-85
+    or aheadY<85 or aheadY>limit-85 then
+    -- Prefer a usable turn rather than blindly pushing against the border.
+    local left=direction+pi/2
+    local lx=player.x+math.cos(left)*170
+    local ly=player.y+math.sin(left)*170
+    direction=(lx>85 and lx<limit-85 and ly>85 and ly<limit-85)
+      and left or (direction-pi/2)
+  end
+ end
  a.prevX=player.x;a.prevY=player.y
  player.dir=angle(player,target)
  if (mode=="gather" and d<85) or (mode=="wander" and d<45)
