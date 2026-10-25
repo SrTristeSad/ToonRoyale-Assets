@@ -29,6 +29,13 @@ if ($testFiles.Count -gt 0) {
 foreach ($path in $forbidden) {
   if (Test-Path (Join-Path $DistDir $path)) { throw "Forbidden Node/V2 artifact: $path" }
 }
+$dataDir=Join-Path $DistDir 'server-lua\data'
+if (Test-Path -LiteralPath $dataDir) {
+  $generated=@(Get-ChildItem -LiteralPath $dataDir -Recurse -File -Force)
+  if ($generated.Count -gt 0) {
+    throw "Runtime secrets or test data leaked into ZIP: $($generated[0].FullName)"
+  }
+}
 $paths=Get-Content (Join-Path $DistDir 'src\net\mooio_paths.lua') -Raw
 if ($paths -notmatch 'start-server-lua\.ps1' -or $paths -match 'return join\(root,"scripts/start-server\.ps1"\)') {
   throw 'Client startup must target only the bundled Lua server'
