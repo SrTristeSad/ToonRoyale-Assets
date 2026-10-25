@@ -100,7 +100,16 @@ function API:handle(method,target,headers,raw,ip)
   return response(200,{token=store:issueToken(account),email=account.email,id=account.id})
  end
  if method=="POST" and path=="/api/auth/password" then
-  local password=str(body.password)
+  -- Original Node: String((req.body && req.body.password) || "").
+  -- False, 0 and JSON null must not become non-empty "false"/"0".
+  local password=truth(body.password) and str(body.password) or ""
+  if type(body.password)=="table" and
+      getmetatable(body.password) and
+      getmetatable(body.password).__jsontype=="array" then
+    local values={}
+    for i,value in ipairs(body.password) do values[i]=str(value) end
+    password=table.concat(values,",")
+  end
   local account=store:accountForEmail(body.email)
   if not truth(account) or #password==0 then
    return response(400,{type="invalidCredentials"})
