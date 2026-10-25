@@ -167,6 +167,16 @@ function Home:refreshMaps()
   end
  end
 end
+function Home:refreshInstalled()
+ self:refreshMaps()
+ self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
+ self.mapPage=math.min(self.mapPage,
+   math.max(0,math.ceil((#self.mapCatalog+1)/4)-1))
+ self.modPage=math.min(self.modPage,
+   math.max(0,math.ceil(#self.modCatalog/4)-1))
+ self:setStatus(#self.mapCatalog.." mapas e "..
+   #self.modCatalog.." mods de regras encontrados.")
+end
 function Home:roomInvite()
   if self.hostAddress=="" or self.hostCode=="" then return "" end
   return self.hostAddress.."/"..self.hostCode
@@ -366,6 +376,11 @@ local function removeLast(s)
   return s:sub(1,i-1)
 end
 function Home:keypressed(key)
+  if key=="f5" and (self.screen=="create"
+     or self.screen=="mods" or self.screen=="maps") then
+    self:refreshInstalled()
+    return "refresh_installed"
+  end
   if key=="escape" then
     self.screen=(self.screen=="mods" and "create"
       or self.screen=="maps" and "create"
@@ -537,6 +552,7 @@ function Home:draw(state,detail,showWorld)
       end
     elseif self.screen=="create" then
       printText("CONFIGURAR NOVA SALA",121,155,29,C.white)
+      printText("F5: atualizar mapas e mods instalados",635,172,13,C.amber,490)
       panel(100,195,482,477,C.panel,0)
       panel(613,195,564,477,C.panel,0)
       printText("CONEXAO",122,206,17,C.green)
