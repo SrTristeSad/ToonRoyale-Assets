@@ -449,7 +449,104 @@ local function labels(world,camera,w,h)
     end
   end
 end
+-- Original game uses a flat surface. Custom LC map packs add their own
+-- visually separate zones; all collision/teleport authority stays server-side.
+local function mapPortalMarkers(world,camera,indoor)
+ local area=world.space
+ local portals=area and area.portals or {}
+ for _,p in ipairs(portals) do
+  if type(p.x)=="number" and type(p.y)=="number" then
+   local x,y=camera:worldToScreen(p.x,p.y)
+   local size=(indoor and 50 or 60)*camera.zoom
+   love.graphics.setColor(0.17,0.13,0.07,1)
+   love.graphics.circle("fill",x,y,size+5*camera.zoom)
+   love.graphics.setColor(0.94,0.72,0.26,1)
+   love.graphics.circle("fill",x,y,size)
+   love.graphics.setColor(0.18,0.14,0.07,1)
+   love.graphics.rectangle("fill",x-size*0.46,y-size*0.2,size*0.92,size*0.4)
+  end
+ end
+ local player=world:localPlayer()
+ if not player or not player.x then return end
+ for _,p in ipairs(portals) do
+  if type(p.x)=="number" and type(p.y)=="number" then
+   local dx,dy=player.x-p.x,player.y-p.y
+   if dx*dx+dy*dy<=150*150 then
+    local w=love.graphics.getWidth()
+    love.graphics.setColor(0.08,0.10,0.08,0.87)
+    love.graphics.rectangle("fill",w/2-177,76,354,38,5,5)
+    love.graphics.setColor(0.96,0.93,0.78,1)
+    love.graphics.printf("G  -  USAR PASSAGEM",w/2-170,87,340,"center")
+    break
+   end
+  end
+ end
+end
+
+local function drawHouses(world,camera)
+ if not world.map or not world.space then return end
+ for _,portal in ipairs(world.map.portals or {}) do
+  if type(portal.x)=="number" and type(portal.y)=="number" then
+   local x,y=camera:worldToScreen(portal.x,portal.y)
+   local u=camera.zoom
+   -- The roof is opaque outdoors. It is absent when the player enters,
+   -- revealing the separately rendered interior on the next server packet.
+   love.graphics.setColor(0.30,0.21,0.14)
+   love.graphics.rectangle("fill",x-220*u,y-230*u,440*u,405*u)
+   love.graphics.setColor(0.58,0.37,0.21)
+   love.graphics.rectangle("fill",x-197*u,y-211*u,394*u,363*u)
+   love.graphics.setColor(0.73,0.49,0.28)
+   love.graphics.rectangle("fill",x-184*u,y-195*u,368*u,335*u)
+   love.graphics.setColor(0.24,0.18,0.12)
+   love.graphics.rectangle("fill",x-64*u,y+120*u,128*u,65*u)
+   love.graphics.setColor(0.90,0.75,0.37)
+   love.graphics.circle("fill",x,y+167*u,24*u)
+  end
+ end
+end
+
+local function drawIndoor(world,camera,dt,options)
+ local area=assert(world.space,"active local area required")
+ local w,h=love.graphics.getDimensions()
+ local mine=area.type=="underground"
+ love.graphics.setColor(mine and 0.25 or 0.68,
+  mine and 0.26 or 0.59,mine and 0.27 or 0.43,1)
+ love.graphics.rectangle("fill",0,0,w,h)
+ local x0,y0=camera:worldToScreen(0,0)
+ local x1,y1=camera:worldToScreen(area.width,area.height)
+ love.graphics.setColor(mine and 0.39 or 0.78,
+  mine and 0.37 or 0.67,mine and 0.33 or 0.53,1)
+ love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
+ if options and options.showGrid~=false then grid(camera,w,h) end
+ for _,obstacle in ipairs(area.obstacles or {}) do
+  local x,y=camera:worldToScreen(obstacle.x,obstacle.y)
+  local a,b=obstacle.width*camera.zoom,obstacle.height*camera.zoom
+  love.graphics.setColor(0.08,0.09,0.08,0.5)
+  love.graphics.rectangle("fill",x+4*camera.zoom,y+5*camera.zoom,a,b)
+  love.graphics.setColor(mine and 0.35 or 0.47,
+    mine and 0.36 or 0.32,mine and 0.36 or 0.20)
+  love.graphics.rectangle("fill",x,y,a,b)
+  love.graphics.setColor(1,1,1,0.1)
+  love.graphics.rectangle("fill",x+3*camera.zoom,y+3*camera.zoom,a-6*camera.zoom,5*camera.zoom)
+ end
+ mapPortalMarkers(world,camera,true)
+ for _,p in ipairs(world:orderedPlayers()) do
+  if p.x and p.y and p.invisible~=1 then
+   local aim=(p.sid==world.sid and options) and options.localAim or nil
+   drawPlayer(p,camera,dt or 0,aim)
+  end
+ end
+ labels(world,camera,w,h)
+ love.graphics.setColor(0.06,0.07,0.06,0.85)
+ love.graphics.rectangle("fill",15,14,250,39,5,5)
+ love.graphics.setColor(1,1,1,1)
+ love.graphics.print(mine and "SUBSOLO" or "INTERIOR",27,24)
+end
+
 function View.draw(world,camera,dt,options)
+  if world.map and world.spaceId and world.spaceId~="surface" then
+    return drawIndoor(world,camera,dt,options)
+  end
   local w,h=love.graphics.getDimensions()
   -- Aiming is local presentation only. The actual attack and target
   -- direction are still transmitted via the original D/F Node packets.
@@ -489,6 +586,7 @@ function View.draw(world,camera,dt,options)
   end
   drawObjectLayer(objects,camera,w,h,2)
   drawObjectLayer(objects,camera,w,h,3)
+  if world.map then drawHouses(world,camera) end
   boundaries(camera,w,h)
   -- The JS reference composites this violet-blue tint after game objects
   -- and before world labels, not over the HTML/CSS HUD.
@@ -496,5 +594,6 @@ function View.draw(world,camera,dt,options)
   love.graphics.rectangle("fill",0,0,w,h)
   love.graphics.setColor(1,1,1,1)
   labels(world,camera,w,h)
+  if world.map then mapPortalMarkers(world,camera,false) end
 end
 return View
