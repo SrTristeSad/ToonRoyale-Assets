@@ -499,7 +499,7 @@ local function drawMapHelp(world)
   love.graphics.setColor(0.96,0.95,0.87,1)
   love.graphics.print("B: CASA (70 MADEIRA, 35 PEDRA)",24,h-43)
  end
- if world.spaceId and world.spaceId~="surface" then
+ if world.spaceId and world.spaceId:match("^casa%-%d+$") then
   love.graphics.setColor(0.09,0.11,0.09,0.83)
   love.graphics.rectangle("fill",16,h-52,390,36,5,5)
   love.graphics.setColor(0.96,0.95,0.87,1)
