@@ -160,7 +160,8 @@ function Registry:addBot(request)
  end
  if room.customMap and room.key=="LC" then
   init.map={id=room.mapId,name=room.customMap.name,
-     portals=room.mapSpaces:get("surface").portals}
+     portals=room.mapSpaces:get("surface").portals,
+     interactables=room.mapSpaces:get("surface").interactables}
  end
  player:send("A",init)
  if self.options.count then self.options.count(room.key,#room.players) end
@@ -249,7 +250,8 @@ function Registry:onJoined(player,peer,ticket,room)
  end
  if room.key=="LC" and room.customMap then
   init.map={id=room.mapId,name=room.customMap.name,
-    portals=room.mapSpaces:get("surface").portals}
+    portals=room.mapSpaces:get("surface").portals,
+     interactables=room.mapSpaces:get("surface").interactables}
  end
  player:send("A",init)
  if player.account and self.options.presence then
