@@ -95,6 +95,9 @@ function House.save(room)
 end
 local function checkWalls(zone,walls)
  assert(type(walls)=="table" and #walls<=MAX_WALLS,"bad saved walls")
+ for key in pairs(walls) do
+  assert(integer(key,1,#walls),"saved walls must be a dense array")
+ end
  for _,r in ipairs(walls) do
   assert(type(r)=="table" and integer(r.x,50,zone.width-50)
     and integer(r.y,50,zone.height-50)
@@ -126,6 +129,9 @@ function House.load(room)
   and data.schemaVersion==1 and data.mapId==room.mapId
   and type(data.houses)=="table" and #data.houses<=MAX_HOUSES,
   "invalid house snapshot for selected map")
+ for key in pairs(data.houses) do
+  assert(integer(key,1,#data.houses),"saved houses must be a dense array")
+ end
  for i,record in ipairs(data.houses) do
   assert(type(record)=="table"
    and integer(record.x,310,room.config.mapScale-310)
@@ -215,6 +221,9 @@ function House.build(room,player)
  end
  local index=#room.builtHouses+1
  local zone,portal=prefab(index,x,y)
+ if room.mapSpaces:get(zone.id) then
+  return fail(player,"Este ID de casa ja e usado pelo mapa.")
+ end
  room.mapSpaces:addZone(zone)
  room.mapSpaces:addSurfacePortal(portal)
  room.builtHouses[index]={id=zone.id,ownerId=player.id,
