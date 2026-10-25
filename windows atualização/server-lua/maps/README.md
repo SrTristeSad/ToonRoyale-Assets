@@ -1,6 +1,48 @@
 # Núcleo de mapas personalizados (schemaVersion 1)
 
-Ao criar uma sala local no Windows, clique em **MAPA** para selecionar o clássico ou um manifesto JSON instalado em `server-lua/maps/ID.json`. Não são aceitos arquivos Lua de terceiros.
+Ao criar uma sala local no Windows, use **Jogar → Configurar minha sala** para selecionar o mundo clássico ou um mapa JSON instalado em uma destas pastas:
+
+- `server-lua/maps/ID.json`: mapas integrados ou criados pelo usuário.
+- `server-lua/mods/maps/ID.json`: **mapas adicionados por mods**, exibidos no mesmo seletor.
+
+O carregamento também funciona para qualquer ID e qualquer quantidade válida de regiões; nomes como `bunker-01`, `caverna-01` e `casa-1` **não têm significado especial para o motor de mapas**. A física, os animais, as portas, o minimapa e o transporte entre andares utilizam os mesmos componentes. IDs duplicados não substituem silenciosamente o mapa integrado. Não são aceitos arquivos Lua executáveis de terceiros.
+
+## Visuais, tiles e portais universais
+
+Todo espaço `interior` ou `underground` pode declarar um objeto `visual` opcional e validado. O renderizador usa esses valores, **não o ID da região**:
+
+```json
+{
+  "id": "andar-laboratorio",
+  "type": "interior",
+  "width": 1300,
+  "height": 1100,
+  "visual": {
+    "floor": "metal",
+    "wall": "brick",
+    "tileSize": 96,
+    "name": "Laboratório"
+  },
+  "obstacles": [
+    {"x": 100, "y": 100, "width": 500, "height": 70, "material": "stone"}
+  ],
+  "portals": [
+    {"id": "saida", "x": 600, "y": 800,
+     "to": "surface", "targetX": 3500, "targetY": 3500,
+     "style": "hatch", "label": "Retornar"}
+  ],
+  "mobs": []
+}
+```
+
+- Pisos e materiais permitidos: `wood`, `rock`, `metal`, `stone`, `sand`, `earth`, `grass`, `ice` e `brick`.
+- `tileSize`: número inteiro de 32 a 256 unidades. As coordenadas, paredes e colisões continuam sendo calculadas no espaço do mundo, independentemente do tamanho do desenho do piso.
+- `obstacles[].material`: opcional; altera o desenho daquela parede, mas a colisão continua usando seu retângulo.
+- `portals[].style`: `door`, `hatch`, `stairs`, `tunnel`, `arch`; os nomes antigos `house`, `bunker` e `cave` continuam funcionando.
+- `portals[].label`: texto opcional limitado a 40 caracteres exibido no cenário e nas indicações de acesso.
+- Campos omitidos usam materiais padrão compatíveis com mapas anteriores. Não há leitura de caminhos arbitrários de imagem, shaders, scripts ou bibliotecas pelos pacotes JSON.
+
+Para testar uma instalação de mod completa, selecione **Refúgio Personalizado (mod)**. Ele está em `server-lua/mods/maps/refugio-personalizado.json` e demonstra um andar de metal e tijolos conectado a outro de gelo e pedra, com os nomes `mod-sala-metal` e `mod-sala-gelo`. Podem ser combinados mods de regras (lobos, recursos etc.) com qualquer mapa personalizado.
 
 ## Superfície
 
