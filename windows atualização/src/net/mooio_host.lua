@@ -111,7 +111,7 @@ function Host:start(mode,requestedIP,requestedBots,difficulty,modIds)
     return false,"Dificuldade desconhecida."
   end
   modIds=modIds or ""
-  if #modIds>400 or modIds:find("[^a-z0-9%%-, ]") then
+  if #modIds>400 or modIds:find("[^a-z0-9,%- ]") then
     return false,"IDs de mods invalidos."
   end
   local keys={"MOO_IO_ROOM_CODE","MOO_IO_GUI_HOST","MOO_IO_BIND_IP","MOO_IO_NETWORK_MODE","MOO_IO_BOT_COUNT","MOO_IO_DIFFICULTY","MOO_IO_MODS"}
