@@ -1,30 +1,11 @@
 {
   "schemaVersion": 1,
   "id": "mapa-de-exemplo",
-  "name": "Mapa Manual",
-  "description": "Recursos posicionados manualmente sem geracao aleatoria.",
-  "mode": "authored",
+  "name": "Mapa de Exemplo Aleatorio",
+  "description": "Mapa com geracao original do MooMoo.io; recursos distribuidos aleatoriamente a cada partida.",
+  "mode": "generated",
   "generation": {},
-  "surface": [
-    {
-      "x": 1200,
-      "y": 1800,
-      "kind": 0,
-      "scale": 150
-    },
-    {
-      "x": 1700,
-      "y": 2100,
-      "kind": 2,
-      "scale": 85
-    },
-    {
-      "x": 2100,
-      "y": 2400,
-      "kind": 3,
-      "scale": 85
-    }
-  ],
+  "surface": [],
   "spaces": [],
   "portals": []
 }
