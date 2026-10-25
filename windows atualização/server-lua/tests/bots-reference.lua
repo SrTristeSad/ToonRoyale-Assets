@@ -51,6 +51,17 @@ local scenarios={
 for _,entry in ipairs(scenarios) do
  local x=makeGame(entry[2]);x.b:decide(x.a,entry[3]);dump(entry[1],x)
 end
+-- The original LOCAL Node RoomBots never stores the temporary heading.
+math.random=function()return 0.75 end
+local repeatWander=makeGame()
+repeatWander.b:decide(repeatWander.a,270)
+local firstX,firstY=repeatWander.a.wander.x,repeatWander.a.wander.y
+repeatWander.a.targetUntil=0
+repeatWander.b:decide(repeatWander.a,270)
+print("WANDER_REPEAT|"..num(firstX).."|"..num(firstY)..
+ "|"..num(repeatWander.a.wander.x).."|"..
+ num(repeatWander.a.wander.y).."|"..tostring(repeatWander.a.heading))
+math.random=function()return 0.5 end
 local dead=makeGame(function(p)p.alive=false end)
 dead.b:decide(dead.a,2200);dead.b:decide(dead.a,2200)
 dump("RESPAWN",dead)
