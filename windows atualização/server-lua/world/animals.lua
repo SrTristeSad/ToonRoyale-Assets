@@ -96,6 +96,7 @@ function Animals:spawn(x,y,angle,index,overrides)
  if not ai then
    local opts={
      config=self.config,players=self.players,ais=self.ais,world=self.world,
+     mapSpaces=self.mapSpaces,
      randInt=function(min,max)return self:randomInt(min,max)end,
      randFloat=function(min,max)return self:randomFloat(min,max)end,
      random=self.random,
@@ -107,6 +108,7 @@ function Animals:spawn(x,y,angle,index,overrides)
    self.ais[#self.ais+1]=ai
  end
  AI.init(ai,x,y,angle,index,data)
+ ai.options.mapSpaces=self.mapSpaces
  if overrides then
    for k,v in pairs(overrides) do ai[k]=v end
  end
@@ -155,7 +157,8 @@ function Animals:ensureAnimals()
  for _,entry in ipairs(plan) do
    local count=0
    for _,ai in ipairs(self.ais) do
-     if ai.active and ai.index==entry.index and not jsTruthy(ai.despawnOnDeath) then
+     if ai.active and ai.index==entry.index and (ai.spaceId or "surface")=="surface"
+       and not jsTruthy(ai.despawnOnDeath) then
        count=count+1
      end
    end
