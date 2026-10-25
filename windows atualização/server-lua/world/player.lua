@@ -69,7 +69,9 @@ end
 function Player:spawn(moofoll)
  return Spawn.spawn(self,moofoll,self.room.object_manager,{
    config=self.room.config,nowMs=self.room.nowMs,
-   send=function(...)return self.room:sendId(...)end
+   send=function(...)return self.room:sendId(...)end,
+   broadcast=assert(self.room.broadcast,
+     "original ObjectManager.fetchSpawnObj requires Game.server.broadcast")
  })
 end
 function Player:variant()
