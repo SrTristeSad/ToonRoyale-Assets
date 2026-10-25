@@ -450,6 +450,56 @@ local function labels(world,camera,w,h)
     end
   end
 end
+-- All interactable art is projected from the same coordinates and
+-- authoritative state as the physical custom-map geometry.
+function View.nearestInteraction(world)
+ local area=world and world.space
+ local player=world and world:localPlayer()
+ if not area or not player or type(player.x)~="number" then return nil end
+ local best,dist
+ for _,obj in ipairs(area.interactables or {}) do
+  if (obj.kind=="cache" or obj.kind=="lever") and not obj.used then
+   local dx,dy=obj.x-player.x,obj.y-player.y
+   local d=dx*dx+dy*dy
+   if d<=150*150 and (not dist or d<dist) then
+    best,dist=obj,d
+   end
+  end
+ end
+ return best
+end
+local function drawMapInteractables(world,camera)
+ local area=world.space
+ if not area then return end
+ local u=camera.zoom
+ for _,obj in ipairs(area.interactables or {}) do
+  if obj.kind~="gate" or obj.closed then
+   local x,y=camera:worldToScreen(obj.x,obj.y)
+   if obj.kind=="cache" then
+    love.graphics.setColor(obj.used and 0.26 or 0.50,
+      obj.used and 0.24 or 0.34,0.17,1)
+    love.graphics.rectangle("fill",x-35*u,y-26*u,70*u,52*u,4*u)
+    love.graphics.setColor(obj.used and 0.4 or 0.85,0.65,0.29,1)
+    love.graphics.rectangle("line",x-35*u,y-26*u,70*u,52*u,4*u)
+    love.graphics.rectangle("fill",x-3*u,y-19*u,6*u,38*u)
+   elseif obj.kind=="lever" then
+    love.graphics.setColor(0.27,0.31,0.31,1)
+    love.graphics.circle("fill",x,y,29*u)
+    love.graphics.setColor(obj.used and 0.35 or 0.94,
+      obj.used and 0.80 or 0.58,0.18,1)
+    love.graphics.setLineWidth(math.max(1,6*u))
+    local angle=obj.used and 0.8 or -0.8
+    love.graphics.line(x,y,x+math.sin(angle)*43*u,y-math.cos(angle)*43*u)
+    love.graphics.setLineWidth(1)
+   elseif obj.kind=="gate" then
+    -- The gate is already a real obstacle in zone.obstacles.
+    love.graphics.setColor(0.95,0.75,0.31,1)
+    love.graphics.circle("fill",x,y,6*u)
+   end
+  end
+ end
+end
+
 -- Original game uses a flat surface. Custom LC map packs add their own
 -- visually separate zones; all collision/teleport authority stays server-side.
 local function drawMapHelp(world)
@@ -511,6 +561,14 @@ local function drawMapHelp(world)
   love.graphics.rectangle("fill",16,h-52,390,36,5,5)
   love.graphics.setColor(0.96,0.95,0.87,1)
   love.graphics.print("H: EDITOR DE PAREDES  |  15 MADEIRA + 5 PEDRA",24,h-43)
+ end
+ local obj=View.nearestInteraction(world)
+ if obj then
+  love.graphics.setColor(0.10,0.11,0.10,0.88)
+  love.graphics.rectangle("fill",w/2-205,h-170,410,37,6,6)
+  love.graphics.setColor(0.97,0.89,0.65,1)
+  local label=obj.label or (obj.kind=="cache" and "Bau de recursos" or "Alavanca")
+  love.graphics.printf("F: "..label:sub(1,38),w/2-196,h-161,392,"center")
  end
  if world.mapMessage and (world.mapMessageTimer or 0)>0 then
   love.graphics.setColor(0.07,0.10,0.07,0.91)
@@ -786,6 +844,7 @@ local function drawIndoor(world,camera,dt,options)
   love.graphics.rectangle("fill",x+3*camera.zoom,y+3*camera.zoom,a-6*camera.zoom,5*camera.zoom)
  end
  mapPortalMarkers(world,camera,true)
+ drawMapInteractables(world,camera)
  -- Mob AI and original projectile packets must be drawn inside caves,
  -- not only on the outdoor surface.
  drawProjectiles(world,camera,w,h,0)
@@ -856,7 +915,10 @@ function View.draw(world,camera,dt,options)
   end
   drawObjectLayer(objects,camera,w,h,2)
   drawObjectLayer(objects,camera,w,h,3)
-  if world.map then drawHouses(world,camera) end
+  if world.map then
+    drawHouses(world,camera)
+    drawMapInteractables(world,camera)
+  end
   boundaries(camera,w,h)
   -- The JS reference composites this violet-blue tint after game objects
   -- and before world labels, not over the HTML/CSS HUD.
