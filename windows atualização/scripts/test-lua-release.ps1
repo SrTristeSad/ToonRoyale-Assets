@@ -5,7 +5,7 @@ param([Parameter(Mandatory=$true)][string]$DistDir)
 $ErrorActionPreference='Stop'
 $DistDir=[IO.Path]::GetFullPath($DistDir)
 $required=@(
-  'love.exe','MOO-IO.vbs','main.lua','conf.lua','server-lua\local_server.lua',
+  'love.exe','love.dll','SDL2.dll','license.txt','MOO-IO.vbs','main.lua','conf.lua','server-lua\local_server.lua',
   'scripts\start-server-lua.ps1','src\net\mooio_paths.lua',
   'src\game\mooio_home.lua','src\net\browser_auth.lua',
   'src\net\tls_bridge.lua','src\net\tls_relay_windows.lua',
@@ -16,7 +16,8 @@ $forbidden=@(
   'MOO-IO.bat','MOO-IO-Lua-Teste.vbs',
   'INSTALAR-MAPA.bat','INSTALAR-MOD.bat',
   'INSTALAR-ANIMACAO.bat','INSTALAR-MOB-ARTE.bat',
-  'package.json','shared','tests','tools'
+  'package.json','shared','tests','tools',
+  'lovec.exe','changes.txt','readme.txt','game.ico','love.ico'
 )
 foreach ($path in $required) {
   if (-not (Test-Path (Join-Path $DistDir $path))) { throw "Missing runtime file: $path" }
