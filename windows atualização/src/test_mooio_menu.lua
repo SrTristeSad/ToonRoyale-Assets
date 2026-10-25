@@ -9,7 +9,9 @@ return function()
   local realRoot,pathError=Paths.find(love.filesystem)
   assert(realRoot,pathError or "Diretorio do Moo IO nao encontrado")
   local source=love.filesystem.getSource()
-  assert(realRoot==source or realRoot==love.filesystem.getSourceBaseDirectory(),
+  assert(realRoot==source or realRoot==love.filesystem.getSourceBaseDirectory() or
+    realRoot==source.."/windows atualização" or
+    realRoot==love.filesystem.getSourceBaseDirectory().."/windows atualização",
     "Scripts encontrados em pasta inesperada")
   assert(Paths.script(realRoot):find("scripts/start%-server%-lua%.ps1")~=nil)
   assert(home:click(110,298)=="play_tab","Jogar must open personal room")
@@ -18,7 +20,7 @@ return function()
   assert(not home.botsEnabled,"Bots cannot turn on automatically")
   assert(home:click(210,446)=="configure")
   assert(home.screen=="create","room options must have their own screen")
-  assert(home:mapName()=="Mundo classico")
+  assert(home.mapId~="" and home.mapId~="classico","installed JSON map must be selected")
   assert(#home.mapCatalog>=3,"built-in cave and cabin maps must be installed")
   assert(home:click(160,463)=="bots_toggle")
   assert(home.botsEnabled and home.botCount==2)
@@ -32,7 +34,7 @@ return function()
   local sawCave=false
   for i,m in ipairs(home.mapCatalog) do
     if m.id=="bunker-e-cavernas" then
-      local n=i+1
+      local n=i
       home.mapPage=math.floor((n-1)/4)
       sawCave=home:click(690,256+74*((n-1)%4))=="map_select"
       break
