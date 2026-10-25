@@ -3,6 +3,7 @@
 -- Bots use actual Player/Room mechanics, not simulated combat/resources.
 local Catalogue=require("server-lua.world.catalogue")
 local Loadout=require("server-lua.world.bot_loadout")
+local Goals=require("server-lua.world.bot_goals")
 local Bots={}
 Bots.__index=Bots
 local names={"Lince","Ari","Raposa","Falcao","Rubi","Tora","Lua","Caio"}
@@ -52,6 +53,7 @@ function Bots:create(index)
  local a={p=player,index=index,target=nil,targetUntil=0,wander=nil,at=0,
   prevX=player.x,prevY=player.y,stuck=0,detour=0,detourDir=0,respawn=0,
   lastTarget=nil,lastMode=nil,holdUntil=0,
+  lastHeal=-10000,shopAt=2200+index*350,lastPurpose=nil,
   socialAt=12500+index*3400,prefersGroup=index%4~=3}
  self.agents[#self.agents+1]=a
  return a
@@ -117,23 +119,30 @@ function Bots:decide(a,delta)
  end
  a.respawn=0
  a.at=a.at+delta
+ local enhanced=game.config and game.config.server~=nil
+ local catalogue=game.items or Catalogue
  -- Real age points, no artificial levels or free weapons. Each step invokes
  -- the same Equipment.handle("H") validation used by a human player.
  if type(player.upgradePoints)=="number" and player.upgradePoints>0
    and player.weapons and player.items and type(player.addItem)=="function" then
   for _=1,3 do
-   if not Loadout.upgrade(player,game.items or Catalogue,a.index+1) then break end
+   if not Loadout.upgrade(player,catalogue,a.index+1) then break end
   end
+ end
+ if enhanced and a.at>=a.shopAt and player.points~=nil then
+  a.shopAt=a.at+2100+(a.index%3)*500
+  Goals.purchase(player,a.index+1,catalogue)
  end
  if a.at>=a.socialAt and game.tribes then
   a.socialAt=a.at+15000+math.random()*17000
   self:socialize(a)
  end
- if player.health<player.maxHealth*0.74 and player.food>=10 and a.at>=850 then
+ if player.health<player.maxHealth*0.84 and player.food>=10
+   and a.at-a.lastHeal>=850 then
   player.buildIndex=0
-  player:buildItem(Catalogue.list[0])
+  player:buildItem(catalogue.list[0])
   player.buildIndex=-1
-  a.at=0
+  a.lastHeal=a.at
  end
  local threat,distance=nil,math.huge
  local extra=player.weapons and player.weapons[1]
@@ -160,28 +169,35 @@ function Bots:decide(a,delta)
   end
  end
  local target,mode=nil,"wander"
- local enhanced=game.config and game.config.server~=nil
+ local purpose=nil
  local weak=player.health<player.maxHealth*(enhanced and 0.49 or 0.37)
  if threat and distance<sight then
   target=threat
   local opponentStrong=enhanced and threat.isPlayer
     and (threat.health or 100)>player.health*1.5
-  mode=(weak or opponentStrong) and "flee" or "fight"
+  local unsafe=enhanced and not Goals.shouldFight(player,threat,distance)
+  mode=(weak or opponentStrong or unsafe) and "flee" or "fight"
  else
-  local best=math.huge
-  for _,object in ipairs(game.game_objects) do
-   if (player.spaceId==nil or player.spaceId=="surface")
-     and object.active and not truth(object.isItem) and
-      not truth(object.dontGather) and
-      object.type>=0 and object.type<=3 then
-    local d=dist(player,object)
-    if d<=500 then
-     local foodNeed=player.food<30 or player.health<75
-     local score=d+((foodNeed and object.type~=1) and 125 or 0)
-       +(object.type==3 and -25 or 0)
-     if score<best then best=score;target=object end
+  if enhanced then
+   target,purpose=Goals.selectResource(player,game.game_objects,
+     a.index+1,catalogue,1200)
+  else
+   local best=math.huge
+   for _,object in ipairs(game.game_objects) do
+    if (player.spaceId==nil or player.spaceId=="surface")
+      and object.active and not truth(object.isItem) and
+       not truth(object.dontGather) and
+       object.type>=0 and object.type<=3 then
+     local d=dist(player,object)
+     if d<=500 then
+      local foodNeed=player.food<30 or player.health<75
+      local score=d+((foodNeed and object.type~=1) and 125 or 0)
+        +(object.type==3 and -25 or 0)
+      if score<best then best=score;target=object end
+     end
     end
    end
+ 
   end
   if target then mode="gather"
   else
@@ -216,12 +232,14 @@ function Bots:decide(a,delta)
  -- imminent threat can always interrupt gathering or roaming.
  if enhanced then
   if mode=="gather" and a.lastTarget and a.lastTarget.active
-    and a.lastMode=="gather" and a.at<a.holdUntil
+    and a.lastMode=="gather" and a.lastPurpose==purpose
+    and a.at<a.holdUntil
     and dist(player,a.lastTarget)<620 then
     target=a.lastTarget
   end
   if a.lastTarget~=target or a.lastMode~=mode then
     a.lastTarget=target;a.lastMode=mode;a.holdUntil=a.at+1700
+    a.lastPurpose=purpose
   end
   if player.team and mode=="wander" and math.random()<0.32 then
     for _,mate in ipairs(game.players) do
