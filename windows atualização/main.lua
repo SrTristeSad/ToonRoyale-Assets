@@ -959,6 +959,13 @@ function love.keypressed(key)
     client:send("F",{0,Pack.null})
     return
   end
+  if key=="f" and phase=="playing" and client
+     and client.state=="spawn_confirmed" and world.map
+     and not panels:isOpen() and not chatOpen then
+    local obj=View.nearestInteraction(world)
+    if obj then client:send("j",{"interact",obj.id}) end
+    return
+  end
   if key=="m" and phase=="playing" and client
      and client.state=="spawn_confirmed" and world.map
      and world.spaceId~="surface" and not panels:isOpen()
