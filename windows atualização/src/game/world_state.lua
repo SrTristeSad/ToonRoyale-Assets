@@ -214,7 +214,25 @@ function World:apply(name,args)
     end
     return true
   elseif name=="j" then
-    if args[1]=="add-house" then
+    if args[1]=="add-wall" then
+      local payload=args[4]
+      if not self.map or type(payload)~="table" or
+        type(payload.spaceId)~="string" or type(payload.rect)~="table" or
+        not self.space or self.spaceId~=payload.spaceId then return false end
+      local rect=payload.rect
+      if not number(rect.x) or not number(rect.y) or
+        not number(rect.width) or not number(rect.height)
+        or rect.width<30 or rect.height<30 or
+        rect.width>240 or rect.height>240
+        or rect.x<0 or rect.y<0 or
+        rect.x+rect.width>self.space.width or
+        rect.y+rect.height>self.space.height or
+        #self.space.obstacles>=300 then return false end
+      self.space.obstacles[#self.space.obstacles+1]={
+        x=rect.x,y=rect.y,width=rect.width,height=rect.height,material="wood"
+      }
+      return true
+    elseif args[1]=="add-house" then
       local portal=args[4]
       if not self.map or type(portal)~="table"
         or type(portal.id)~="string" or type(portal.to)~="string"
