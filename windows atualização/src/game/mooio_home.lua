@@ -372,7 +372,11 @@ function Home:keyboardNavigate(key)
  if #rects==0 then return nil end
  if key=="tab" or key=="down" or key=="up" then
   local direction=key=="up" and -1 or 1
-  self.navIndex=((self.navIndex or 0)-1+direction)%#rects+1
+  if not self.navIndex or self.navIndex==0 then
+   self.navIndex=direction<0 and #rects or 1
+  else
+   self.navIndex=((self.navIndex-1+direction)%#rects)+1
+  end
   local b=rects[self.navIndex]
   local w,h=love.graphics.getDimensions()
   local z=math.min(w/1280,h/720)
