@@ -451,6 +451,23 @@ local function labels(world,camera,w,h)
 end
 -- Original game uses a flat surface. Custom LC map packs add their own
 -- visually separate zones; all collision/teleport authority stays server-side.
+local function drawMapHelp(world)
+ if not world.map then return end
+ local w,h=love.graphics.getDimensions()
+ local near=world.spaceId=="surface"
+ if near then
+  love.graphics.setColor(0.09,0.11,0.09,0.83)
+  love.graphics.rectangle("fill",16,h-52,345,36,5,5)
+  love.graphics.setColor(0.96,0.95,0.87,1)
+  love.graphics.print("B: CONSTRUIR CASA (70 MADEIRA, 35 PEDRA)",24,h-43)
+ end
+ if world.mapMessage and (world.mapMessageTimer or 0)>0 then
+  love.graphics.setColor(0.07,0.10,0.07,0.91)
+  love.graphics.rectangle("fill",w/2-290,h-102,580,43,5,5)
+  love.graphics.setColor(0.96,0.90,0.72,1)
+  love.graphics.printf(world.mapMessage,w/2-276,h-91,552,"center")
+ end
+end
 local function mapPortalMarkers(world,camera,indoor)
  local area=world.space
  local portals=area and area.portals or {}
@@ -594,6 +611,9 @@ function View.draw(world,camera,dt,options)
   love.graphics.rectangle("fill",0,0,w,h)
   love.graphics.setColor(1,1,1,1)
   labels(world,camera,w,h)
-  if world.map then mapPortalMarkers(world,camera,false) end
+  if world.map then
+    mapPortalMarkers(world,camera,false)
+    drawMapHelp(world)
+  end
 end
 return View
