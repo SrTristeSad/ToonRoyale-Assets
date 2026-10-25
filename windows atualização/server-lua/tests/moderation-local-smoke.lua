@@ -1,6 +1,6 @@
 -- ModerationStore LOCAL Node behavior through actual account/join API.
 local Accounts=require("server-lua.world.account_store")
-local Moderation=require("server-lua.anticheat.store")
+local Moderation=require("server-lua.anticheat.moderation_store")
 local API=require("server-lua.net.local_api")
 local Json=require("server-lua.vendor.dkjson")
 local prefix="server-lua/tests/.moderation-local"
