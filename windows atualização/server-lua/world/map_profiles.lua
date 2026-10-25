@@ -174,13 +174,48 @@ local function checkInteractables(list,w,h,zone)
  end
 end
 
+-- Optional sprite-sheet metadata for original animal IDs (0..14).
+-- Maps never execute scripts or accept filesystem paths in animation packs.
+local animationStates={idle=true,walk=true,attack=true,hurt=true,death=true}
+local function checkAnimalAnimations(definitions)
+ assert(type(definitions)=="table","animalAnimations must be an object")
+ local count=0
+ for key,set in pairs(definitions) do
+  count=count+1
+  assert(count<=15 and type(key)=="string" and key:match("^%d+$")
+    and tonumber(key)>=0 and tonumber(key)<=14
+    and tostring(tonumber(key))==key,"invalid animated animal ID")
+  only(set,{sheet=true,frameWidth=true,frameHeight=true,
+    idle=true,walk=true,attack=true,hurt=true,death=true})
+  assert(type(set.sheet)=="string" and #set.sheet<=64
+    and set.sheet:match("^[a-zA-Z0-9][a-zA-Z0-9_%-]*%.png$"),
+    "animation sheet must be a safe PNG basename")
+  assert(integer(set.frameWidth,8,512) and integer(set.frameHeight,8,512),
+    "invalid animation frame dimensions")
+  local clips=0
+  for name in pairs(animationStates) do
+   local clip=set[name]
+   if clip~=nil then
+    clips=clips+1
+    only(clip,{row=true,frames=true,fps=true,loop=true})
+    assert(integer(clip.row,0,31) and integer(clip.frames,1,24)
+      and integer(clip.fps,1,30),
+      "invalid animation clip: "..name)
+    assert(clip.loop==nil or type(clip.loop)=="boolean",
+      "animation loop must be a boolean")
+   end
+  end
+  assert(clips>0,"animation requires at least one state")
+ end
+end
+
 function Maps.validate(content,wanted)
  assert(type(content)=="string" and #content<=131072,"map pack exceeds 128 KiB")
  local map,_,why=Json.decode(content,1,Json.null)
  assert(not why and type(map)=="table","invalid map JSON")
  only(map,{schemaVersion=true,id=true,name=true,description=true,mode=true,
   generation=true,surface=true,spaces=true,portals=true,spawn=true,
-  interactables=true})
+  interactables=true,animalAnimations=true})
  assert(map.schemaVersion==1 and id(map.id)
    and (not wanted or wanted==map.id),"wrong map schema or ID")
  assert(validText(map.name,70) and
@@ -206,6 +241,8 @@ function Maps.validate(content,wanted)
  assert(type(map.surface)=="table" and #map.surface<=400,"too many surface resources")
  for _,o in ipairs(map.surface) do checkSurface(o) end
  if map.mode=="authored" then assert(#map.surface>0,"empty authored map") end
+ map.animalAnimations=map.animalAnimations or {}
+ checkAnimalAnimations(map.animalAnimations)
  map.spaces=map.spaces or {}
  assert(type(map.spaces)=="table" and #map.spaces<=24,"too many map spaces")
  local lookup={}
