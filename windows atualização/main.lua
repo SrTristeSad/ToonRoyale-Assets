@@ -46,6 +46,7 @@ local TLS=require("src.net.tls_bridge")
 local Config=require("src.game.config")
 local Hud=require("src.game.reference_hud")
 local Pad=require("src.game.gamepad_controls")
+local Controls=require("src.game.control_settings")
 local Panels=require("src.game.reference_panels")
 local Clans=require("src.game.account_clans")
 local Death=require("src.game.reference_death")
@@ -90,6 +91,8 @@ local reconnectSeconds=0
 local latestEvent="Nenhum io-init recebido."
 local startupError=nil
 local input=Input.new()
+local controls=Controls.new()
+input.bindings=controls
 local movementClock=0
 local lastMove=false
 local lastAim=nil
@@ -141,8 +144,9 @@ local function updateGamepad()
   end
   return
  end
- input:gamepadMove(Pad.axis(joy,"leftx"),Pad.axis(joy,"lefty"))
- local rx,ry=Pad.axis(joy,"rightx"),Pad.axis(joy,"righty")
+ local lx,ly=controls:stick(controls:axis(joy,"leftx"),controls:axis(joy,"lefty"))
+ input:gamepadMove(lx,ly)
+ local rx,ry=controls:stick(controls:axis(joy,"rightx"),controls:axis(joy,"righty"))
  -- The R3 analog guides both the server D direction and the visible weapon.
  -- Holding the last angle at stick center avoids snapping back to the mouse.
  if rx*rx+ry*ry>=0.12 then
@@ -151,11 +155,11 @@ local function updateGamepad()
    if client:send("K",{0}) then lockDir=false end
   end
  end
- local r2=Pad.triggerRight(joy)
+ local r2=controls:button(joy,"next")
  if r2 and not gamepadR2Held then cycleGamepadSlot(1) end
  gamepadR2Held=r2
  -- R1 attacks. R2 is reserved for moving forward through the hotbar.
- local attacking=Pad.button(joy,"rightshoulder")
+ local attacking=controls:button(joy,"attack")
  if phase=="playing" and client and client.state=="spawn_confirmed"
    and not died and not pause:isOpen() and not chatOpen
    and not panels:isOpen() and not clans:isOpen() and not profile:isOpen() then
@@ -355,10 +359,10 @@ end
   -- Continuous cursor travel for controller navigation; axis callbacks only fire
 -- on changes, so relying on them makes menus nearly impossible to navigate.
 local function updateGamepadMenu(dt)
- if phase~="menu" and phase~="death_choice" and not pause:isOpen() then return end
+ if controls:isOpen() or (phase~="menu" and phase~="death_choice" and not pause:isOpen()) then return end
  local joy=activeGamepad()
  if not joy then return end
- local xaxis,yaxis=Pad.axis(joy,"leftx"),Pad.axis(joy,"lefty")
+ local xaxis,yaxis=controls:axis(joy,"leftx"),controls:axis(joy,"lefty")
  if math.abs(xaxis)<0.24 then xaxis=0 end
  if math.abs(yaxis)<0.24 then yaxis=0 end
  if xaxis==0 and yaxis==0 then return end
@@ -668,6 +672,7 @@ function love.draw()
     home:draw(state,client and (client.error or client.status) or "",true)
     if home.roomOverlay then home:drawRoomOverlay() end
     if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world) end
+    controls:draw(activeGamepad())
     return
   end
   if client and client.state=="spawn_confirmed" and not died
@@ -692,6 +697,7 @@ function love.draw()
     end
     if pause:isOpen() then
       pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world)
+      controls:draw(activeGamepad())
       return
     end
     -- Only show missing PNG diagnostics on explicit developer opt-in.
@@ -721,6 +727,7 @@ function love.draw()
   love.graphics.setColor(0.68,0.75,0.73)
   love.graphics.printf(client and client.status or "Aguardando servidor...",40,h/2+26,w-80,"center")
   if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world) end
+  controls:draw(activeGamepad())
 end
 
 local menuAction
@@ -838,7 +845,10 @@ connectRoom=function(ip,port,inviteCode,authToken,secure)
 end
 
 homeAction=function(action)
-  if action=="quit_game" then
+  if action=="edit_controls" then
+    controls:show()
+    return
+  elseif action=="quit_game" then
     if hosted.state=="ready" or hosted.state=="starting" then
       -- Never destroy a live friend's room from the title screen silently.
       pause:confirm(true,true)
@@ -1048,7 +1058,10 @@ local function stopPlayerControls()
   end
 end
 local function pauseAction(action)
-  if action=="toggle_grid" then
+  if action=="edit_controls" then
+    controls:show()
+    stopPlayerControls()
+  elseif action=="toggle_grid" then
     home.showGrid=not home.showGrid
     menu.grid=home.showGrid
     previewAge=2
@@ -1072,52 +1085,65 @@ local function pauseAction(action)
     end
   end
 end
-function love.gamepadpressed(joystick,button)
+local function gamepadAction(joystick,physical)
  if joystick~=activeGamepad() then return end
- if button=="start" then love.keypressed("escape");return end
+ if controls:isOpen() then
+  controls:captureButton(joystick,physical)
+  return
+ end
+ local match=function(id)return controls:matches(joystick,physical,id)end
+ if match("pause") then love.keypressed("escape");return end
  if phase=="death_choice" then
-  if button=="a" then love.keypressed("return")
-  elseif button=="b" then love.keypressed("escape") end
+  if match("interact") then love.keypressed("return")
+  elseif physical=="b" or match("pause") then love.keypressed("escape") end
   return
  end
- if button=="b" and (phase=="menu" or pause:isOpen()) then
-  love.keypressed("escape");return
- end
- if button=="a" and (phase=="menu" or pause:isOpen()) then
-  local x,y=love.mouse.getPosition()
-  love.mousepressed(x,y,1)
+ if phase=="menu" or pause:isOpen() then
+  if match("interact") then
+   local x,y=love.mouse.getPosition()
+   love.mousepressed(x,y,1)
+  elseif physical=="b" then love.keypressed("escape") end
   return
  end
- if phase~="playing" or pause:isOpen() or chatOpen or died then return end
- if button=="a" then love.keypressed("f")
- elseif button=="b" then love.keypressed("escape")
- elseif button=="x" then love.keypressed("space")
- elseif button=="y" then love.keypressed("r")
- elseif button=="leftshoulder" then cycleGamepadSlot(-1)
- -- R1 is read continuously in updateGamepad() to ensure release is handled.
- elseif button=="dpup" then love.keypressed("1")
- elseif button=="dpright" then love.keypressed("2")
- elseif button=="dpdown" then love.keypressed("3")
- elseif button=="dpleft" then love.keypressed("4")
+ if phase~="playing" or chatOpen or died or profile:isOpen()
+   or panels:isOpen() or clans:isOpen() then return end
+ if match("previous") then cycleGamepadSlot(-1)
+ elseif match("interact") then love.keypressed("f")
+ elseif match("heal") then love.keypressed("r")
+ elseif physical=="b" then love.keypressed("escape")
+ elseif physical=="dpup" then love.keypressed("1")
+ elseif physical=="dpright" then love.keypressed("2")
+ elseif physical=="dpdown" then love.keypressed("3")
+ elseif physical=="dpleft" then love.keypressed("4")
  end
+end
+function love.gamepadpressed(joystick,button)
+ gamepadAction(joystick,button)
 end
 function love.gamepadreleased(joystick,button)
  if joystick~=activeGamepad() then return end
- if button=="x" then love.keyreleased("space") end
+ if button=="x" and spaceAttack then love.keyreleased("space") end
 end
--- Unmapped USB and generic DirectInput sticks do not emit gamepadpressed.
--- Translate their physical button indices to the same in-game actions.
 function love.joystickpressed(joystick,index)
  if joystick~=activeGamepad() or Pad.isMapped(joystick) then return end
- local button=Pad.buttonName(joystick,index)
- if button then love.gamepadpressed(joystick,button) end
+ gamepadAction(joystick,index)
 end
 function love.joystickreleased(joystick,index)
  if joystick~=activeGamepad() or Pad.isMapped(joystick) then return end
- local button=Pad.buttonName(joystick,index)
- if button then love.gamepadreleased(joystick,button) end
 end
 function love.keypressed(key)
+  if controls:isOpen() then
+    if controls:captureKeyboard(key) then return end
+    if key=="escape" then controls:hide() end
+    return
+  end
+  if phase=="playing" and not chatOpen then
+    local mapped=controls:keyForAction(key)
+    if mapped=="previous" then cycleGamepadSlot(-1);return end
+    if mapped=="next" then cycleGamepadSlot(1);return end
+    local virtual={attack="space",interact="f",heal="r",pause="escape"}
+    key=virtual[mapped] or key
+  end
   if pause:isOpen() then
     pauseAction(pause:keypressed(key))
     return
@@ -1284,6 +1310,7 @@ function love.textinput(text)
 end
 function love.keyreleased(key)
   if phase=="death" then return end
+  if controls:keyForAction(key)=="attack" then key="space" end
   if not diagnostic then input:keyreleased(key) end
   if key=="space" and spaceAttack then
     spaceAttack=false
@@ -1303,6 +1330,7 @@ function love.focus(focused)
   end
 end
 function love.mousepressed(x,y,button)
+  if controls:isOpen() then controls:click(x,y);return end
   if pause:isOpen() then
     if button==1 then pauseAction(pause:click(x,y)) end
     return
