@@ -58,9 +58,19 @@ local function modFile(dir,id)
  assert(type(dir)=="string" and #dir>0,"diretorio de mods invalido")
  assert(type(id)=="string" and #id>=2 and #id<=48
     and id:match("^[a-z][a-z0-9%-]+$"),"mod ID invalido")
- local f,err=io.open(dir.."/"..id..".json","rb")
- assert(f,"mod nao encontrado: "..id..": "..tostring(err))
- local content=f:read(65537);f:close()
+ local path=dir.."/"..id..".json"
+ -- LÖVE resolves UTF-8 source paths correctly even on Windows. The standalone
+ -- Lua test server uses the regular filesystem as a compatible fallback.
+ local content
+ if love and love.filesystem and type(love.filesystem.read)=="function" then
+  local ok,data=pcall(love.filesystem.read,path)
+  if ok and type(data)=="string" then content=data end
+ end
+ if not content then
+  local f,err=io.open(path,"rb")
+  assert(f,"mod nao encontrado: "..id..": "..tostring(err))
+  content=f:read(65537);f:close()
+ end
  return validateManifest(content,id)
 end
 function Mods.describe(dir,id)
