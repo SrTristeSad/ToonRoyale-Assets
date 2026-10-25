@@ -18,6 +18,32 @@ local function only(t,fields)
  assert(type(t)=="table","map object must be a table")
  for k in pairs(t) do assert(fields[k],"unknown map field: "..tostring(k)) end
 end
+-- Presentational options are deliberately data-only. No Lua code, external
+-- asset paths, or renderer names may be supplied by a community map.
+local visualThemes={wood=true,rock=true,metal=true,stone=true,
+  sand=true,earth=true,grass=true,ice=true,brick=true}
+local entranceStyles={house=true,bunker=true,cave=true,door=true,
+  hatch=true,stairs=true,tunnel=true,arch=true}
+local function validateVisual(zone)
+ local visual=zone.visual
+ if visual==nil then
+  zone.visual={floor=zone.type=="underground" and "rock" or "wood",
+    wall=zone.type=="underground" and "rock" or "wood",tileSize=128}
+  return
+ end
+ only(visual,{floor=true,wall=true,tileSize=true,name=true})
+ assert(visual.floor==nil or visualThemes[visual.floor],
+  "unknown map floor material")
+ assert(visual.wall==nil or visualThemes[visual.wall],
+  "unknown map wall material")
+ assert(visual.tileSize==nil or integer(visual.tileSize,32,256),
+  "invalid map tile size")
+ assert(visual.name==nil or validText(visual.name,60),
+  "invalid region display name")
+ visual.floor=visual.floor or (zone.type=="underground" and "rock" or "wood")
+ visual.wall=visual.wall or visual.floor
+ visual.tileSize=visual.tileSize or 128
+end
 local bounds={treesPerArea={0,50},bushesPerArea={0,50},
  totalRocks={0,400},goldOres={0,160},riverWidth={0,2000},seed={1,2147483646}}
 local function checkSurface(object)
@@ -30,7 +56,8 @@ end
 local function checkObstacles(obstacles,w,h)
  assert(type(obstacles)=="table" and #obstacles<=256,"too many obstacles")
  for _,o in ipairs(obstacles) do
-  only(o,{x=true,y=true,width=true,height=true})
+  only(o,{x=true,y=true,width=true,height=true,material=true})
+  assert(o.material==nil or visualThemes[o.material],"unknown wall material")
   assert(integer(o.x,0,w) and integer(o.y,0,h)
    and integer(o.width,1,1024) and integer(o.height,1,1024)
    and o.x+o.width<=w and o.y+o.height<=h,"obstacle outside space")
@@ -53,9 +80,11 @@ local function checkPortals(portals,source,lookup,max)
  local fromW,fromH=dims(source)
  local seen={}
  for _,p in ipairs(portals) do
-  only(p,{id=true,x=true,y=true,to=true,targetX=true,targetY=true,style=true})
-  assert(p.style==nil or p.style=="house" or p.style=="bunker" or p.style=="cave",
+  only(p,{id=true,x=true,y=true,to=true,targetX=true,targetY=true,
+    style=true,label=true})
+  assert(p.style==nil or entranceStyles[p.style],
     "unsupported entrance style")
+  assert(p.label==nil or validText(p.label,40),"invalid entrance label")
   assert(id(p.id) and not seen[p.id],"duplicate/invalid portal")
   seen[p.id]=true
   local dest=p.to=="surface" and nil or lookup[p.to]
@@ -103,12 +132,14 @@ function Maps.validate(content,wanted)
  assert(type(map.spaces)=="table" and #map.spaces<=24,"too many map spaces")
  local lookup={}
  for _,zone in ipairs(map.spaces) do
-  only(zone,{id=true,type=true,width=true,height=true,obstacles=true,portals=true,mobs=true})
+  only(zone,{id=true,type=true,width=true,height=true,obstacles=true,
+    portals=true,mobs=true,visual=true})
   assert(id(zone.id) and zone.id~="surface" and not lookup[zone.id],
     "invalid or duplicate space ID")
   assert(zone.type=="interior" or zone.type=="underground","invalid space type")
   assert(integer(zone.width,256,4096) and integer(zone.height,256,4096),
     "invalid space dimensions")
+  validateVisual(zone)
   zone.obstacles=zone.obstacles or {}
   zone.portals=zone.portals or {}
   checkObstacles(zone.obstacles,zone.width,zone.height)
