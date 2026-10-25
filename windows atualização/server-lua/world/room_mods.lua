@@ -30,12 +30,9 @@ local function finite(value,range)
    and value~=-math.huge and value>=range[1] and value<=range[2]
    and (range~=limits.spawns.desired or value%1==0)
 end
-local function modFile(dir,id)
+local function validateManifest(content,id)
  assert(type(id)=="string" and #id>=2 and #id<=48
    and id:match("^[a-z][a-z0-9%-]+$"),"mod ID invalido")
- local f,err=io.open(dir.."/"..id..".json","rb")
- assert(f,"mod nao encontrado: "..id..": "..tostring(err))
- local content=f:read(65537);f:close()
  assert(type(content)=="string" and #content<=65536,"arquivo de mod muito grande")
  local data,_,why=Json.decode(content,1,Json.null)
  assert(not why and type(data)=="table" and data.id==id
@@ -54,9 +51,43 @@ local function modFile(dir,id)
 end
 -- Metadata API for the client mod picker and server diagnostics.
 -- It invokes the same manifest validator as the runtime.
+local function modFile(dir,id)
+ assert(type(dir)=="string" and #dir>0,"diretorio de mods invalido")
+ assert(type(id)=="string" and #id>=2 and #id<=48
+    and id:match("^[a-z][a-z0-9%-]+$"),"mod ID invalido")
+ local f,err=io.open(dir.."/"..id..".json","rb")
+ assert(f,"mod nao encontrado: "..id..": "..tostring(err))
+ local content=f:read(65537);f:close()
+ return validateManifest(content,id)
+end
 function Mods.describe(dir,id)
  local data=modFile(dir,id)
  return {id=data.id,name=data.name,description=data.description or ""}
+end
+-- The menu can inspect installed mods without executing external Lua or opening
+-- remote pages. Uses LÖVE's read-only filesystem API; injectable for tests.
+function Mods.available(fs,dir)
+ dir=dir or "server-lua/mods"
+ if type(fs)~="table" or type(fs.getDirectoryItems)~="function"
+   or type(fs.read)~="function" then return {} end
+ local ok,files=pcall(fs.getDirectoryItems,dir)
+ if not ok or type(files)~="table" then return {} end
+ table.sort(files)
+ local result={}
+ for _,filename in ipairs(files) do
+  local id=type(filename)=="string" and filename:match("^([a-z][a-z0-9%-]+)%.json$")
+  if id and #id<=48 then
+   local success,content=pcall(fs.read,dir.."/"..filename)
+   if success and type(content)=="string" then
+    local valid,manifest=pcall(validateManifest,content,id)
+    if valid then
+     result[#result+1]={id=manifest.id,name=manifest.name,
+       description=manifest.description or ""}
+    end
+   end
+  end
+ end
+ return result
 end
 function Mods.ids(raw)
  if raw==nil or raw=="" then return {} end
