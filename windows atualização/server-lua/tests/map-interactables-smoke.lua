@@ -120,7 +120,8 @@ assert(#surface.interactables==1 and surface.interactables[1].kind=="cache")
 local surfaceEvents={}
 local surfacePlayer={
  id="surface-looter",alive=true,spaceId="surface",
- x=3620,y=3660,scale=35,food=0,
+ x=surface.interactables[1].x,y=surface.interactables[1].y,
+ scale=35,food=0,
  send=function(_,name,...) surfaceEvents[#surfaceEvents+1]={
   name=name,args={...}} end,
  addResource=function(self,kind,amount,auto)
