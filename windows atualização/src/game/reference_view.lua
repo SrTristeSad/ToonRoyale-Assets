@@ -182,7 +182,7 @@ local function renderAnimal(a,camera,world,animatedOnly)
   -- a server-authoritative enemy completely invisible.
   -- Map JSON may supply optional frames. No animation data or asset?
   -- Use the SAME original PNG; no change to classic/V2 visuals.
-  local frames=Mob.definition(world and world.map,a)
+  local frames=Mob.definition(world and world.animationCatalog,a)
   local rendered=Mob.draw(a,frames,x,y,radius*2,angle,alpha)
   if not rendered and animatedOnly then return false end
   if not rendered then
