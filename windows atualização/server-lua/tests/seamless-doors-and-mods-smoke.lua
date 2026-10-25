@@ -31,6 +31,25 @@ assert(indoor==6 and surface==45 and active==baseline,
  "Normal map unexpectedly adds underground mobs on top of classic budget")
 assert(#instance.rooms.MB.room.ais==baseline,
  "MB must retain the original normal animal plan")
+local killed
+for _,mob in ipairs(room.ais) do
+ if mob.mapSpawnId=="caverna-02:1" then killed=mob;break end
+end
+assert(killed and killed.spaceId=="caverna-02")
+killed.active=false
+room.animal_manager:ensureAnimals()
+local restored=0
+for _,mob in ipairs(room.ais) do
+ if mob.active then
+  restored=restored+1
+  if mob.mapSpawnId=="caverna-02:1" then
+   assert(mob.spaceId=="caverna-02",
+    "recycled AI entered the wrong zone")
+  end
+ end
+end
+assert(restored==baseline,
+ "the authored cave mob must respawn without exceeding normal budget")
 local packets={}
 local player={
  id="walking-player",x=4200,y=4840,dir=0,moveDir=0,scale=35,
