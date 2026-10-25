@@ -16,6 +16,7 @@ assert(key==9 and weapon==true,"secondary slot must preserve weapon identity")
 world:apply("V",{{4,9},1})
 assert(#world.inventory.weapons==2 and world.inventory.weapons[1]==4,
   "ordinary MessagePack arrays must remain supported")
+world:apply("V",{{[0]=3,[1]=9},1})
 world.upgradePoints=1;world.upgradeAge=8
 local offers=Upgrades.offers(world)
 local found=false
