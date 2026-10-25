@@ -68,7 +68,7 @@ local boxes={
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43},
   playConfigure={155,418,462,63},
   chooseLan={122,242,212,43},chooseVpn={348,242,212,43},
-  createVpnIP={122,296,438,42},
+  createVpnIP={122,292,438,34},
   easyDiff={122,349,210,40},normalDiff={348,349,212,40},
   hardDiff={122,398,210,40},extremeDiff={348,398,212,40},
   createBots={122,451,438,40},createBotsMinus={122,498,99,39},
@@ -547,7 +547,7 @@ function Home:draw(state,detail,showWorld)
       else
         printText("Amigos na mesma rede local.",122,310,16,C.muted,440)
       end
-      printText("DIFICULDADE",122,329,16,C.green)
+      printText("DIFICULDADE",122,330,14,C.green)
       local opts={{"easyDiff","PACIFICO","pacifico"},
         {"normalDiff","NORMAL","normal"},{"hardDiff","DIFICIL","dificil"},
         {"extremeDiff","EXTREMO","extremo"}}
@@ -582,7 +582,7 @@ function Home:draw(state,detail,showWorld)
       button("chooseMapNext","PROXIMOS MAPAS",false)
       button("createBack","CANCELAR",false)
       button("createSubmit","CRIAR SALA NESTE MAPA",true)
-      printText("Selecionado: "..self:mapName(),639,604,13,C.green,510)
+      printText("SELECIONADO: "..self:mapName(),635,542,14,C.amber,510)
       if #self.mapCatalog==0 then
         printText("Aviso: nenhum mapa adicional encontrado no pacote.",
           636,543,14,C.red,511)
