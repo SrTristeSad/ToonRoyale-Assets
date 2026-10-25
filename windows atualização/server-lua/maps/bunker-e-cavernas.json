@@ -24,7 +24,8 @@
       "to": "bunker-01",
       "targetX": 750,
       "targetY": 850,
-      "style": "bunker"
+      "style": "bunker",
+      "label": "Bunker"
     },
     {
       "id": "entrada-caverna",
@@ -33,7 +34,8 @@
       "to": "caverna-01",
       "targetX": 500,
       "targetY": 700,
-      "style": "cave"
+      "style": "cave",
+      "label": "Caverna"
     }
   ],
   "spaces": [
@@ -111,7 +113,9 @@
           "y": 850,
           "to": "surface",
           "targetX": 4200,
-          "targetY": 4700
+          "targetY": 4700,
+          "style": "hatch",
+          "label": "Superficie"
         },
         {
           "id": "descer-bunker",
@@ -119,10 +123,18 @@
           "y": 1000,
           "to": "bunker-02",
           "targetX": 600,
-          "targetY": 700
+          "targetY": 700,
+          "style": "hatch",
+          "label": "bunker-02"
         }
       ],
-      "mobs": []
+      "mobs": [],
+      "visual": {
+        "floor": "metal",
+        "wall": "metal",
+        "tileSize": 96,
+        "name": "Bunker"
+      }
     },
     {
       "id": "bunker-02",
@@ -198,7 +210,9 @@
           "y": 700,
           "to": "bunker-01",
           "targetX": 1100,
-          "targetY": 1000
+          "targetY": 1000,
+          "style": "hatch",
+          "label": "bunker-01"
         },
         {
           "id": "tunel-da-gruta",
@@ -206,7 +220,9 @@
           "y": 700,
           "to": "caverna-01",
           "targetX": 2100,
-          "targetY": 1200
+          "targetY": 1200,
+          "style": "tunnel",
+          "label": "caverna-01"
         }
       ],
       "mobs": [
@@ -215,7 +231,13 @@
           "x": 1300,
           "y": 400
         }
-      ]
+      ],
+      "visual": {
+        "floor": "metal",
+        "wall": "metal",
+        "tileSize": 96,
+        "name": "Bunker"
+      }
     },
     {
       "id": "caverna-01",
@@ -303,7 +325,9 @@
           "y": 700,
           "to": "surface",
           "targetX": 4670,
-          "targetY": 4700
+          "targetY": 4700,
+          "style": "stairs",
+          "label": "Superficie"
         },
         {
           "id": "voltar-bunker",
@@ -311,7 +335,9 @@
           "y": 1200,
           "to": "bunker-02",
           "targetX": 1600,
-          "targetY": 700
+          "targetY": 700,
+          "style": "stairs",
+          "label": "bunker-02"
         },
         {
           "id": "descer-caverna",
@@ -319,7 +345,9 @@
           "y": 550,
           "to": "caverna-02",
           "targetX": 500,
-          "targetY": 700
+          "targetY": 700,
+          "style": "stairs",
+          "label": "caverna-02"
         }
       ],
       "mobs": [
@@ -333,7 +361,13 @@
           "x": 1650,
           "y": 850
         }
-      ]
+      ],
+      "visual": {
+        "floor": "rock",
+        "wall": "stone",
+        "tileSize": 128,
+        "name": "Caverna"
+      }
     },
     {
       "id": "caverna-02",
@@ -433,7 +467,9 @@
           "y": 700,
           "to": "caverna-01",
           "targetX": 2300,
-          "targetY": 550
+          "targetY": 550,
+          "style": "stairs",
+          "label": "caverna-01"
         }
       ],
       "mobs": [
@@ -452,7 +488,13 @@
           "x": 750,
           "y": 1700
         }
-      ]
+      ],
+      "visual": {
+        "floor": "rock",
+        "wall": "stone",
+        "tileSize": 128,
+        "name": "Caverna"
+      }
     }
   ]
 }
