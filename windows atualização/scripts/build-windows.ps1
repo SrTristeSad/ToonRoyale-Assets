@@ -33,6 +33,7 @@ foreach ($folder in @('src','shared','assets','server-lua')) {
 New-Item -ItemType Directory -Force (Join-Path $OutputDir 'scripts') | Out-Null
 Copy-Item (Join-Path $root 'scripts\start-server-lua.ps1') (Join-Path $OutputDir 'scripts\start-server-lua.ps1') -Force
 Copy-Item (Join-Path $root 'scripts\import-json-pack.ps1') (Join-Path $OutputDir 'scripts\import-json-pack.ps1') -Force
+Copy-Item (Join-Path $root 'scripts\import-animation.ps1') (Join-Path $OutputDir 'scripts\import-animation.ps1') -Force
 Copy-Item (Join-Path $root 'scripts\tls-relay.mjs') (Join-Path $OutputDir 'scripts\tls-relay.mjs') -Force
 # Only a TLS relay uses this executable; no Node game engine is shipped.
 if (-not $TlsNodeExe) {
@@ -48,7 +49,7 @@ if ($LASTEXITCODE -ne 0 -or $version -notmatch '^v22[.]') {
 $nodeDir=Join-Path $OutputDir 'runtime\node'
 New-Item -ItemType Directory -Force $nodeDir | Out-Null
 Copy-Item $TlsNodeExe (Join-Path $nodeDir 'node.exe') -Force
-foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','INSTALAR-MAPA.bat','INSTALAR-MOD.bat','README.md','LICENSE','NOTICE.md')) {
+foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','INSTALAR-MAPA.bat','INSTALAR-MOD.bat','INSTALAR-ANIMACAO.bat','README.md','LICENSE','NOTICE.md')) {
   Copy-Item (Join-Path $root $file) (Join-Path $OutputDir $file) -Force
 }
 if (Test-Path (Join-Path $root 'licenses')) {
