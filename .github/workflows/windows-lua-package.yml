@@ -1,0 +1,86 @@
+name: Moo-IO Lua - pacote Windows completo
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'windows atualização/**'
+      - '.github/workflows/windows-lua-package.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-package:
+    name: Build Windows x64 e teste servidor Lua
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obter LÖVE 11.5 oficial e conferir SHA-256
+        run: |
+          $ErrorActionPreference='Stop'
+          $url='https://github.com/love2d/love/releases/download/11.5/love-11.5-win64.zip'
+          $zip=Join-Path $env:RUNNER_TEMP 'love-11.5-win64.zip'
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          $expected='BA6E56BE2685E53C817749C4A5007F51137136FE5A3AB64920508BABC2E74369'
+          $hash=(Get-FileHash $zip -Algorithm SHA256).Hash
+          if ($hash -ne $expected) { throw "SHA256 LÖVE divergente: $hash" }
+          Expand-Archive -Path $zip -DestinationPath (Join-Path $env:RUNNER_TEMP 'love') -Force
+      - name: Gerar pacote Lua sem Node ou V2
+        run: |
+          $ErrorActionPreference='Stop'
+          $root=Join-Path $env:GITHUB_WORKSPACE 'windows atualização'
+          $loveDir=Join-Path $env:RUNNER_TEMP 'love\love-11.5-win64'
+          $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
+          & (Join-Path $root 'scripts\build-windows.ps1') -LoveDir $loveDir -OutputDir $out
+          if ($LASTEXITCODE -and $LASTEXITCODE -ge 8) { throw "Build falhou: $LASTEXITCODE" }
+          & (Join-Path $root 'scripts\test-lua-release.ps1') -DistDir $out
+      - name: Smoke do executavel Windows - iniciar sala e encerrar
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
+          $env:MOO_IO_LUA_SERVER='1'
+          $env:MOO_IO_BIND_IP='127.0.0.1'
+          $env:MOO_IO_ROOM_CODE='testing42'
+          $env:MOO_IO_LUA_DATA_DIR=Join-Path $out 'server-lua\data'
+          $env:MOO_IO_BOT_COUNT='0'
+          $env:PORT='18777'
+          $stdout=Join-Path $env:RUNNER_TEMP 'server-stdout.txt'
+          $stderr=Join-Path $env:RUNNER_TEMP 'server-stderr.txt'
+          $proc=Start-Process -FilePath (Join-Path $out 'love.exe') -ArgumentList ('"' + $out + '"') -WorkingDirectory $out -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+          try {
+            $ready=$false
+            for ($i=0; $i -lt 40; $i++) {
+              Start-Sleep -Milliseconds 500
+              if ($proc.HasExited) { break }
+              try {
+                $result=Invoke-RestMethod -Uri 'http://127.0.0.1:18778/status' -TimeoutSec 2
+                if ($result.project -eq 'Moo-IO') { $ready=$true; break }
+              } catch { }
+            }
+            if (-not $ready) {
+              if (Test-Path $stdout) { Get-Content $stdout }
+              if (Test-Path $stderr) { Get-Content $stderr }
+              throw 'Servidor Lua nao iniciou no Windows x64'
+            }
+            $stop=Invoke-RestMethod -Uri 'http://127.0.0.1:18778/shutdown' -Method POST -Headers @{'X-MooIO-Code'='testing42'} -TimeoutSec 5
+            if (-not $stop.ok) { throw 'Shutdown recusado' }
+            if (-not $proc.WaitForExit(12000)) { throw 'Servidor Lua permaneceu aberto apos shutdown' }
+            if ($proc.ExitCode -ne 0) { throw "Servidor terminou com codigo $($proc.ExitCode)" }
+            Write-Host 'PASS: servidor Windows Lua abriu, respondeu /status e encerrou sem processo residual'
+          } finally {
+            if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
+          }
+      - name: Compactar jogo completo
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
+          $zip=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua.zip'
+          Compress-Archive -Path (Join-Path $out '*') -DestinationPath $zip -CompressionLevel Optimal
+          if (-not (Test-Path $zip)) { throw 'Arquivo ZIP nao gerado' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Moo-IO-Windows-Lua-x64
+          path: ${{ runner.temp }}/Moo-IO-Windows-Lua.zip
+          if-no-files-found: error
