@@ -234,6 +234,19 @@ function Registry:onJoined(player,peer,ticket,room)
  self.pending[peer]=nil
  self.playersById[player.id]=player
  local init={teams=self.options.clanList(),animals=self.animalKinds}
+ if room.key=="LC" then
+  local surfaceTotal=0
+  for _,row in ipairs(room.config.server.animalSpawnPlan) do
+   surfaceTotal=surfaceTotal+row.desired
+  end
+  local indoors=0
+  for _,zone in ipairs(room.customMap and room.customMap.spaces or {}) do
+   indoors=indoors+#(zone.mobs or {})
+  end
+  init.roomSettings={difficulty=room.selectedDifficulty or "normal",
+    mods=room.activeMods or {},surfaceAnimals=surfaceTotal,
+    interiorAnimals=indoors}
+ end
  if room.key=="LC" and room.customMap then
   init.map={id=room.mapId,name=room.customMap.name,
     portals=room.mapSpaces:get("surface").portals}
