@@ -239,17 +239,28 @@ function AI:update(delta)
  local multiplier=1/depth
  for _=1,depth do
    local prevX,prevY=self.x,self.y
-   if truth(self.xVel) then self.x=self.x+self.xVel*delta*multiplier end
-   if truth(self.yVel) then self.y=self.y+self.yVel*delta*multiplier end
-   if self.secret then
-     assert(type(self.keepInSecret)=="function","original secret AI boundary required")
-     self:keepInSecret(prevX,prevY)
-   end
    if inside and spaces then
-     if not spaces:canOccupy(spaceId,self.x,self.y,self.scale) then
-       self.x=prevX;self.y=prevY;self.xVel=0;self.yVel=0
+     -- Resolve against dungeon geometry on each axis independently, as
+     -- Player's tile collision does. Wall contact blocks only that axis.
+     if truth(self.xVel) then
+       local xx=self.x+self.xVel*delta*multiplier
+       if spaces:canOccupy(spaceId,xx,self.y,self.scale) then
+         self.x=xx
+       else self.xVel=0 end
+     end
+     if truth(self.yVel) then
+       local yy=self.y+self.yVel*delta*multiplier
+       if spaces:canOccupy(spaceId,self.x,yy,self.scale) then
+         self.y=yy
+       else self.yVel=0 end
      end
    else
+     if truth(self.xVel) then self.x=self.x+self.xVel*delta*multiplier end
+     if truth(self.yVel) then self.y=self.y+self.yVel*delta*multiplier end
+     if self.secret then
+       assert(type(self.keepInSecret)=="function","original secret AI boundary required")
+       self:keepInSecret(prevX,prevY)
+     end
      for _,grid in ipairs(world:getGridArrays(self.x,self.y,self.scale)) do
        for _,obj in ipairs(grid) do
          if obj.active then checkCollision(self,obj,multiplier,opts) end
