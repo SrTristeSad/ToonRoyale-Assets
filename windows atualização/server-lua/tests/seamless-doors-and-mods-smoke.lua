@@ -65,6 +65,8 @@ assert(room:checkPortalCrossing(player),"walking toward bunker must enter")
 assert(player.spaceId=="bunker-01" and player.x==750)
 assert(packets[#packets].name=="j" and packets[#packets].args[1]=="bunker-01")
 room.nowMs=202000
+-- The server zeroes movement on transfer; the native client resends held WASD.
+player.moveDir=0
 assert(not room:checkPortalCrossing(player),
  "arrival pad cannot immediately teleport player outside")
 player.x=930;player.y=850
@@ -74,6 +76,7 @@ player.x=750;player.y=850
 assert(room:checkPortalCrossing(player) and player.spaceId=="surface",
  "return doorway must work by walking onto it")
 room.nowMs=204000
+player.moveDir=0
 player.x=4670;player.y=4780
 assert(room:checkPortalCrossing(player) and player.spaceId=="caverna-01",
  "walking into cave entrance must cross without keypress")
