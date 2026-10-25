@@ -24,7 +24,7 @@ local other={id="second-player",alive=true,spaceId="surface",
  x=3000,y=3000,scale=35,sentTo={["test-player"]=true}}
 local obj={sentTo={["test-player"]=true}}
 local room=setmetatable({key="LC",customMap=map,mapSpaces=Spaces.new(map,Config.mapScale),
- config=Config,nowMs=5000,players={player,other},
+ config=Config,nowMs=5000,players={player,other},services={},
  items={weapons={},list={}},object_manager={objects={obj}}},Room)
 assert(room:handleInput(player,"j",{})==true)
 assert(player.spaceId=="cabana" and player.x==600 and player.y==900)
@@ -58,7 +58,7 @@ room.nowMs=8506
 assert(room:usePortal(player)==true)
 assert(player.spaceId=="mina" and #events==before+1)
 local legacy=setmetatable({key="MB",customMap=nil,mapSpaces=Spaces.new(nil,Config.mapScale),
- players={player},items={weapons={},list={}}},Room)
+ players={player},services={},items={weapons={},list={}}},Room)
 local previous=player.spaceId
 assert(legacy:handleInput(player,"j",{})==false)
 assert(player.spaceId==previous,"classic room accepted custom-map transition")
