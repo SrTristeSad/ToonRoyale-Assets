@@ -1,5 +1,6 @@
 -- Original Moo IO pause/options UI. It is an overlay, not a replacement
 -- scene. The authoritative world keeps rendering and receiving packets.
+local UI=require("src.game.pc_menu_style")
 local Pause={}
 Pause.__index=Pause
 local W,H=1280,720
@@ -44,19 +45,7 @@ end
 local function button(text,kind,selected)
   local r=rects[kind]
   local mx,my=coords(love.mouse.getPosition())
-  local active=hit(mx,my,r)
-  local fill=selected and {0.41,0.71,0.25}
-    or (active and {0.36,0.43,0.37} or {0.22,0.27,0.24})
-  love.graphics.setColor(0.025,0.055,0.037,0.93)
-  love.graphics.rectangle("fill",r[1]+4,r[2]+6,r[3],r[4],2,2)
-  love.graphics.setColor(0.04,0.075,0.05,1)
-  love.graphics.rectangle("fill",r[1]-2,r[2]-2,r[3]+4,r[4]+4,2,2)
-  love.graphics.setColor(fill)
-  love.graphics.rectangle("fill",r[1],r[2],r[3],r[4],2,2)
-  love.graphics.setColor(1,1,1,0.16)
-  love.graphics.rectangle("fill",r[1]+3,r[2]+3,r[3]-6,3)
-  label(text,r[1],r[2],r[3],r[4],19,
-    selected and {0.08,0.15,0.07} or {0.97,0.98,0.93})
+  UI.button(r[1],r[2],r[3],r[4],text,selected,false,hit(mx,my,r))
 end
 function Pause.new()
   return setmetatable({page=nil,owner=false,confirmQuit=false},Pause)
@@ -135,17 +124,14 @@ function Pause:draw(grid,fullscreen,inviteText,world)
   love.graphics.push("all")
   love.graphics.origin()
   -- Retain the ACTUAL rendered game world visible behind the modal.
-  love.graphics.setColor(0.03,0.07,0.045,0.66)
+  love.graphics.setColor(0.015,0.021,0.019,0.70)
   love.graphics.rectangle("fill",0,0,w,h)
   local z=math.min(w/W,h/H)
   love.graphics.translate((w-W*z)/2,(h-H*z)/2)
   love.graphics.scale(z)
-  love.graphics.setColor(0.055,0.09,0.067,0.92)
-  love.graphics.rectangle("fill",360,114,560,465,5,5)
-  love.graphics.setColor(0.36,0.64,0.25,1)
-  love.graphics.rectangle("fill",360,114,560,7)
-  love.graphics.setColor(1,1,1,0.12)
-  love.graphics.rectangle("line",365,121,550,451,3,3)
+  UI.panel(360,114,560,465,{0.19,0.21,0.20})
+  love.graphics.setColor(0.77,0.82,0.77,0.27)
+  love.graphics.rectangle("fill",366,120,548,3)
   if self.page=="root" then
     label("JOGO PAUSADO",395,146,490,58,32)
     label(self.owner and "Sua sala privada continua online."
@@ -182,8 +168,8 @@ function Pause:draw(grid,fullscreen,inviteText,world)
     label("Envie este convite para seus amigos.",405,217,470,31,16,
       {0.82,0.88,0.79})
     local code=tostring(inviteText or "")
-    love.graphics.setColor(0.12,0.19,0.14,0.97)
-    love.graphics.rectangle("fill",389,284,502,57,4,4)
+    love.graphics.setColor(0.12,0.16,0.14,0.97)
+    love.graphics.rectangle("fill",389,284,502,57)
     label(code~="" and code or "Convite indisponivel",399,292,482,38,
       code:len()>40 and 14 or 17)
     button("COPIAR CONVITE","copyInvite",true)
