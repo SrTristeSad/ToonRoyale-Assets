@@ -8,7 +8,8 @@ local Anticheat=require("server-lua.anticheat.index")
 local time=100000
 local logs={}
 local function append(v)logs[#logs+1]=v end
-local room=Room.new({nowMs=10000,services={ensureAnimals=function()end}})
+local room=Room.new({nowMs=10000,broadcast=function()end,
+ services={ensureAnimals=function()end}})
 local seq=0
 local registry=Registry.new(room,{
  randomString=function(size)
