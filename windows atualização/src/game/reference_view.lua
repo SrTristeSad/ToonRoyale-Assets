@@ -642,6 +642,70 @@ local function drawHouses(world,camera)
  end
 end
 
+-- In-game floor plan derived solely from authoritative zone rectangles,
+-- not an independent PNG map. Exits and player location share world coords.
+function View.dungeonMapGeometry(zone,player,size)
+ if type(zone)~="table" or type(zone.width)~="number"
+   or type(zone.height)~="number" or zone.width<=0 or zone.height<=0
+   or type(player)~="table" then return nil end
+ size=size or 174
+ local factor=size/math.max(zone.width,zone.height)
+ local left=(size-zone.width*factor)*0.5
+ local top=(size-zone.height*factor)*0.5
+ return {scale=factor,left=left,top=top,
+  x=left+(player.x or 0)*factor,
+  y=top+(player.y or 0)*factor}
+end
+local function drawDungeonMap(world)
+ local zone=world.space
+ local player=world:localPlayer()
+ if not zone or not player or type(player.x)~="number" then return end
+ local size=174
+ local g=View.dungeonMapGeometry(zone,player,size)
+ if not g then return end
+ local left,top=22,230
+ love.graphics.push("all")
+ love.graphics.setColor(0.06,0.08,0.09,0.90)
+ love.graphics.rectangle("fill",left-7,top-29,size+14,size+37,6,6)
+ love.graphics.setColor(0.91,0.92,0.83,1)
+ love.graphics.print("PLANTA DO ANDAR  [M]",left,top-22)
+ love.graphics.setColor(0.15,0.19,0.19,1)
+ love.graphics.rectangle("fill",left,top,size,size)
+ local ox,oy=left+g.left,top+g.top
+ local zoneWidth,zoneHeight=zone.width*g.scale,zone.height*g.scale
+ love.graphics.setColor(0.37,0.43,0.43,1)
+ love.graphics.rectangle("line",ox,oy,zoneWidth,zoneHeight)
+ love.graphics.setScissor(left,top,size,size)
+ for _,r in ipairs(zone.obstacles or {}) do
+  love.graphics.setColor(r.material=="wood" and 0.58 or 0.57,
+    r.material=="wood" and 0.38 or 0.62,
+    r.material=="wood" and 0.23 or 0.57,1)
+  love.graphics.rectangle("fill",ox+r.x*g.scale,oy+r.y*g.scale,
+    math.max(1,r.width*g.scale),math.max(1,r.height*g.scale))
+ end
+ for _,portal in ipairs(zone.portals or {}) do
+  local x,y=ox+portal.x*g.scale,oy+portal.y*g.scale
+  love.graphics.setColor(0.98,0.80,0.32,1)
+  love.graphics.circle("fill",x,y,4)
+  love.graphics.setColor(0.12,0.12,0.12,1)
+  love.graphics.circle("line",x,y,4)
+ end
+ for _,other in ipairs(world:orderedPlayers()) do
+  if other.sid~=world.sid and other.x and other.y and
+   player.team and player.team~=false and other.team==player.team then
+   love.graphics.setColor(0.39,0.84,0.96,1)
+   love.graphics.circle("fill",ox+other.x*g.scale,
+     oy+other.y*g.scale,3)
+  end
+ end
+ love.graphics.setColor(0.26,0.98,0.37,1)
+ love.graphics.circle("fill",left+g.x,top+g.y,5)
+ love.graphics.setColor(0.07,0.18,0.09,1)
+ love.graphics.circle("line",left+g.x,top+g.y,5)
+ love.graphics.setScissor()
+ love.graphics.pop()
+end
+
 local function drawIndoor(world,camera,dt,options)
  local area=assert(world.space,"active local area required")
  local w,h=love.graphics.getDimensions()
@@ -764,6 +828,9 @@ local function drawIndoor(world,camera,dt,options)
  end
  labels(world,camera,w,h)
  drawMapHelp(world)
+ if options and options.showDungeonMap~=false then
+  drawDungeonMap(world)
+ end
  love.graphics.setColor(0.06,0.07,0.06,0.85)
  love.graphics.rectangle("fill",15,14,250,39,5,5)
  love.graphics.setColor(1,1,1,1)
