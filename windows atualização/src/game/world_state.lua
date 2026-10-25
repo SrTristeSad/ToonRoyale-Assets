@@ -154,6 +154,7 @@ function World.new()
   return setmetatable({
     sid=nil,spawned=false,dead=false,players={},objects={},
     map=nil,spaceId="surface",space=nil,justChangedSpace=false,
+    mapMessage=nil,mapMessageTimer=0,
     objectSlots={},objectSlotBySid={},objectSlotCount=0,
     animals={},projectiles={},
     entityPaintOrder={players={},animals={}},
@@ -213,6 +214,28 @@ function World:apply(name,args)
     end
     return true
   elseif name=="j" then
+    if args[1]=="add-house" then
+      local portal=args[4]
+      if not self.map or type(portal)~="table"
+        or type(portal.id)~="string" or type(portal.to)~="string"
+        or not number(portal.x) or not number(portal.y)
+        or not number(portal.targetX) or not number(portal.targetY) then
+        return false
+      end
+      for _,entry in ipairs(self.map.portals) do
+        if entry.id==portal.id then return true end
+      end
+      self.map.portals[#self.map.portals+1]=portal
+      return true
+    elseif args[1]=="build-result" then
+      local detail=args[4]
+      if not self.map or type(detail)~="table"
+        or type(detail.message)~="string"
+        or #detail.message>160 then return false end
+      self.mapMessage=detail.message
+      self.mapMessageTimer=5
+      return true
+    end
     -- Authoritative zone switch from the authenticated LOCAL Lua host.
     local id,x,y,zone=args[1],args[2],args[3],args[4]
     if not self.map or type(id)~="string" or type(zone)~="table"
@@ -618,6 +641,9 @@ function World:apply(name,args)
   return false
 end
 function World:update(dt)
+  if self.mapMessageTimer and self.mapMessageTimer>0 then
+    self.mapMessageTimer=math.max(0,self.mapMessageTimer-dt)
+  end
   if type(dt)~="number" or dt<=0 then return end
   -- Advance the server-issued countdowns only. Stage 0 on r is a
   -- semantic "after this life" message, so it remains at zero.
