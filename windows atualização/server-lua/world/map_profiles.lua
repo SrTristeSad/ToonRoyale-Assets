@@ -71,7 +71,7 @@ function Maps.validate(content,wanted)
  local map,_,why=Json.decode(content,1,Json.null)
  assert(not why and type(map)=="table","invalid map JSON")
  only(map,{schemaVersion=true,id=true,name=true,description=true,mode=true,
-  generation=true,surface=true,spaces=true,portals=true})
+  generation=true,surface=true,spaces=true,portals=true,spawn=true})
  assert(map.schemaVersion==1 and id(map.id)
    and (not wanted or wanted==map.id),"wrong map schema or ID")
  assert(validText(map.name,70) and
@@ -86,6 +86,12 @@ function Maps.validate(content,wanted)
  end
  if map.mode=="authored" then
   assert(next(map.generation)==nil,"authored maps cannot also generate nature")
+ end
+ if map.spawn~=nil then
+  only(map.spawn,{x=true,y=true})
+  assert(integer(map.spawn.x,100,Config.mapScale-100)
+    and integer(map.spawn.y,100,Config.mapScale-100),
+    "custom spawn must be inside surface bounds")
  end
  map.surface=map.surface or {}
  assert(type(map.surface)=="table" and #map.surface<=400,"too many surface resources")
