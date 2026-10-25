@@ -506,6 +506,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/room-animals-smoke.lua
+      - name: Comportamento inteligente de animais agressivos e passivos
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/animal-decisions-smoke.lua
       - name: Bots nativos no Player Registry e Room sem socket ficticio
         run: |
           set -euo pipefail
