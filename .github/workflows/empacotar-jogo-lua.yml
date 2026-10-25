@@ -31,6 +31,20 @@ jobs:
           lua5.4 server-lua/tests/weapon-upgrade-client-smoke.lua
           lua5.4 server-lua/tests/weapon-reselect-reference-smoke.lua
           lua5.4 server-lua/tests/equipment-reference.lua
+      - name: Auditoria regressiva completa dos modulos Lua
+        run: |
+          set -euo pipefail
+          total=0
+          for script in server-lua/tests/*.lua; do
+            echo "CHECK $script"
+            timeout 20s lua5.4 "$script" >/tmp/moo-lua-current.log || {
+              echo "FAILED $script"
+              cat /tmp/moo-lua-current.log
+              exit 1
+            }
+            total=$((total+1))
+          done
+          echo "PASS: $total testes Lua"
       - name: Baixar runtime oficial LÖVE 11.5 Win64
         run: |
           set -euo pipefail
