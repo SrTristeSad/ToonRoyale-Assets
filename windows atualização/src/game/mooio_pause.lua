@@ -17,6 +17,8 @@ local rects={
   fullscreen={410,316,460,58},
   back={410,454,460,52},
   info={410,386,460,58},
+  controls={410,453,460,53},
+  settingsBack={410,521,460,44},
   copyInvite={410,359,460,58},
   inviteBack={410,431,460,52},
   confirm={410,404,216,56},
@@ -110,7 +112,8 @@ function Pause:click(screenX,screenY)
     if which("grid") then return "toggle_grid" end
     if which("fullscreen") then return "toggle_fullscreen" end
     if which("info") then self.page="info";return "info" end
-    if which("back") then self.page="root";return "back" end
+    if which("controls") then return "edit_controls" end
+    if which("settingsBack") then self.page="root";return "back" end
   elseif self.page=="info" then
     if which("back") then self.page="settings";return "back" end
   elseif self.page=="invite" then
@@ -163,7 +166,8 @@ function Pause:draw(grid,fullscreen,inviteText,world)
     button("GRADE DO MAPA: "..(grid and "LIGADA" or "DESLIGADA"),"grid")
     button("TELA CHEIA: "..(fullscreen and "LIGADA" or "DESLIGADA"),"fullscreen")
     button("INFORMACOES DO MAPA","info")
-    button("VOLTAR","back")
+    button("EDITAR TECLADO E JOYSTICK","controls")
+    button("VOLTAR","settingsBack")
   elseif self.page=="info" then
     label("INFORMACOES DA PARTIDA",395,146,490,58,28)
     local map=world and world.map
