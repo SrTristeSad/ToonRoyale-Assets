@@ -9,19 +9,31 @@ if os.getenv("MOO_IO_LUA_SERVER")=="1" then
     local Socket=require("socket")
     local ip=assert(os.getenv("MOO_IO_BIND_IP"),"MOO_IO_BIND_IP required")
     local code=assert(os.getenv("MOO_IO_ROOM_CODE"),"MOO_IO_ROOM_CODE required")
-    instance=Local.new({
+    local created,server=pcall(Local.new,{
       bind=ip,port=tonumber(os.getenv("PORT")) or 8080,
       mode=os.getenv("MOO_IO_NETWORK_MODE")=="vpn" and "vpn" or "lan",
       roomCode=code,botCount=os.getenv("MOO_IO_BOT_COUNT") or "0",
       dataDir=os.getenv("MOO_IO_LUA_DATA_DIR") or "server-lua/data",
       difficulty=os.getenv("MOO_IO_DIFFICULTY") or "normal",
       modIds=os.getenv("MOO_IO_MODS") or "",
-       mapId=os.getenv("MOO_IO_MAP_ID") or "",
+      mapId=os.getenv("MOO_IO_MAP_ID") or "",
       guiHost=true,nowMs=function()return math.floor(Socket.gettime()*1000)end,
       log=function(msg)print(msg)end
     })
+    if not created then
+      -- A missing mod or invalid map must never open the blue LÖVE crash
+      -- window; the hosting client's watchdog displays this log instead.
+      print("MOOIO_LUA_SERVER_ERROR: "..tostring(server):gsub("[\r\n]"," "))
+      love.event.quit(1)
+      return
+    end
+    instance=server
     local ok,why=instance:start()
-    assert(ok,why)
+    if not ok then
+      print("MOOIO_LUA_SERVER_ERROR: "..tostring(why):gsub("[\r\n]"," "))
+      love.event.quit(1)
+      return
+    end
     print("MOOIO_LUA_SERVER_READY")
   end
 function love.update(dt)
