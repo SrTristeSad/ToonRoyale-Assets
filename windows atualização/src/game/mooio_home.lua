@@ -151,7 +151,7 @@ function Home:click(sx,sy)
         self.focus="vpnIP";return "focus"
       end
       if inside(x,y,boxes.difficulty) then
-        local nextLevel={normal="dificil",dificil="extremo",extremo="normal"}
+        local nextLevel={pacifico="normal",normal="dificil",dificil="extremo",extremo="pacifico"}
         self.difficulty=nextLevel[self.difficulty] or "normal"
         self.focus=nil
         return "difficulty"
@@ -346,6 +346,10 @@ function Home:draw(state,detail,showWorld)
         printText("QUANTIDADE: "..(self.botsEnabled and self.botCount or 0).." / 8",
           274,485,17,C.white,225,"center")
         button("botsPlus","+")
+        local names={pacifico="PACIFICO",normal="NORMAL (CLASSICO)",
+          dificil="DIFICIL (LOBOS EM GRUPO)",extremo="EXTREMO"}
+        button("difficulty","DIFICULDADE: "..(names[self.difficulty] or "NORMAL"),false)
+        field("modIds",self.modIds,"Mods JSON (ex.: mais-lobos)",self.focus=="modIds")
         button(self.serverMode=="vpn" and "createVpn" or "createLan",
           "CRIAR MINHA SALA",true)
       end
@@ -358,11 +362,14 @@ function Home:draw(state,detail,showWorld)
       if self.error then
         button("joinRetry","TENTAR NOVAMENTE",false)
       else
-        printText("Entre pelo IP da rede local ou VPN privada.",706,517,15,C.muted)
+        printText("Convite LAN/VPN ou HTTPS V2 com certificado valido.",706,517,15,C.muted)
+      end
+      if not self.hosting and not self.starting then
+        button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
     elseif self.screen=="server" then
       printText("SERVIDORES",140,165,31,C.white)
-      printText("Salas do servidor local Lua em rede LAN ou VPN privada.",145,220,16,C.muted)
+      printText("Salas LAN/VPN e servidores V2 externos com HTTPS.",145,220,16,C.muted)
       panel(130,239,995,265,C.panel,0)
       printText("CRIAR SALA",159,282,22,C.green)
       printText("Inicie o servidor Lua pelo menu JOGAR.",159,327,18,C.white)
@@ -377,7 +384,7 @@ function Home:draw(state,detail,showWorld)
       printText("ESC na partida: voltar e alterar as configuracoes.",360,505,16,C.muted)
     end
   end
-  panel(83,614,1111,57,{0.13,0.17,0.15},0)
+  panel(83,684,1111,34,{0.13,0.17,0.15},0)
   local message=self.status~="" and self.status or
     (state=="joining" and "Entrando na partida..." or
      state=="keyed_transport" and "Servidor conectado. Carregando mundo..." or
@@ -385,10 +392,10 @@ function Home:draw(state,detail,showWorld)
      "Jogar abre as opcoes. Criar sala e uma escolha.")
   if #message>135 then message=message:sub(1,132).."..." end
   love.graphics.setColor(self.error and C.red or C.green)
-  love.graphics.rectangle("fill",92,625,5,35)
-  printText(self.error and "ATENCAO" or "STATUS",111,627,13,
+  love.graphics.rectangle("fill",92,689,5,22)
+  printText(self.error and "ATENCAO" or "STATUS",111,692,13,
     self.error and C.red or C.green)
-  printText(message,212,631,16,self.error and {1,0.85,0.77} or C.white,950)
+  printText(message,212,691,15,self.error and {1,0.85,0.77} or C.white,950)
   love.graphics.pop()
 end
 function Home:drawRoomOverlay()
