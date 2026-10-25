@@ -191,6 +191,29 @@ function H.slotForKey(world,key)
   if not entry then return nil end
   return entry.id,entry.kind=="weapon"
 end
+-- Controller shoulder/trigger navigation follows the identical visible
+-- hotbar order used by click and digit hotkeys, including weapons and items.
+-- Selection remains server-authoritative; callers store only a browse cursor.
+function H.cycleSlot(world,step,cursor)
+  if step~=1 and step~=-1 then return nil end
+  local entries=actionBarEntries(world)
+  local n=#entries
+  if n==0 then return nil end
+  if type(cursor)~="number" or cursor<1 or cursor>n then
+    cursor=nil
+    for i,entry in ipairs(entries) do
+      if H.isSelected(world,entry) then cursor=i;break end
+    end
+  end
+  local index
+  if cursor then
+    index=((cursor-1+step)%n)+1
+  else
+    index=step==1 and 1 or n
+  end
+  local entry=entries[index]
+  return entry.id,entry.kind=="weapon",index
+end
 local function actionBar(world,w,h)
   local entries=actionBarEntries(world)
   local count=#entries
