@@ -67,6 +67,7 @@ function Player:canSee(other)
  return Snapshot.canSee(self,other,self.room.config)
 end
 function Player:spawn(moofoll)
+ self.spaceId="surface"
  return Spawn.spawn(self,moofoll,self.room.object_manager,{
    config=self.room.config,nowMs=self.room.nowMs,
    send=function(...)return self.room:sendId(...)end,
