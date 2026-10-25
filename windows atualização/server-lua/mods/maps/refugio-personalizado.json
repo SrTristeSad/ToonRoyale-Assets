@@ -92,7 +92,36 @@
           "label": "Sala gelada"
         }
       ],
-      "mobs": []
+      "mobs": [],
+      "interactables": [
+        {
+          "id": "bau-madeira",
+          "kind": "cache",
+          "x": 580,
+          "y": 520,
+          "label": "Bau com madeira",
+          "resource": "wood",
+          "amount": 35
+        },
+        {
+          "id": "alavanca-portao",
+          "kind": "lever",
+          "x": 665,
+          "y": 740,
+          "label": "Abrir portao",
+          "target": "portao-metal"
+        },
+        {
+          "id": "portao-metal",
+          "kind": "gate",
+          "x": 820,
+          "y": 770,
+          "width": 48,
+          "height": 175,
+          "material": "metal",
+          "label": "Portao reforcado"
+        }
+      ]
     },
     {
       "id": "mod-sala-gelo",
