@@ -24,7 +24,31 @@ Mapas de mods podem declarar `interactables` nas regiões `spaces[]` e na superf
 
 **Controle:** caminhe até um baú ou alavanca e pressione **F**. O servidor verifica se a pessoa está viva, na região correta, a menos de 150 unidades e sem paredes no caminho. A recompensa de um baú pode ser madeira (`wood`), pedra (`stone`) ou comida (`food`), de 1 a 500 unidades, concedida uma única vez por partida. Uma alavanca aponta para um portão existente na *mesma* região e o abre permanentemente naquela partida. O portão fechado é uma parede de colisão real; sua abertura remove essa parede do servidor e de todos os clientes na região. Jogadores que entrarem depois recebem o estado atualizado.
 
-Limites: até 32 objetos interativos por região; todos precisam de IDs exclusivos. A superfície permite baús de recursos, enquanto portões/alavancas físicas pertencem a regiões interiores ou subterrâneas até que a física de barreiras na superfície seja ampliada. Esses objetos não adicionam execução Lua, imagens externas ou comportamentos arbitrários. O mapa `refugio-personalizado.json` demonstra esses elementos.
+Limites: até 32 objetos interativos por região; todos precisam de IDs exclusivos. A superfície permite baús de recursos e pontos de coleta limitados, enquanto portões/alavancas/interruptores físicos pertencem a regiões interiores ou subterrâneas até que a física de barreiras na superfície seja ampliada. Esses objetos não adicionam execução Lua, imagens externas ou comportamentos arbitrários. O mapa `refugio-personalizado.json` demonstra esses elementos.
+
+## Pontos de coleta e interruptores reversíveis
+
+Para um mapa personalizado, `interactables` também aceita pontos de coleta limitados e mecanismos que podem alternar o mesmo portão diversas vezes:
+
+```json
+"interactables": [
+  {"id":"mina-pedra","kind":"node","x":550,"y":930,
+   "label":"Minerio renovavel","resource":"stone","amount":8,
+   "charges":3,"cooldownMs":1500},
+  {"id":"interruptor-portao","kind":"switch","x":690,"y":880,
+   "label":"Abrir ou fechar","target":"portao-metal","cooldownMs":500},
+  {"id":"portao-metal","kind":"gate","x":750,"y":730,
+   "width":48,"height":175,"material":"metal"}
+]
+```
+
+- **`node`**: entrega `amount` por coleta, com um máximo de `charges` entre **1 e 20**, e `cooldownMs` entre **0 e 120.000 ms**. Ao acabar, permanece esgotado até o término daquela partida. O tempo de recuperação pertence ao objeto e é compartilhado por todos os jogadores, prevenindo coleta duplicada.
+- **`switch`**: alterna um portão da mesma região entre aberto e fechado, com `cooldownMs` entre **0 e 120.000 ms**. Diferentemente de `lever`, não é consumido após o primeiro uso.
+- **Segurança**: o servidor rejeita fechamento quando um jogador, animal ou acesso de passagem ocupa a área do portão. Não permite portão instalado sobre a saída, posição de chegada nem muito perto de uma passagem. O desenho e a colisão atualizam juntos em todos os clientes.
+- **Onde usar**: pontos de coleta podem aparecer na superfície ou em regiões internas de **mapas personalizados**. Portões, alavancas e interruptores ficam em regiões com física própria. O mundo clássico e o V2 permanecem sem essas regras.
+- **Sincronização**: mudanças usam versões ordenadas por objeto para recusar pacotes repetidos ou atrasados. Quem entrar depois recebe quantidades restantes, alavancas já acionadas e o estado atual de cada portão.
+
+O mapa de exemplo `refugio-personalizado.json` inclui uma mina com três coletas e um interruptor de portão reversível. Use **F** perto dos objetos para interagir.
 
 ## Visuais, tiles e portais universais
 
