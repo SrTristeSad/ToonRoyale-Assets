@@ -54,6 +54,10 @@ assert(target and target.alive,
   "difficult wolves must join their nearby packmate's pursuit")
 local flank=Pack.direction(wolf,target,ais,"dificil")
 assert(type(flank)=="number" and flank==flank)
+-- Prediction changes the attack bearing for other aggressive creatures as well.
+local forecast=AI.predictiveDirection({x=0,y=0},{x=100,y=0,xVel=0,yVel=0.2},"dificil")
+local static=AI.predictiveDirection({x=0,y=0},{x=100,y=0,xVel=0,yVel=0},"dificil")
+assert(forecast>static+0.1,"hard hostile AI should anticipate lateral movement")
 local Vitals=require("server-lua.world.vitals")
 local function fake()
  local p={alive=true,shameTimer=0,regenTimer=0,skin={},tail={},
