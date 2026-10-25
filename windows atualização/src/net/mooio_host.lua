@@ -107,7 +107,8 @@ function Host:start(mode,requestedIP,requestedBots,difficulty,modIds)
     return false,"Quantidade de bots invalida (0 a 8)."
   end
   difficulty=difficulty or "normal"
-  if difficulty~="normal" and difficulty~="dificil" and difficulty~="extremo" then
+  if difficulty~="pacifico" and difficulty~="normal"
+    and difficulty~="dificil" and difficulty~="extremo" then
     return false,"Dificuldade desconhecida."
   end
   modIds=modIds or ""
