@@ -6,11 +6,15 @@ local Profiles=require("server-lua.world.map_profiles")
 local Spaces=require("server-lua.world.map_spaces")
 local Indoor=require("server-lua.world.indoor_movement")
 local map=Profiles.load("server-lua/maps","cabana-e-mina")
+local GameWorld=require("server-lua.world.objects")
+GameWorld.new({config=Config,random=Profiles.random(14827)}):loadMap(map)
+assert(map.portals[1].x and map.portals[1].y,
+  "random map entrance was not created before joining")
 local events={}
 local strikes=0
 local player={
  id="test-player",sid=1,active=true,alive=true,spaceId="surface",
- x=room.customMap.portals[1].x,y=room.customMap.portals[1].y,
+ x=map.portals[1].x,y=map.portals[1].y,
  scale=35,xVel=0,yVel=0,speed=Config.playerSpeed,
  moveDir=nil,dir=0,powers={speed=1},shameTimer=0,
  weaponIndex=0,buildIndex=-1,reloads={[0]=300},hits=0,mouseState=0,
