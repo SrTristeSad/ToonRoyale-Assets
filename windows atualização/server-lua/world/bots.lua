@@ -51,7 +51,7 @@ function Bots:create(index)
  local a={p=player,index=index,target=nil,targetUntil=0,wander=nil,at=0,
   prevX=player.x,prevY=player.y,stuck=0,detour=0,detourDir=0,respawn=0,
   lastTarget=nil,lastMode=nil,holdUntil=0,
-  socialAt=12500+index*3400,prefersGroup=index%3~=0}
+  socialAt=12500+index*3400,prefersGroup=index%4~=3}
  self.agents[#self.agents+1]=a
  return a
 end
