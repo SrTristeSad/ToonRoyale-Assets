@@ -119,7 +119,7 @@ jobs:
           set -euo pipefail
           export XDG_DATA_HOME="$RUNNER_TEMP/moo-ui-data"
           mkdir -p "$XDG_DATA_HOME"
-          for mode in MOO_IO_MENU_TEST MOO_IO_ROOM_CHOICE_TEST MOO_IO_PAUSE_TEST MOO_IO_HUD_TEST MOO_IO_SPRITE_TEST; do
+          for mode in MOO_IO_MENU_TEST MOO_IO_ROOM_CHOICE_TEST MOO_IO_PAUSE_TEST MOO_IO_HUD_TEST MOO_IO_SPRITE_TEST MOO_IO_WEAPON_VISUAL_TEST; do
             echo "TEST $mode"
             if ! timeout 45 xvfb-run -a env "$mode=1" MOO_IO_CAPTURE_UI=1 love . > "/tmp/$mode.log" 2>&1; then
               cat "/tmp/$mode.log"
@@ -129,8 +129,8 @@ jobs:
           done
           mkdir -p ci-ui-captures
           find "$XDG_DATA_HOME" -type f -name 'ui-*.png' -exec cp {} ci-ui-captures/ \;
-          test "$(find ci-ui-captures -type f -name 'ui-*.png' | wc -l)" -eq 5
-          echo "PASS cinco telas capturadas com LÖVE real"
+          test "$(find ci-ui-captures -type f -name 'ui-*.png' | wc -l)" -eq 9
+          echo "PASS nove telas capturadas com LÖVE real (incluindo evolucao de armas)"
       - name: Publicar capturas da interface (auditoria visual)
         uses: actions/upload-artifact@v4
         with:
