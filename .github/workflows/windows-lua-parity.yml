@@ -174,6 +174,29 @@ jobs:
             fi
             cat "/tmp/$mode.log"
           done
+          # Reproduce the exact Windows screenshot: map requiring mob 15
+          # with the species mod disabled. The headless host must report a
+          # recoverable setup error, never a blue LÖVE traceback window.
+          set +e
+          timeout 18 xvfb-run -a env MOO_IO_LUA_SERVER=1 \
+            MOO_IO_BIND_IP=127.0.0.1 MOO_IO_ROOM_CODE=invalidcreatures \
+            MOO_IO_MAP_ID=reserva-criaturas MOO_IO_MODS="" \
+            MOO_IO_LUA_DATA_DIR="$RUNNER_TEMP/invalid-moo-room" \
+            love . > /tmp/moo-invalid-species-host.log 2>&1
+          result=$?
+          set -e
+          if [ "$result" -eq 124 ]; then
+            cat /tmp/moo-invalid-species-host.log
+            echo "FAIL invalid species host hung";exit 1
+          fi
+          grep -q "MOOIO_LUA_SERVER_ERROR:.*especie 15" /tmp/moo-invalid-species-host.log || {
+            cat /tmp/moo-invalid-species-host.log;exit 1;
+          }
+          if grep -qi "Traceback" /tmp/moo-invalid-species-host.log; then
+            cat /tmp/moo-invalid-species-host.log
+            echo "FAIL server displayed LÖVE traceback";exit 1
+          fi
+          echo "PASS invalid species setup exits gracefully without a blue crash window"
           mkdir -p ci-ui-captures
           find "$XDG_DATA_HOME" -type f -name 'ui-*.png' -exec cp {} ci-ui-captures/ \;
           test "$(find ci-ui-captures -type f -name 'ui-*.png' | wc -l)" -eq 13
