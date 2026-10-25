@@ -9,6 +9,7 @@ local Config=require("src.game.config")
 
 local map=Maps.load("server-lua/maps","bunker-e-cavernas")
 local function joined(room)
+ room.config=room.config or Config
  local peer={}
  local received
  local player={id="human-test",send=function(self,name,info)
@@ -35,6 +36,7 @@ local client=World.new()
 assert(client:apply("A",{data}))
 assert(client.map.id==map.id and client.map.name==map.name)
 assert(client.map.portals[2].style=="cave")
+assert(client.roomSettings.difficulty=="normal" and #client.roomSettings.mods==0)
 local roomMB={key="MB",mapId="classico",customMap=nil,
  mapSpaces=Spaces.new(nil,Config.mapScale)}
 assert(joined(roomMB).map==nil,"classic MB must stay unmodified")
