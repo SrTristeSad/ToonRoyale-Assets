@@ -53,7 +53,11 @@ jobs:
         run: |
           set -euo pipefail
           test -f scripts/start-server-lua.ps1
-          test -f MOO-IO-Lua-Teste.vbs
+          test -f MOO-IO.vbs
+          test ! -f MOO-IO-Lua-Teste.vbs
+          test ! -f MOO-IO.bat
+          test ! -f INSTALAR-MAPA.bat
+          test ! -f INSTALAR-MOD.bat
           grep -Fq "'server-lua'" scripts/build-windows.ps1
           grep -Fq 'start-server-lua.ps1' src/net/mooio_paths.lua
           ! grep -Fq 'start-server.ps1' src/net/mooio_paths.lua
