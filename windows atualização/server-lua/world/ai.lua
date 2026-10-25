@@ -51,6 +51,7 @@ function AI.init(ai,x,y,direction,index,data)
  assert(data and type(data)=="table","source AI type definition required")
  ai.x=x;ai.y=y
  ai.spaceId="surface" -- Reset reused actor; underground overrides are applied by Animals.spawn.
+ ai.mapSpawnId=nil -- Persistent author-defined indoor spawn identity, set explicitly on spawn.
  ai.startX=truth(data.fixedSpawn) and x or nil
  ai.startY=truth(data.fixedSpawn) and y or nil
  ai.xVel=0;ai.yVel=0;ai.zIndex=0;ai.dir=direction;ai.dirPlus=0
