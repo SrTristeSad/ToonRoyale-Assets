@@ -185,7 +185,10 @@ function World:apply(name,args)
     -- V2 and classic servers omit it and retain their original rendering.
     if type(handshake.map)=="table" and type(handshake.map.id)=="string"
        and type(handshake.map.portals)=="table" then
-      self.map={id=handshake.map.id,portals=handshake.map.portals}
+      self.map={id=handshake.map.id,
+        name=type(handshake.map.name)=="string"
+          and handshake.map.name:sub(1,70) or handshake.map.id,
+        portals=handshake.map.portals}
       self.spaceId="surface"
       self.space={id="surface",type="surface",portals=self.map.portals}
     else
