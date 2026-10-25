@@ -303,7 +303,7 @@ function love.load()
         function(value) client=value end,function() return client end,
         function(value) sessionIsHost=value end,
         function(value) phase=value end,function() return phase end,
-        function() return camera end)
+        function() return camera end,connectRoom)
     end)
     if not ok then print("MOO IO DEATH FLOW FAIL: "..tostring(err)) end
     allowQuit=true
