@@ -1,7 +1,8 @@
 # Install a local PNG spritesheet for optional JSON mob animations.
 # Does not run third-party code. No change to server gameplay or V2.
 [CmdletBinding()]
-param([Parameter(Mandatory=$true)][string]$Source)
+param([Parameter(Mandatory=$true)][string]$Source,
+  [ValidateSet('animation','static')][string]$Kind='animation')
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
 if (-not (Test-Path (Join-Path $root 'main.lua') -PathType Leaf)) {
@@ -44,7 +45,11 @@ if ($width -lt 8 -or $height -lt 8 -or
     $width -gt 4096 -or $height -gt 4096) {
  throw 'A spritesheet deve ter dimensoes entre 8 e 4096 px.'
 }
-$dest=Join-Path $root 'assets\custom\img\animals\animations'
+$dest=if ($Kind -eq 'static') {
+ Join-Path $root 'assets\custom\img\animals'
+} else {
+ Join-Path $root 'assets\custom\img\animals\animations'
+}
 New-Item -Path $dest -ItemType Directory -Force | Out-Null
 $target=Join-Path $dest $name
 if (Test-Path -LiteralPath $target) {
@@ -53,5 +58,9 @@ if (Test-Path -LiteralPath $target) {
 $stream=[IO.File]::Open($target,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write)
 try { $stream.Write($bytes,0,$bytes.Length) } finally { $stream.Dispose() }
 Write-Host ("Spritesheet instalada: "+$name+" ("+$width+"x"+$height+")") -ForegroundColor Green
-Write-Host 'Declare o mesmo nome no campo animalAnimations do mapa JSON.'
+if ($Kind -eq 'static') {
+ Write-Host 'Declare o nome do arquivo, sem .png, em newAnimals[].src no JSON do mod.'
+} else {
+ Write-Host 'Declare o mesmo nome em animalAnimations[].sheet no JSON do mod.'
+}
 Write-Host 'O mob continuara usando sprite estatico se um clipe nao existir.'
