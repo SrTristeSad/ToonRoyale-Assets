@@ -83,6 +83,7 @@ jobs:
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-profiles-smoke.lua
           lua5.4 server-lua/tests/custom-map-human-welcome-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/seamless-doors-and-mods-smoke.lua
+          MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/indoor-physics-tiles-smoke.lua
           lua5.4 server-lua/tests/local-map-interaction-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/house-build-smoke.lua
           lua5.4 server-lua/tests/house-editor-smoke.lua
