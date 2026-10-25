@@ -359,7 +359,7 @@ end
   -- Continuous cursor travel for controller navigation; axis callbacks only fire
 -- on changes, so relying on them makes menus nearly impossible to navigate.
 local function updateGamepadMenu(dt)
- if controls:isOpen() or (phase~="menu" and phase~="death_choice" and not pause:isOpen()) then return end
+ if not controls:isOpen() and phase~="menu" and phase~="death_choice" and not pause:isOpen() then return end
  local joy=activeGamepad()
  if not joy then return end
  local xaxis,yaxis=controls:axis(joy,"leftx"),controls:axis(joy,"lefty")
@@ -1088,7 +1088,11 @@ end
 local function gamepadAction(joystick,physical)
  if joystick~=activeGamepad() then return end
  if controls:isOpen() then
-  controls:captureButton(joystick,physical)
+  if controls.waiting then controls:captureButton(joystick,physical)
+  elseif physical=="a" or physical==1 then
+   local x,y=love.mouse.getPosition()
+   controls:click(x,y)
+  elseif physical=="b" then controls:hide() end
   return
  end
  local match=function(id)return controls:matches(joystick,physical,id)end
