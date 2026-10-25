@@ -10,7 +10,8 @@ local events={}
 local strikes=0
 local player={
  id="test-player",sid=1,active=true,alive=true,spaceId="surface",
- x=1950,y=1950,scale=35,xVel=0,yVel=0,speed=Config.playerSpeed,
+ x=room.customMap.portals[1].x,y=room.customMap.portals[1].y,
+ scale=35,xVel=0,yVel=0,speed=Config.playerSpeed,
  moveDir=nil,dir=0,powers={speed=1},shameTimer=0,
  weaponIndex=0,buildIndex=-1,reloads={[0]=300},hits=0,mouseState=0,
  regenTimer=1000,dmgOverTime={},healCol=0,pps=0,slowMult=1,
@@ -39,7 +40,7 @@ assert(room:handleInput(player,"j",{"mine"})==false and strikes==1,
  "client must never send an arbitrary destination")
 room.nowMs=5701
 assert(room:handleInput(player,"j",{})==true)
-assert(player.spaceId=="surface" and player.x==1950)
+assert(player.spaceId=="surface" and player.x==room.customMap.portals[1].x)
 room.nowMs=6402
 assert(room:handleInput(player,"j",{})==true)
 player.x=1050;player.y=800
