@@ -1081,8 +1081,8 @@ function love.gamepadpressed(joystick,button)
  elseif button=="b" then love.keypressed("escape")
  elseif button=="x" then love.keypressed("space")
  elseif button=="y" then love.keypressed("r")
- elseif button=="leftshoulder" then love.keypressed("q")
- elseif button=="rightshoulder" then love.keypressed("e")
+ elseif button=="leftshoulder" then cycleGamepadSlot(-1)
+ -- R1 is read continuously in updateGamepad() to ensure release is handled.
  elseif button=="dpup" then love.keypressed("1")
  elseif button=="dpright" then love.keypressed("2")
  elseif button=="dpdown" then love.keypressed("3")
@@ -1092,6 +1092,18 @@ end
 function love.gamepadreleased(joystick,button)
  if joystick~=activeGamepad() then return end
  if button=="x" then love.keyreleased("space") end
+end
+-- Unmapped USB and generic DirectInput sticks do not emit gamepadpressed.
+-- Translate their physical button indices to the same in-game actions.
+function love.joystickpressed(joystick,index)
+ if joystick~=activeGamepad() or Pad.isMapped(joystick) then return end
+ local button=Pad.buttonName(joystick,index)
+ if button then love.gamepadpressed(joystick,button) end
+end
+function love.joystickreleased(joystick,index)
+ if joystick~=activeGamepad() or Pad.isMapped(joystick) then return end
+ local button=Pad.buttonName(joystick,index)
+ if button then love.gamepadreleased(joystick,button) end
 end
 function love.keypressed(key)
   if pause:isOpen() then
@@ -1384,6 +1396,8 @@ end
 -- Only presentation changes; no purchase, equip or Node packet on hover.
 function love.mousemoved(x,y)
   if pause:isOpen() then return end
+  -- Physical mouse movement takes over aiming from the right stick.
+  if phase=="playing" then gamepadAim=nil end
   if phase=="playing" and panels:isOpen() and love.graphics then
     local w,h=love.graphics.getDimensions()
     panels:hover(x,y,w,h)
