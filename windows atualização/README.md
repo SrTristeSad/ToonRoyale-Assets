@@ -8,7 +8,7 @@ O teclado e o mouse continuam funcionando. Layout padrao:
 
 - Analógico esquerdo: mover; direito: mirar.
 - Gatilho direito (RT/R2): atacar enquanto pressionado.
-- A / Cruz: interagir (F); B / Círculo: construir casa (B).
+- A / Cruz: interagir (F); B / Círculo: voltar nos menus ou abrir pausa (sem construção de casa).
 - X / Quadrado: ataque alternativo; Y / Triângulo: cura/acao R.
 - LB/L1: equipamento secundário (Q); RB/R1: ação E.
 - Direcional digital: selecionar os atalhos 1 a 4.
