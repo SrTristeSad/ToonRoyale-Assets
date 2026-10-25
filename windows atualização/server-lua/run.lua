@@ -1,8 +1,6 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Standalone LOCAL server CLI for automated integration tests.
--- Windows users normally use the opt-in LÖVE launcher instead.
-assert(os.getenv("MOO_IO_V2_PRIVATE_ROOM")~="1",
-  "V2 private workers are excluded: run only the LOCAL Windows server")
+-- Windows users run the dedicated LÖVE Lua server by default.
 local Socket=require("socket")
 local Local=require("server-lua.local_server")
 local server=Local.new({
