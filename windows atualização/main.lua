@@ -106,6 +106,47 @@ local spaceAttack=false
 local showDungeonMap=true
 local lockDir=false
 local angle
+local gamepadAim=nil
+local gamepadAttack=false
+local function activeGamepad()
+ if not love.joystick or not love.joystick.getJoysticks then return nil end
+ for _,joy in ipairs(love.joystick.getJoysticks()) do
+  if joy:isGamepad() and joy:isConnected() then return joy end
+ end
+ return nil
+end
+local function updateGamepad()
+ local joy=activeGamepad()
+ if not joy then
+  input:gamepadMove(0,0)
+  gamepadAim=nil
+  if gamepadAttack then
+   gamepadAttack=false
+   if client and client.state=="spawn_confirmed" and not mouseAttack and not spaceAttack then
+    client:send("F",{0,Pack.null})
+   end
+  end
+  return
+ end
+ input:gamepadMove(joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty"))
+ local rx,ry=joy:getGamepadAxis("rightx"),joy:getGamepadAxis("righty")
+ if rx*rx+ry*ry>=0.12 then gamepadAim=angle(ry,rx) end
+ local pressed=joy:getGamepadAxis("triggerright")>=0.52
+ if phase=="playing" and client and client.state=="spawn_confirmed"
+   and not died and not pause:isOpen() and not chatOpen
+   and not panels:isOpen() and not clans:isOpen() and not houseEditor.active then
+  if pressed and not gamepadAttack then
+   gamepadAttack=true
+   if not mouseAttack and not spaceAttack then client:send("F",{1,gamepadAim or 0}) end
+  elseif not pressed and gamepadAttack then
+   gamepadAttack=false
+   if not mouseAttack and not spaceAttack then client:send("F",{0,Pack.null}) end
+  end
+ elseif gamepadAttack then
+  gamepadAttack=false
+  if client and client.state=="spawn_confirmed" then client:send("F",{0,Pack.null}) end
+ end
+end
 local function currentAttackDir()
   local w,h=love.graphics.getDimensions()
   local mx,my=love.mouse.getPosition()
@@ -425,6 +466,7 @@ function love.update(dt)
   end
   if client.state=="spawn_confirmed" and not died and not pause:isOpen() then
     if panels:isOpen() or clans:isOpen() then input.keys={} end
+    updateGamepad()
     input:update(dt)
     movementClock=movementClock+dt
     if movementClock>=0.07 then
@@ -435,7 +477,7 @@ function love.update(dt)
         client:send("9",{move==false and Pack.null or move})
         lastMove=move
       end
-      local aim=View.localAim(lockDir,currentAttackDir(),lastAim)
+      local aim=View.localAim(lockDir,gamepadAim or currentAttackDir(),lastAim)
       if not lastAim or math.abs(aim-lastAim)>0.02 then
         client:send("D",{aim})
         lastAim=aim
@@ -890,6 +932,25 @@ local function pauseAction(action)
       love.event.quit()
     end
   end
+end
+function love.gamepadpressed(joystick,button)
+ if joystick~=activeGamepad() then return end
+ if button=="start" then love.keypressed("escape");return end
+ if phase~="playing" or pause:isOpen() or chatOpen or died then return end
+ if button=="a" then love.keypressed("f")
+ elseif button=="b" then love.keypressed("b")
+ elseif button=="x" then love.keypressed("space")
+ elseif button=="y" then love.keypressed("r")
+ elseif button=="leftshoulder" then love.keypressed("q")
+ elseif button=="rightshoulder" then love.keypressed("e")
+ elseif button=="dpup" then love.keypressed("1")
+ elseif button=="dpright" then love.keypressed("2")
+ elseif button=="dpdown" then love.keypressed("3")
+ elseif button=="dpleft" then love.keypressed("4")
+ end
+end
+function love.gamepadreleased(joystick,button)
+ if button=="x" then love.keyreleased("space") end
 end
 function love.keypressed(key)
   if pause:isOpen() then
