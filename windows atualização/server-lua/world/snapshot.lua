@@ -13,6 +13,11 @@ local function nullable(v) return v==nil and MP.null or v end
 function Sync.canSee(viewer,other,cfg)
   cfg=cfg or Config
   if not other then return false end
+  -- Node Math.abs(undefined - x) becomes NaN and comparison returns false.
+  -- A connected viewer may not have sent its spawn M packet yet.
+  if type(viewer.x)~="number" or type(viewer.y)~="number"
+    or type(other.x)~="number" or type(other.y)~="number"
+    or type(other.scale)~="number" then return false end
   if other.skin and other.skin.invisTimer and other.noMovTimer>=other.skin.invisTimer then
     return false
   end
