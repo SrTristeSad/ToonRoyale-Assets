@@ -242,6 +242,20 @@ function love.load()
     love.event.quit(ok and 0 or 1)
     return
   end
+  if os.getenv("MOO_IO_DEATH_FLOW_TEST")=="1" then
+    local ok,err=pcall(function()
+      require("src.test_death_flow")(death,home,hosted,
+        function(value) world=value end,function() return world end,
+        function(value) client=value end,function() return client end,
+        function(value) sessionIsHost=value end,
+        function(value) phase=value end,function() return phase end,
+        function() return camera end)
+    end)
+    if not ok then print("MOO IO DEATH FLOW FAIL: "..tostring(err)) end
+    allowQuit=true
+    love.event.quit(ok and 0 or 1)
+    return
+  end
   if os.getenv("MOO_IO_HUD_TEST")=="1" then
     local ok,err=pcall(function() require("src.test_missing_asset_ui")() end)
     if not ok then print("MOO IO HUD FAIL: "..tostring(err)) end
