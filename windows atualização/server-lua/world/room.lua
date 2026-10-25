@@ -17,6 +17,7 @@ local Score=require("server-lua.world.score")
 local PlayerUpdate=require("server-lua.world.player_update")
 local Input=require("server-lua.world.input")
 local Loop=require("server-lua.world.game_loop")
+local Indoor=require("server-lua.world.indoor_movement")
 local Room={}
 Room.__index=Room
 
@@ -199,6 +200,9 @@ function Room:bindPlayer(player)
   for _,p in ipairs(self.players) do if p==player then found=true;break end end
   if not found then self.players[#self.players+1]=player end
   player.update=function(actor,delta)
+    if actor.spaceId and actor.spaceId~="surface" then
+      return Indoor.step(actor,delta,self)
+    end
     return PlayerUpdate.step(actor,delta,{
       items=self.items,config=self.config,
       players=self.players,ais=self.ais,world=self.object_manager,
@@ -211,6 +215,49 @@ function Room:bindPlayer(player)
     })
   end
   return player
+end
+
+-- Server-side portal routing: the client sends no coordinates and cannot
+-- choose an arbitrary destination. Classic rooms have no such action.
+function Room:usePortal(player)
+ if self.key~="LC" or not self.customMap or not self.mapSpaces
+   or not player.alive then return false end
+ local now=self.nowMs
+ if now<(player.nextPortalAt or 0) then return false end
+ local from=player.spaceId or "surface"
+ local zone=self.mapSpaces:get(from)
+ if not zone then return false end
+ local nearest,dist
+ for _,portal in ipairs(zone.portals or {}) do
+  local dx,dy=player.x-portal.x,player.y-portal.y
+  local d=dx*dx+dy*dy
+  if d<=150*150 and (not dist or d<dist) then
+   nearest=portal;dist=d
+  end
+ end
+ if not nearest then return false end
+ local destination=self.mapSpaces:destination(from,nearest.id,player.scale)
+ if not destination then return false end
+ player.nextPortalAt=now+700
+ player.spaceId=destination.spaceId
+ player.x=destination.x;player.y=destination.y
+ player.xVel=0;player.yVel=0
+ player.moveDir=nil;player.mouseState=0
+ player.hits=0;player.gathering=0;player.autoGather=false
+ player.buildIndex=-1;player.lockMove=false
+ for _,obj in ipairs(self.object_manager.objects) do
+  if obj.sentTo then obj.sentTo[player.id]=nil end
+ end
+ for _,other in ipairs(self.players) do
+  if other.sentTo then other.sentTo[player.id]=nil end
+ end
+ player.attrCache={};player.visiblePlayers={};player.visibleAis={}
+ local newZone=self.mapSpaces:get(destination.spaceId)
+ player:send("j",destination.spaceId,destination.x,destination.y,{
+  id=newZone.id,type=newZone.type,width=newZone.width,height=newZone.height,
+  portals=newZone.portals,obstacles=newZone.obstacles
+ })
+ return true
 end
 
 function Room:handleInput(player,name,args)
