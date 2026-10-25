@@ -104,7 +104,7 @@ function Input.handle(ctx,player,name,args)
     if not int(idx) then return bad(player,name,"item index") end
     if truthy(args[2]) then
       local weapon=ctx.items.weapons[idx]
-      if not weapon or player.weapons[weapon.type]~=idx then return end
+      if not weapon or player.weapons[weapon.type+1]~=idx then return end
       player.buildIndex=-1
       player.weaponIndex=idx
       return
