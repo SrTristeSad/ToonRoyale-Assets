@@ -143,6 +143,9 @@ function Bots:decide(a,delta)
   player:buildItem((catalogue.list and catalogue.list[0]) or Catalogue.list[0])
   player.buildIndex=-1
   a.lastHeal=a.at
+  -- The unmodified JS compatibility fixture retains its original timer.
+  -- Extended local rooms keep a monotonic clock for long-term decisions.
+  if not enhanced then a.at=0 end
  end
  local threat,distance=nil,math.huge
  local extra=player.weapons and player.weapons[1]
