@@ -26,6 +26,35 @@ Mapas de mods podem declarar `interactables` nas regiões `spaces[]` e na superf
 
 Limites: até 32 objetos interativos por região; todos precisam de IDs exclusivos. A superfície permite baús de recursos e pontos de coleta limitados, enquanto portões/alavancas/interruptores físicos pertencem a regiões interiores ou subterrâneas até que a física de barreiras na superfície seja ampliada. Esses objetos não adicionam execução Lua, imagens externas ou comportamentos arbitrários. O mapa `refugio-personalizado.json` demonstra esses elementos.
 
+## Animações opcionais de mobs (spritesheet PNG)
+
+**Nenhuma animação é obrigatória.** Os mobs continuam funcionando com a imagem PNG original quando um mapa não define animações, quando a spritesheet não foi instalada ou quando falta uma ação. Movimentação, colisões, inteligência artificial, ataque, dano e recompensas continuam sob controle do servidor.
+
+No JSON de um **mapa personalizado**, acrescente `animalAnimations` no nível principal. Cada chave é o ID numérico do tipo de animal original (por exemplo, `"4"` é o lobo):
+
+```json
+"animalAnimations": {
+  "4": {
+    "sheet": "wolf_custom.png",
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "idle":   {"row": 0, "frames": 4, "fps": 6},
+    "walk":   {"row": 1, "frames": 6, "fps": 10},
+    "attack": {"row": 2, "frames": 5, "fps": 12, "loop": false},
+    "hurt":   {"row": 3, "frames": 3, "fps": 8, "loop": false},
+    "death":  {"row": 4, "frames": 7, "fps": 7, "loop": false}
+  }
+}
+```
+
+O arquivo `wolf_custom.png` é uma **spritesheet de quadros alinhados em grade**, com cada animação em uma linha (a primeira é a linha `0`), e cada quadro com as dimensões `frameWidth × frameHeight`. Não precisa declarar as cinco ações: `idle`, `walk`, `attack`, `hurt` e `death` são independentes. Se uma ação não estiver presente, o renderizador usa `idle` quando existir; sem `idle`, mantém o sprite original. Uma animação com `loop: false` mantém o último quadro até a ação terminar; outras podem repetir os quadros continuamente. Animações de ataque e dano são acionadas por eventos reais do jogo, sem mudar a lógica do combate.
+
+**Instalação no Windows:** arraste o PNG para `INSTALAR-ANIMACAO.bat`, que o copia para `assets/custom/img/animals/animations/`, ou coloque o arquivo manualmente nessa pasta. Alternativamente, o cliente procura em `server-lua/mods/animations/`. O nome deve coincidir exatamente com `sheet`. Também é possível arrastar o JSON do mapa para `INSTALAR-MAPA.bat`.
+
+Limites do formato: nomes PNG simples (sem caminhos relativos), `frameWidth` e `frameHeight` de 8 a 512, até 24 quadros por ação, até 32 linhas e velocidade de 1 a 30 FPS. O instalador PNG limita o arquivo a 8 MiB e 4096 × 4096 pixels. Nenhum arquivo Lua, script, link externo ou shader pode ser executado pelo manifesto.
+
+**Multiplayer:** o host anuncia aos clientes os metadados visuais. Para enxergar animações personalizadas, cada jogador precisa ter a mesma spritesheet PNG instalada no próprio cliente; se não tiver, verá a imagem original, mas continuará jogando normalmente. O modo clássico e as salas V2 não passam a exigir animações.
+
 ## Pontos de coleta e interruptores reversíveis
 
 Para um mapa personalizado, `interactables` também aceita pontos de coleta limitados e mecanismos que podem alternar o mesmo portão diversas vezes:
