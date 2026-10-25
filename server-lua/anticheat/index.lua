@@ -4,6 +4,7 @@
 -- Unlike the unpublished upstream policy, this repo's rules are testable.
 -- Transport/ledger HMAC remains in protocol/session.lua, NOT duplicated here.
 local Config=require("server-lua.anticheat.config")
+local Bits=require("src.protocol.original_crypto")
 local AntiCheat={}
 AntiCheat.__index=AntiCheat
 local Bucket={}
@@ -157,9 +158,9 @@ function AntiCheat:onTelemetry(args)
  self.answered=self.answered+1
  self.lastTelemetry=self.nowMs()
  self.nextProbeAt=self.lastTelemetry+self.config.telemetry.intervalMs
- self.flags=self.flags | flags
+ self.flags=Bits.bor(self.flags,flags)
  for bit,rule in pairs(self.config.telemetry.flags) do
-  if (flags & tonumber(bit))~=0 then
+  if Bits.band(flags,tonumber(bit))~=0 then
    self:apply(rule.action,"client reported "..rule.name)
   end
  end
@@ -170,7 +171,7 @@ function AntiCheat:onTelemetry(args)
  end
  if integer(result) and result>0 then
   for i,rule in ipairs(pending.rules) do
-   if (result & (1<<(i-1)))~=0 then
+   if Bits.band(result,Bits.lshift(1,i-1))~=0 then
     local suffix=rule.value~=nil and " "..jsString(rule.value) or ""
     local reason="client reported "..rule.name..
       " (probe "..rule.kind.." "..(rule.path or "")..suffix..")"
@@ -188,7 +189,7 @@ function AntiCheat:onTelemetry(args)
   local seq,ledger=args[6],args[7]
   local okSeq=integer(seq) and seq==session.lastSeq-1
   local okLedger=integer(ledger) and
-   (ledger & 0xFFFFFFFF)==((session.ledgerBefore or 0) & 0xFFFFFFFF)
+   Bits.band(ledger,0xFFFFFFFF)==Bits.band(session.ledgerBefore or 0,0xFFFFFFFF)
   if not okSeq or not okLedger then
    local message=string.format(
     "client reported LEDGER_MISMATCH (seq %s/%s, hash %s/%s)",
