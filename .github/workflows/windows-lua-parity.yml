@@ -72,6 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/room-mods-smoke.lua
+          lua5.4 server-lua/tests/wolf-pack-smoke.lua
       - name: Processo LOCAL Lua completo - HTTP, ticket, WebSocket, io-init e shutdown
         run: |
           set -euo pipefail
