@@ -62,7 +62,7 @@ assert(owner.name=="Owner" and guest.name=="Guest")
 -- Upgrade is age 2 by default and the original catalogue grants the axe.
 owner.upgradePoints=1
 bridge:packet(a,"H",{1})
-assert(owner.weapons[0]==1 and owner.weaponIndex==1)
+assert(owner.weapons[1]==1 and owner.weaponIndex==1)
 assert(owner.upgradePoints==0 and owner.upgrAge==3)
 -- Store purchase uses the original hat id 57 / 50 points.
 owner.points=800
