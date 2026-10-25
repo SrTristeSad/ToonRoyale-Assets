@@ -69,6 +69,8 @@ assert(player.spaceId=="casa-1" and player.x==700 and player.y==900)
 room.nowMs=207000
 assert(room:handleInput(player,"j",{})==true)
 assert(player.spaceId=="surface" and player.x==portal.x)
+room.nowMs=208000
+assert(room:handleInput(player,"j",{})==true and player.spaceId=="casa-1")
 -- Individual indoor walls consume resources, respect ownership, and are
 -- saved together with the house. Existing map exit remains unobstructed.
 player.x=550;player.y=450;player.dir=0
