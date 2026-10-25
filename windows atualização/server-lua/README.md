@@ -131,15 +131,30 @@ Testes novos executam as funções originais do Node.js, comparando os mesmos ef
 
 **Integração parcial de sala confirmada:** jogador Lua composto, catálogo original integral, filtro de nomes, movimento, construções, combate, economia, animais e Crab King já executam em `Room.tick`; `player_registry.lua` conecta sessões autenticadas pelo convite do Host aos jogadores, com SID e saída testados. A rotina anticheat da **configuração local compatível** já está conectada aos comandos, mas ainda faltam a persistência/gestão real das sanções, a integração completa dos serviços do servidor local, presença e testes reais com o cliente Windows. **O servidor local funcional continua sendo Node.js** até a paridade jogável de ponta a ponta.
 
-## Limites — NÃO é o servidor completo
+## Integração do servidor LOCAL
 
-A infraestrutura de rede e o motor Lua já passam nos testes isolados e integrados com jogadores de teste. **Ainda não existe instalação Lua completa e publicável para substituir o Node.js**: faltam integração da autenticação de contas e dos clãs persistentes, os demais handlers de pacotes, bots, moderação, presença, salvamento e validação com o cliente Windows real.
+`local_server.lua` e `run.lua` unem as duas salas originais `LC` e
+`MB`, o mundo, o controlador de bots, a IA, a rede WebSocket, o
+`AccountStore`, o `ModerationStore`, o chat e os ciclos de jogadores.
+O estado do protocolo é carregado de `protocol-build.json`, sem gerar um
+build diferente a cada reinício. Esses arquivos atendem exclusivamente ao
+modo local normal; **não** são o serviço privado V2.
 
-Pendente: inicializar `player_registry.lua` junto com `net/host.lua` e os serviços reais numa instalação Windows; autenticação local e endpoints HTTP efetivamente usados por **Criar minha sala**, integração do mundo, bots e persistência e **testes cliente Windows↔Lua reais**. Excluir código exclusivo do modo V2 do escopo. O gateway Lua ainda aceita somente convidados LAN/VPN, sem substituir a autenticação V2.
+Os testes existentes incluem `tests/local-server-boot-smoke.lua`,
+`tests/local-server-e2e.py`, `tests/moderation-local-smoke.lua` e
+`tests/protocol-pin-smoke.lua`. A confirmação de sucesso da CI e os
+testes com o cliente Windows final devem ser verificados antes de
+substituir o Node.js.
 
-**Teste explícito Lua:** abra `MOO-IO-Lua-Teste.vbs` (ou defina `MOO_IO_LOCAL_SERVER_RUNTIME=lua`) para usar `scripts/start-server-lua.ps1`. O launcher normal continua em Node. O processo Lua tem LC/MB, bots, contas, moderação e porta de encerramento separados; a paridade do cliente real ainda requer confirmação.
+## Limites — NÃO é o servidor Windows final validado
 
-**O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
+O aplicativo Windows distribuído continua executando o **servidor Node.js
+local original**. A implementação Lua tem um inicializador e testes de
+integração, mas ainda não há comprovação de paridade integral 1:1 com o
+cliente real, nem validação da distribuição LuaSocket/Lua para Windows,
+todos os fluxos HTTP/UI e estabilidade LAN/VPN. Não marcar como pronto,
+não trocar automaticamente o servidor do jogo e não mexer no repositório
+original.
 
 ## Como executar os testes
 
