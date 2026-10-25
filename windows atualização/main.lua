@@ -53,6 +53,7 @@ local Profile=require("src.game.reference_profile")
 local Upgrades=require("src.game.reference_upgrades")
 local Assets=require("src.game.reference_assets")
 local Camera=require("src.camera")
+local HouseEditor=require("src.game.house_editor")
 local Input=require("src.input")
 local Pack=require("src.protocol.msgpack")
 local client=nil
@@ -65,6 +66,7 @@ local uiSmokeTime=0
 local uiSmokeClicked=false
 local uiSmokeDrawn=false
 local world=World.new()
+local houseEditor=HouseEditor.new()
 local camera=nil
 local menuCamera=nil
 local menuPreview=nil
@@ -324,6 +326,7 @@ function love.update(dt)
       world:apply(packet.name,packet.args)
       serverPackets=serverPackets+1
       if packet.name=="j" and world.justChangedSpace then
+        houseEditor:reset()
         world.justChangedSpace=false
         if camera then camera.hasTarget=false end
         movementClock=0;lastMove=false;lastAim=nil
@@ -513,6 +516,10 @@ function love.draw()
     View.draw(world,camera,frameDelta,
       {showGrid=menu.grid,
        localAim=View.localAim(lockDir,currentAttackDir(),lastAim)})
+    if houseEditor.active then
+      local mx,my=love.mouse.getPosition()
+      houseEditor:draw(world,camera,mx,my)
+    end
     Hud.draw(world,chatOpen,chatDraft,
       chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen())
     panels:draw(world)
@@ -883,7 +890,12 @@ function love.keypressed(key)
     return
   end
 
+  if phase=="playing" and key=="escape" and houseEditor.active then
+    houseEditor:reset()
+    return
+  end
   if phase=="playing" and key=="escape" then
+    houseEditor:reset()
     stopPlayerControls()
     panels:close();clans:close()
     if profile:isOpen() then closeProfile() end
@@ -945,7 +957,15 @@ function love.keypressed(key)
   if key=="h" and phase=="playing" and client
      and client.state=="spawn_confirmed" and world.map
      and not panels:isOpen() and not chatOpen then
-    client:send("j",{"wall"})
+    if houseEditor:toggle(world) then
+      -- The editor owns the mouse; stop continuous attack before editing.
+      mouseAttack=false;spaceAttack=false
+      client:send("F",{0,Pack.null})
+    end
+    return
+  end
+  if houseEditor.active then
+    if key=="r" then houseEditor:rotate() end
     return
   end
   if key=="b" and phase=="playing" and client
@@ -1068,6 +1088,24 @@ function love.mousepressed(x,y,button)
     return
   end
   if not client or client.state~="spawn_confirmed" or died then return end
+  if houseEditor.active and (button==1 or button==2) then
+    if panels:isOpen() or clans:isOpen() or profile:isOpen()
+      or chatOpen then return end
+    if button==1 then
+      local proposed=houseEditor:placement(world,camera,x,y)
+      if proposed and proposed.valid then
+        client:send("j",{"wall",{x=proposed.x,y=proposed.y,
+          orientation=proposed.orientation}})
+      else
+        world.mapMessage="Posicao invalida para construir uma parede."
+        world.mapMessageTimer=3
+      end
+    elseif button==2 then
+      local index=houseEditor:wallAt(world,camera,x,y)
+      if index then client:send("j",{"remove-wall",index}) end
+    end
+    return
+  end
   if button==1 then
     local w,h=love.graphics.getDimensions()
     if profile:isOpen() then
