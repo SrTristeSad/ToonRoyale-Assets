@@ -224,6 +224,11 @@ function House.build(room,player)
  if room.mapSpaces:get(zone.id) then
   return fail(player,"Este ID de casa ja e usado pelo mapa.")
  end
+ for _,entry in ipairs(room.mapSpaces:get("surface").portals) do
+  if entry.id==portal.id then
+   return fail(player,"Este ID de entrada ja e usado pelo mapa.")
+  end
+ end
  room.mapSpaces:addZone(zone)
  room.mapSpaces:addSurfacePortal(portal)
  room.builtHouses[index]={id=zone.id,ownerId=player.id,
