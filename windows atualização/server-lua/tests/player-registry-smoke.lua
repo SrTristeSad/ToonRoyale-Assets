@@ -14,6 +14,7 @@ local items={
  list={[0]={id=0,group={id=0}},[3]={id=3,group=group}}
 }
 local room=Room.new({nowMs=10000,items=items,
+ broadcast=function()end, -- the original Room always supplies a broadcast callback
  services={ensureAnimals=function()end}})
 local n=0
 local registry=Registry.new(room,{
