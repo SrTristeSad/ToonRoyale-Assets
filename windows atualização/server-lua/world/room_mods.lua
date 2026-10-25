@@ -1,0 +1,122 @@
+-- Data-only server configuration. Unmodified 'normal' has byte-for-byte
+-- equivalent gameplay values to the original Node baseline.
+-- No loadfile, dofile, load, eval or executable Lua from community mods.
+local Json=require("server-lua.vendor.dkjson")
+local Config=require("src.game.config")
+local Types=require("server-lua.world.animal_types")
+local Mods={}
+local multipliers={
+  normal={spawn=1,damage=1,speed=1,range=1},
+  dificil={spawn=1.5,damage=1.2,speed=1.1,range=1.2},
+  extremo={spawn=2,damage=1.5,speed=1.2,range=1.4}
+}
+Mods.levels={"normal","dificil","extremo"}
+local limits={
+  spawns={desired={0,200}},
+  animals={health={1,1000000},dmg={0,10000},speed={0,0.02},
+    viewRange={1,6000},turnSpeed={0,0.1}}
+}
+local function copy(object)
+ if type(object)~="table" then return object end
+ local out={}
+ for k,v in pairs(object) do out[k]=copy(v) end
+ return out
+end
+local function finite(value,range)
+ return type(value)=="number" and value==value and value~=math.huge
+   and value~=-math.huge and value>=range[1] and value<=range[2]
+   and (range~=limits.spawns.desired or value%1==0)
+end
+local function modFile(dir,id)
+ assert(type(id)=="string" and #id>=2 and #id<=48
+   and id:match("^[a-z][a-z0-9%-]+$"),"mod ID invalido")
+ local f,err=io.open(dir.."/"..id..".json","rb")
+ assert(f,"mod nao encontrado: "..id..": "..tostring(err))
+ local content=f:read(65537);f:close()
+ assert(type(content)=="string" and #content<=65536,"arquivo de mod muito grande")
+ local data,_,why=Json.decode(content,1,Json.null)
+ assert(not why and type(data)=="table" and data.id==id
+    and data.schemaVersion==1 and data.requiresClient=="base",
+   "manifesto de mod invalido: "..id)
+ for field in pairs(data) do
+  assert(field=="id" or field=="schemaVersion" or field=="requiresClient"
+   or field=="name" or field=="description" or field=="changes",
+   "campo desconhecido no mod: "..field)
+ end
+ assert(type(data.name)=="string" and #data.name>0 and #data.name<=70,
+   "nome de mod invalido")
+ assert(type(data.changes)=="table" and next(data.changes),
+   "mod sem mudancas")
+ return data
+end
+function Mods.ids(raw)
+ if raw==nil or raw=="" then return {} end
+ assert(type(raw)=="string" and #raw<=400,"lista de mods invalida")
+ local result,seen={},{}
+ for id in (raw..","):gmatch("([^,]*),") do
+  id=id:match("^%s*(.-)%s*$")
+  assert(#id>0 and #id<=48 and id:match("^[a-z][a-z0-9%-]+$"),
+    "ID de mod invalido: "..id)
+  assert(not seen[id],"mod duplicado: "..id)
+  seen[id]=true;result[#result+1]=id
+  assert(#result<=8,"limite de oito mods por sala")
+ end
+ return result
+end
+function Mods.build(level,ids,dir)
+ assert(multipliers[level],"dificuldade desconhecida: "..tostring(level))
+ assert(type(ids)=="table" and #ids<=8,"lista de mods invalida")
+ local cfg=copy(Config)
+ local types=copy(Types)
+ local spawns=cfg.server.animalSpawnPlan
+ local factor=multipliers[level]
+ if level~="normal" then
+  for _,entry in ipairs(spawns) do
+   if not types[entry.index].boss and not types[entry.index].fixedSpawn then
+    entry.desired=math.min(200,math.ceil(entry.desired*factor.spawn))
+   end
+  end
+  for _,ai in pairs(types) do
+   if ai.hostile and not ai.boss then
+    if ai.dmg then ai.dmg=math.min(10000,ai.dmg*factor.damage) end
+    if ai.speed then ai.speed=math.min(0.02,ai.speed*factor.speed) end
+    if ai.viewRange then ai.viewRange=math.min(6000,ai.viewRange*factor.range) end
+   end
+  end
+ end
+ local used,patches={},{}
+ for _,id in ipairs(ids) do
+  assert(not used["mod:"..id],"mod duplicado");used["mod:"..id]=true
+  local manifest=modFile(assert(dir,"diretorio de mods obrigatorio"),id)
+  for group,entries in pairs(manifest.changes) do
+   assert(limits[group] and type(entries)=="table" and next(entries),
+     "grupo de mod invalido: "..tostring(group))
+   for rawIndex,fields in pairs(entries) do
+    assert(type(rawIndex)=="string" and rawIndex:match("^%d+$")
+      and type(fields)=="table" and next(fields),
+      "indice de mod invalido")
+    local index=tonumber(rawIndex)
+    local target
+    if group=="animals" then target=types[index] else
+     for _,row in ipairs(spawns) do if row.index==index then target=row;break end end
+    end
+    assert(target,"indice de mod inexistente: "..group.."."..rawIndex)
+    for field,value in pairs(fields) do
+     local range=limits[group][field]
+     assert(range and type(target[field])=="number" and finite(value,range),
+       "valor ou campo nao permitido: "..group.."."..rawIndex.."."..field)
+     local key=group.."."..rawIndex.."."..field
+     assert(not used[key],"conflito entre mods: "..key)
+     used[key]=true;patches[#patches+1]={target=target,field=field,value=value}
+    end
+   end
+  end
+ end
+ -- Never partially install a mod: all manifests validated before applying patches.
+ for _,change in ipairs(patches) do change.target[change.field]=change.value end
+ local total=0
+ for _,row in ipairs(spawns) do total=total+row.desired end
+ assert(total<=600,"limite de 600 animais por sala")
+ return {config=cfg,types=types,difficulty=level,mods=ids}
+end
+return Mods
