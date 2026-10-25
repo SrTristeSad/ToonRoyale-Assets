@@ -1,6 +1,8 @@
 # Núcleo de mods — Moo-IO Windows/Lua
 
-Os mods são **pacotes de regras JSON** interpretados pelo servidor local. Coloque cada
+O núcleo aceita **dois tipos independentes de conteúdo JSON**: mods de regras em `server-lua/mods/ID.json` e mapas/modificações de cenário em `server-lua/mods/maps/ID.json`. Ambos podem ser combinados na mesma sala: selecione o cenário na lista de mapas e as regras na lista de mods. Um mod de regras pode alterar animais e economia do mundo sem fornecer um mapa; um mapa personalizado pode funcionar sem nenhum mod de regras.
+
+Os mods de regras são **pacotes de regras JSON** interpretados pelo servidor local. Coloque cada
 manifesto em `server-lua/mods/ID.json`. Na tela **Jogar → Criar minha sala**,
 escolha a dificuldade, clique **Escolher** para marcar os mods instalados e só
 então clique **Criar sala**. Também é possível informar IDs separados por
@@ -51,6 +53,10 @@ valores repetidos por dois mods diferentes são rejeitados como conflito.
 - `fauna-hostil`: javalis e touros mais perigosos.
 - `floresta-densa`: mais árvores, arbustos, pedras e ouro.
 - `lobos-em-matilha`: cooperação de lobos em qualquer dificuldade.
+
+## Mapas de mods
+
+Um mapa de mod descreve regiões e passagens com o mesmo contrato do núcleo (pisos, paredes, dimensões, colisões, animais e tiles). Não precisa seguir nomes como `caverna`, `bunker` ou `casa`. Exemplo incluso: `server-lua/mods/maps/refugio-personalizado.json`. O catálogo do menu encontra esses mapas junto aos de `server-lua/maps/` e indica **MOD INSTALADO**. Consulte `server-lua/maps/README.md` para o formato e os limites de segurança.
 
 Não há execução de scripts de terceiros, leitura de páginas web, instalação de
 dependências, modificações de rede nem acesso à conta do jogador. Os clientes
