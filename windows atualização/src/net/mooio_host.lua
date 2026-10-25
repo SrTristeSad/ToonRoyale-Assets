@@ -81,7 +81,7 @@ function Host.new()
     elapsed=0,check=0,process=nil,error=nil,progress="",lastLog="",root=nil
   },Host)
 end
-function Host:start(mode,requestedIP,requestedBots)
+function Host:start(mode,requestedIP,requestedBots,difficulty,modIds)
   if self.state=="starting" or self.state=="ready" then return false,"Sala ja iniciada" end
   if not win then return false,"Hospedagem automatica disponivel inicialmente no Windows." end
   if ping(self.port) then return false,"Ja existe uma sala Moo IO nesta porta." end
@@ -106,7 +106,15 @@ function Host:start(mode,requestedIP,requestedBots)
   if requestedBots<0 or requestedBots>8 or requestedBots%1~=0 then
     return false,"Quantidade de bots invalida (0 a 8)."
   end
-  local keys={"MOO_IO_ROOM_CODE","MOO_IO_GUI_HOST","MOO_IO_BIND_IP","MOO_IO_NETWORK_MODE","MOO_IO_BOT_COUNT"}
+  difficulty=difficulty or "normal"
+  if difficulty~="normal" and difficulty~="dificil" and difficulty~="extremo" then
+    return false,"Dificuldade desconhecida."
+  end
+  modIds=modIds or ""
+  if #modIds>400 or modIds:find("[^a-z0-9%%-, ]") then
+    return false,"IDs de mods invalidos."
+  end
+  local keys={"MOO_IO_ROOM_CODE","MOO_IO_GUI_HOST","MOO_IO_BIND_IP","MOO_IO_NETWORK_MODE","MOO_IO_BOT_COUNT","MOO_IO_DIFFICULTY","MOO_IO_MODS"}
   local originals={}
   for _,key in ipairs(keys) do originals[key]=getenv(key) end
   setenv(keys[1],self.code)
@@ -114,6 +122,8 @@ function Host:start(mode,requestedIP,requestedBots)
   setenv(keys[3],ip)
   setenv(keys[4],mode)
   setenv(keys[5],tostring(requestedBots))
+  setenv(keys[6],difficulty)
+  setenv(keys[7],modIds)
   local command='powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "'..script..'"'
   local cmd=ffi.new("char[?]",#command+1,command)
   local startup=ffi.new("STARTUPINFOA[1]")
