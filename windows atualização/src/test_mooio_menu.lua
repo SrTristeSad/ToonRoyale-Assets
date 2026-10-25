@@ -30,6 +30,15 @@ return function()
   assert(home:click(200,594)=="focus")
   home:textinput("mais-lobos")
   assert(home.modIds=="mais-lobos","mod manifest ID must be editable")
+  assert(home:click(520,592)=="mod_browse")
+  assert(home.screen=="mods" and #home.modCatalog>=4,
+    "mod installer list should show bundled data-only mods")
+  local toggle=home.modCatalog[1].id
+  assert(home:click(180,260)=="mod_toggle",
+    "installed mod must be selectable without entering its ID")
+  assert(home.modIds:find(toggle,1,true)~=nil,
+    "mod picker selection must be forwarded to room configuration")
+  assert(home:click(862,656)=="mods_done" and home.screen=="play")
   assert(home:click(174,646)=="create","LAN room must have a create action")
   assert(home:click(169,330)=="mode_lan")
   assert(home:click(412,330)=="mode_vpn")
@@ -89,7 +98,7 @@ return function()
   -- Render each page to an offscreen canvas to catch graphical/layout crashes.
   local canvas=love.graphics.newCanvas(1280,720)
   love.graphics.setCanvas(canvas)
-  for _,page in ipairs({"home","play","server","settings"}) do
+  for _,page in ipairs({"home","play","mods","server","settings"}) do
     home.screen=page
     home:draw("idle","")
     love.graphics.setCanvas()
