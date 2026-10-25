@@ -942,6 +942,12 @@ function love.keypressed(key)
     client:send("F",{0,Pack.null})
     return
   end
+  if key=="b" and phase=="playing" and client
+     and client.state=="spawn_confirmed" and world.map
+     and not panels:isOpen() and not chatOpen then
+    client:send("j",{"build"})
+    return
+  end
   if key=="g" and phase=="playing" and client
      and client.state=="spawn_confirmed" and world.map
      and not panels:isOpen() and not chatOpen then
