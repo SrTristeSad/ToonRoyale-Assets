@@ -51,7 +51,7 @@ for _,tc in ipairs(cases) do
   local fields={"SPAWN",tc.name,calls,fmt(p.x),fmt(p.y),fmt(p.scale),
     fmt(p.speed),p.health,p.maxHealth,p.age,p.maxXP,p.XP,
     p.wood,p.food,p.stone,p.points,p.buildIndex,p.weaponIndex,
-    table.concat(p.items,","),table.concat(p.weapons,","),
+    table.concat(p.items,","),tostring(p.weapons[0] or "")..(p.weapons[1] and (","..p.weapons[1]) or ""),
     p.spawned and 1 or 0,p.alive and 1 or 0,
     p.moveDir==nil and 1 or 0,p.slowMult,p.lifeStats.score,
     spawnObj and (spawnObj.active and 1 or 0) or "-",table.concat(events,",")}
