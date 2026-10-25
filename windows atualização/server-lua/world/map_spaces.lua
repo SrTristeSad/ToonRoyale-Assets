@@ -37,6 +37,40 @@ function Spaces:canOccupy(id,x,y,radius)
  end
  return true
 end
+-- Earliest hit fraction along an interior projectile / melee segment.
+-- This prevents attacks through walls and is independent from surface grids.
+local function segmentRect(x,y,x2,y2,r)
+ local dx,dy=x2-x,y2-y
+ local t0,t1=0,1
+ local function clip(p,q)
+  if p==0 then return q>=0 end
+  local v=q/p
+  if p<0 then
+   if v>t1 then return false end
+   if v>t0 then t0=v end
+  else
+   if v<t0 then return false end
+   if v<t1 then t1=v end
+  end
+  return true
+ end
+ if clip(-dx,x-r.x) and clip(dx,r.x+r.width-x)
+  and clip(-dy,y-r.y) and clip(dy,r.y+r.height-y) then return t0 end
+ return nil
+end
+function Spaces:firstWallHit(spaceId,x,y,x2,y2)
+ local zone=self:get(spaceId)
+ if not zone then return nil end
+ local nearest
+ for _,wall in ipairs(zone.obstacles or {}) do
+  local fraction=segmentRect(x,y,x2,y2,wall)
+  if fraction and (not nearest or fraction<nearest) then nearest=fraction end
+ end
+ return nearest
+end
+function Spaces:lineBlocked(spaceId,x,y,x2,y2)
+ return self:firstWallHit(spaceId,x,y,x2,y2)~=nil
+end
 -- Returns an authoritative destination; does not mutate Player or send
 -- unrecognized packets to legacy clients. Wire integration comes later.
 function Spaces:destination(from,portalId,radius)
