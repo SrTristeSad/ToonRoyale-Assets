@@ -170,7 +170,7 @@ function View.animalOpacity(animal,kind)
   if animal.state==3 then return 0.7 end
   return 1
 end
-local function renderAnimal(a,camera,world)
+local function renderAnimal(a,camera,world,animatedOnly)
   local kind=world and world:animalKind(a.index) or Animals.byId(a.index)
   if not kind or not kind.src then return end
   local x,y=camera:worldToScreen(a.visualX or a.x,a.visualY or a.y)
@@ -184,6 +184,7 @@ local function renderAnimal(a,camera,world)
   -- Use the SAME original PNG; no change to classic/V2 visuals.
   local frames=Mob.definition(world and world.map,a)
   local rendered=Mob.draw(a,frames,x,y,radius*2,angle,alpha)
+  if not rendered and animatedOnly then return false end
   if not rendered then
     rendered=Assets.draw("animals",kind.src..".png",
       x,y,radius*2,radius*2,angle,alpha)
@@ -195,6 +196,7 @@ local function renderAnimal(a,camera,world)
         x,y,radius*2,radius*2,angle,alpha)
     end
   end
+  return rendered
 end
 local function drawWeapon(weapon,variant,scale)
   local filename,fallback=Assets.weaponFilename(
@@ -874,6 +876,9 @@ local function drawIndoor(world,camera,dt,options)
   local kind=world and world:animalKind(a.index) or Animals.byId(a.index)
   if a.x and a.y and kind then renderAnimal(a,camera,world) end
  end
+ for _,ghost in ipairs(world.mobDeathEffects or {}) do
+  renderAnimal(ghost,camera,world,true)
+ end
  drawProjectiles(world,camera,w,h,1)
  for _,p in ipairs(world:orderedPlayers()) do
   if p.x and p.y and p.invisible~=1 then
@@ -927,6 +932,9 @@ function View.draw(world,camera,dt,options)
   for _,a in ipairs(animals) do
     local kind=world and world:animalKind(a.index) or Animals.byId(a.index)
     if kind and a.x and a.y then renderAnimal(a,camera,world) end
+  end
+  for _,ghost in ipairs(world.mobDeathEffects or {}) do
+    renderAnimal(ghost,camera,world,true)
   end
   drawObjectLayer(objects,camera,w,h,0)
   drawProjectiles(world,camera,w,h,1)
