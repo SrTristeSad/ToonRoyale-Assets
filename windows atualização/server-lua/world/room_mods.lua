@@ -106,8 +106,14 @@ function Mods.available(fs,dir)
      -- Invalid gameplay patches must not appear as installable mods.
      local compatible=pcall(Mods.build,"normal",{id},dir)
      if compatible then
+      local species={}
+      for key in pairs(manifest.newAnimals or {}) do
+       local kind=tonumber(key)
+       if kind then species[#species+1]=kind end
+      end
+      table.sort(species)
       result[#result+1]={id=manifest.id,name=manifest.name,
-        description=manifest.description or ""}
+        description=manifest.description or "",species=species}
      end
     end
    end
