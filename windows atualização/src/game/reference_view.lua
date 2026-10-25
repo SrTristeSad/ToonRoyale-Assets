@@ -841,7 +841,6 @@ local function drawIndoor(world,camera,dt,options)
    drawPlayer(p,camera,dt or 0,aim)
   end
  end
- DeathMarker.drawWorld(world,camera,w,h)
  labels(world,camera,w,h)
  drawMapHelp(world)
  if options and options.showDungeonMap~=false then
