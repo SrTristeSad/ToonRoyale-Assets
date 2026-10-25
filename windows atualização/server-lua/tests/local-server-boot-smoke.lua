@@ -1,7 +1,8 @@
 local Local=require("server-lua.local_server")
 local dir="server-lua/tests/.boot-check"
 assert(os.execute("mkdir -p "..dir))
-local server=Local.new({bind="127.0.0.1",port=18967,
+local now=10000
+local server=Local.new({nowMs=function()return now end,bind="127.0.0.1",port=18967,
  roomCode="testing42",mode="lan",dataDir=dir,botCount=2,guiHost=true})
 assert(server.rooms.LC.room.key=="LC")
 assert(server.rooms.MB.room.key=="MB")
