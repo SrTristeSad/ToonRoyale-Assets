@@ -3,6 +3,11 @@ local World=require("src.game.world_state")
 local Camera=require("src.camera")
 local View=require("src.game.reference_view")
 local function run()
+ assert(View.doorOpenRatio(300)==0)
+ assert(View.doorOpenRatio(185)==0)
+ assert(View.doorOpenRatio(130)>0.49)
+ assert(View.doorOpenRatio(75)==1)
+ assert(View.doorOpenRatio(nil)==0)
  local world=World.new()
  local portal={id="entrar-cabana",x=1950,y=1950,to="cabana",
   targetX=600,targetY=900}
