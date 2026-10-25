@@ -198,7 +198,8 @@ function Host:stop()
     -- A graceful /shutdown request can fail (adapter/firewall/closed
     -- control port). Never report "room closed" while keeping the
     -- child Node server running in the background.
-    if not wasReady or kernel.WaitForSingleObject(self.process,1500)~=0 then
+    local grace=os.getenv("MOO_IO_LOCAL_SERVER_RUNTIME")=="lua" and 4000 or 1500
+    if not wasReady or kernel.WaitForSingleObject(self.process,grace)~=0 then
       kernel.TerminateProcess(self.process,1)
       kernel.WaitForSingleObject(self.process,500)
     end
