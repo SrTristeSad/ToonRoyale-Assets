@@ -716,11 +716,19 @@ function Home:draw(state,detail,showWorld)
   end
   panel(83,684,1111,34,{0.13,0.17,0.15},0)
   local currentStatus=self.status~="" and self.statusScreen==self.screen
+  local help={
+   play="Crie sua sala ou entre usando o convite de um amigo.",
+   create="Escolha o mundo, a dificuldade e os mods; depois crie a sala.",
+   maps="Mapas extras sao opcionais. Veja os requisitos antes de selecionar.",
+   mods="Ative ou desative mods. Algumas especies dependem de um pacote.",
+   server="Informe o endereco do servidor e selecione uma sala.",
+   settings="Ajuste a imagem e personalize os controles do joystick."
+  }
   local message=currentStatus and self.status or
     (state=="joining" and "Entrando na partida..." or
      state=="keyed_transport" and "Servidor conectado. Carregando mundo..." or
      state=="failed" and tostring(detail) or
-     "Jogar abre as opcoes. Criar sala e uma escolha.")
+     help[self.screen] or "Selecione uma opcao para comecar.")
   message=UI.oneLine(message,950,15)
   love.graphics.setColor(currentStatus and self.error and C.red or C.green)
   love.graphics.rectangle("fill",92,689,5,22)
