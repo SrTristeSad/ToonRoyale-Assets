@@ -17,24 +17,31 @@ Quando o **anfitriao morre**, o fluxo original de retorno ao menu e mantido,
 mas o fundo mostra o ultimo local da morte em vez de recentralizar o mundo.
 Sair do cliente com uma sala ainda aberta continua exigindo confirmacao.
 
-## Controle USB / Bluetooth (gamepad)
+## Controle USB / Bluetooth (joystick)
 
-O cliente Windows aceita controles reconhecidos pelo LÖVE como gamepads, inclusive
-modelos compatíveis com Xbox e controles que exponham mapeamento SDL GameController.
-O teclado e o mouse continuam funcionando. Layout padrao:
+Controles reconhecidos pelo SDL/LÖVE como gamepads (Xbox, PlayStation via
+mapeamento, etc.) usam os botões padronizados. O cliente também tenta aceitar
+joysticks USB genéricos com os eixos físicos 1/2 (esquerdo), 3/4 (direito)
+e botões físicos 5 (L1), 6 (R1), 8 ou eixo 6 (R2). Em controles genéricos
+com outra ordem de eixos, o mapeamento pode variar.
 
-- Analógico esquerdo: mover; direito: mirar.
-- Gatilho direito (RT/R2): atacar enquanto pressionado.
-- A / Cruz: interagir (F); B / Círculo: voltar nos menus ou abrir pausa (sem construção de casa).
-- X / Quadrado: ataque alternativo; Y / Triângulo: cura/acao R.
-- LB/L1: equipamento secundário (Q); RB/R1: ação E.
-- Direcional digital: selecionar os atalhos 1 a 4.
-- Start/Options: pausa. Em menus, A confirma onde o cursor estiver e B retorna;
-  analógico esquerdo move o cursor.
-  
-O controle não altera pacotes multiplayer. As ações são enviadas ao servidor Lua
-pelos mesmos comandos do teclado/mouse. Alguns controles sem mapeamento SDL não
-aparecerão como gamepads. O esquema de botões é inicial e pode ser refinado.
+- Analógico **esquerdo**: andar.
+- Analógico **direito / R3**: apontar a arma. Não precisa pressionar o R3:
+  basta inclinar. A mira permanece onde foi deixada até movê-la novamente;
+  mover o mouse devolve o controle da mira ao mouse.
+- **L1 / LB**: item anterior na barra (incluindo armas e construções clássicas).
+- **R2 / RT**: próximo item na barra. Cada puxada avança exatamente uma posição.
+- **R1 / RB**: atacar/usar a arma selecionada, mantendo pressionado.
+- **X / Quadrado**: ataque alternativo pelo comando Espaço.
+- **A / Cruz**: interagir; **B / Círculo**: voltar/pausar; **Y / Triângulo**:
+  cura/ação R.
+- D-pad: atalhos 1–4; Start/Options: pausa.
+
+A barra é a lista verdadeira de armas e itens recebida do servidor e o
+equipamento selecionado só é confirmado pelo protocolo original `z`.
+O controle não cria itens nem altera as regras multiplayer. Teclado e
+mouse permanecem utilizáveis ao mesmo tempo.
+
 
 ## Duas maneiras de jogar multiplayer
 
