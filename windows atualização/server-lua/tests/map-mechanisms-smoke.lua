@@ -140,7 +140,7 @@ reject(function(m)
 end)
 local exterior=assert(Json.decode(Json.encode(map)))
 exterior.interactables[#exterior.interactables+1]={
- id="outdoor-deposit",kind="node",x=3790,y=3700,
+ id="outdoor-deposit",kind="node",placement="random",
  resource="stone",amount=4,charges=2,cooldownMs=2000}
 assert(Maps.validate(Json.encode(exterior),exterior.id),
  "custom-map surface must support finite gathering nodes")
