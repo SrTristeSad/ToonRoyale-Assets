@@ -47,9 +47,18 @@ end
 local bounds={treesPerArea={0,50},bushesPerArea={0,50},
  totalRocks={0,400},goldOres={0,160},riverWidth={0,2000},seed={1,2147483646}}
 local function checkSurface(object)
- only(object,{x=true,y=true,kind=true,scale=true})
- assert(integer(object.x,0,Config.mapScale)
-   and integer(object.y,0,Config.mapScale),"surface coordinates out of bounds")
+ only(object,{x=true,y=true,kind=true,scale=true,
+   placement=true,count=true})
+ if object.placement=="random" then
+  assert(object.x==nil and object.y==nil
+   and integer(object.count or 1,1,80),
+   "random surface item cannot have fixed coordinates")
+ else
+  assert(object.placement==nil and object.count==nil
+   and integer(object.x,0,Config.mapScale)
+   and integer(object.y,0,Config.mapScale),
+   "surface item needs valid coordinates or random placement")
+ end
  assert(integer(object.kind,0,3) and integer(object.scale,30,200),
    "surface object type or scale invalid")
 end
@@ -86,7 +95,7 @@ local function checkPortals(portals,source,lookup,max)
  local seen={}
  for _,p in ipairs(portals) do
   only(p,{id=true,x=true,y=true,to=true,targetX=true,targetY=true,
-    style=true,label=true})
+    style=true,label=true,placement=true})
   assert(p.style==nil or entranceStyles[p.style],
     "unsupported entrance style")
   assert(p.label==nil or validText(p.label,40),"invalid entrance label")
@@ -95,11 +104,18 @@ local function checkPortals(portals,source,lookup,max)
   local dest=p.to=="surface" and nil or lookup[p.to]
   assert(p.to=="surface" or dest,"portal destination unknown")
   local toW,toH=dims(dest)
-  assert(integer(p.x,0,fromW) and integer(p.y,0,fromH)
-   and integer(p.targetX,0,toW) and integer(p.targetY,0,toH),
-    "portal entry or exit outside boundaries")
-  assert(not blocked(source,p.x,p.y) and not blocked(dest,p.targetX,p.targetY),
-    "portal blocked by solid geometry")
+  if source==nil and p.placement=="random" then
+   assert(p.x==nil and p.y==nil,
+     "random surface entrance cannot contain fixed coordinates")
+  else
+   assert(p.placement==nil and integer(p.x,0,fromW)
+     and integer(p.y,0,fromH),"portal entry outside boundaries")
+   assert(not blocked(source,p.x,p.y),"portal entry blocked")
+  end
+  assert(integer(p.targetX,0,toW) and integer(p.targetY,0,toH),
+    "portal destination outside boundaries")
+  assert(not blocked(dest,p.targetX,p.targetY),
+    "portal destination blocked")
  end
 end
 -- Stateless interaction manifests. Runtime state belongs only to the
@@ -112,13 +128,19 @@ local function checkInteractables(list,w,h,zone)
  for _,obj in ipairs(list) do
   only(obj,{id=true,kind=true,x=true,y=true,width=true,height=true,
     label=true,material=true,resource=true,amount=true,target=true,
-    charges=true,cooldownMs=true})
+    charges=true,cooldownMs=true,placement=true})
   assert(id(obj.id) and not lookup[obj.id],"invalid or duplicate interaction ID")
   assert(interactiveKinds[obj.kind],"unsupported interaction kind")
   assert(zone or obj.kind=="cache" or obj.kind=="node",
     "surface gates and switches require collision-aware indoor physics")
-  assert(integer(obj.x,120,w-120) and integer(obj.y,120,h-120),
-    "interaction out of map bounds")
+  if zone==nil and obj.placement=="random" then
+   assert(obj.x==nil and obj.y==nil,
+     "random surface collectible cannot have fixed coordinates")
+  else
+   assert(obj.placement==nil and integer(obj.x,120,w-120)
+     and integer(obj.y,120,h-120),
+     "interaction requires real coordinates or random placement")
+  end
   assert(obj.label==nil or validText(obj.label,40),"invalid interaction label")
   assert(obj.material==nil or visualThemes[obj.material],
     "invalid interaction material")
