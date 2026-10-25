@@ -3,6 +3,7 @@
 local Catalog=require("src.game.catalog")
 local C=require("src.game.config")
 local Animation=require("src.game.reference_animation")
+local Mob=require("src.game.mob_animations")
 local CombatText=require("src.game.reference_combat_text")
 local BossEffects=require("src.game.reference_boss_effects")
 local Animals=require("src.game.animals")
@@ -511,6 +512,13 @@ function World:apply(name,args)
       if validId(sid) and number(x) and number(y) then
         local ai=self.animals[sid] or {sid=sid}
         ai.index=data[i+1]
+        Mob.onPosition(ai,x,y)
+        if number(data[i+5]) and number(ai.health)
+          and data[i+5]<ai.health then
+          local set=Mob.definition(self.map,ai)
+          if data[i+5]<=0 then Mob.onDeath(ai,set)
+          else Mob.onHurt(ai,set) end
+        end
         receivePosition(ai,x,y,number(data[i+4]) and data[i+4]/100 or 0)
         ai.health=data[i+5];ai.nameIndex=data[i+6];ai.state=data[i+7]
         self.animals[sid]=ai
@@ -583,7 +591,10 @@ function World:apply(name,args)
   elseif name=="J" then
     -- The JavaScript client invokes findAIBySID(sid):startAnim().
     local ai=self.animals[args[1]]
-    if ai then Animation.animal(ai) end
+    if ai then
+      Animation.animal(ai)
+      Mob.onAttack(ai,Mob.definition(self.map,ai))
+    end
     return true
   elseif name=="K" then
     -- sid, didHit, weaponIndex, optional skin attack-speed multiplier.
@@ -770,6 +781,9 @@ function World:update(dt)
   for _,group in ipairs({self.players,self.animals}) do
     for _,entity in pairs(group) do
       Animation.update(entity,dt)
+      if group==self.animals then
+        Mob.update(entity,Mob.definition(self.map,entity),dt)
+      end
       if entity.chatCountdown and entity.chatCountdown>0 then
         entity.chatCountdown=math.max(0,entity.chatCountdown-dt*1000)
       end
