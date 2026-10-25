@@ -158,7 +158,7 @@ function Local.new(opts)
   rooms={LC={capacity=Config.maxPlayers,membersOnly=false},
     MB={capacity=80,membersOnly=true}},
   maxPeers=120,guiHost=opts.guiHost==true,botCount=opts.botCount or 0,
-  accounts=accounts,moderation=moderation,servers=serverList,game=game,
+  accounts=accounts,moderation=moderation,servers=serverList,game=game,chat=chat,
   nowMs=now,
   onConnect=function(peer,ticket,key)
    peer.host=host
