@@ -1,4 +1,4 @@
-# Moo-IO — Windows
+# Moo-IO — Windows (servidor local Lua)
 
 ## Login V2 pelo navegador (LAN/VPN privada)
 
@@ -18,6 +18,16 @@ O protocolo protege o segredo central: a sala consulta o serviço de identidade 
 - **Evolução:** ganhe experiência, avance de idade e desbloqueie novos equipamentos e construções.
 - **Equipamentos e loja:** escolha itens, chapéus e acessórios com diferentes efeitos durante as partidas.
 - **Interface de partida:** acompanhe vida, recursos, experiência, inventário, mapa e classificação dos jogadores.
+
+## Arquitetura desta copia
+
+O cliente LÖVE inicia somente o servidor local Lua (`server-lua/`) quando voce seleciona **Criar minha sala**. Nao e necessario executar Node.js, login V2 ou Firebase.
+
+A pasta `server/` no checkout do GitHub permanece **somente como referencia historica Node.js para testes de paridade** e nao entra no ZIP Windows criado por `scripts/build-windows.ps1`. Essa distincao evita afirmar que o codigo-fonte historico foi apagado ou que a paridade ja e perfeita.
+
+O build offline exige uma distribuicao LÖVE 11.5 x64 acompanhada dos modulos LuaSocket compativeis (socket/http, ltn12, mime e suas bibliotecas nativas). A compilacao deve falhar se essas dependencias nao estiverem presentes.
+
+**Paridade 1:1:** ainda depende de testes executaveis Node/Lua e regressao grafica de uma partida completa. Nao trate a replica como integralmente homologada ate tais verificacoes passarem.
 
 ## Salas e multiplayer
 
