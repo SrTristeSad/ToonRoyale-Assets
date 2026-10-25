@@ -22,35 +22,39 @@ return function()
   assert(home.screen=="create","room options must have their own screen")
   assert(home.mapId=="","new rooms must not auto-select a map requiring species mods")
   assert(#home.mapCatalog>=3,"built-in cave and cabin maps must be installed")
-  assert(home:click(160,463)=="bots_toggle")
+  assert(home:click(405,461)=="bots_toggle")
   assert(home.botsEnabled and home.botCount==2)
-  assert(home:click(500,515)=="bots_count" and home.botCount==3)
-  assert(home:click(156,515)=="bots_count" and home.botCount==2)
+  assert(home:click(845,505)=="bots_count" and home.botCount==3)
+  assert(home:click(402,505)=="bots_count" and home.botCount==2)
   assert(home.difficulty=="normal")
-  assert(home:click(160,409)=="difficulty" and home.difficulty=="dificil")
-  assert(home:click(165,362)=="difficulty" and home.difficulty=="pacifico")
-  assert(home:click(412,362)=="difficulty" and home.difficulty=="normal")
-  assert(home:click(429,409)=="difficulty" and home.difficulty=="extremo")
-  assert(home:click(730,587)=="map_browse" and home.screen=="maps")
-  -- A map can be explicitly disabled. Refresh must not silently select one.
-  assert(home:click(690,256)=="map_select" and home.mapId=="")
+  assert(home:click(400,413)=="difficulty" and home.difficulty=="dificil")
+  assert(home:click(400,373)=="difficulty" and home.difficulty=="pacifico")
+  assert(home:click(745,373)=="difficulty" and home.difficulty=="normal")
+  assert(home:click(745,413)=="difficulty" and home.difficulty=="extremo")
+  assert(home:click(560,608)=="map_browse" and home.screen=="maps")
+  -- Same as mods: selecting a map enables it; clicking again disables.
+  local firstId=assert(home.mapCatalog[1]).id
+  assert(home:click(690,256)=="map_toggle" and home.mapId==firstId,
+    "one click must activate selected map")
+  assert(home:click(690,256)=="map_toggle" and home.mapId=="",
+    "second click must disable it without a special disable row")
   assert(home:click(820,656)=="maps_done" and home.screen=="create")
   home:refreshMaps()
   assert(home.mapId=="","F5 refresh silently re-enabled a disabled map")
   assert(home:mapName()=="Mapa desativado")
-  assert(home:click(730,587)=="map_browse" and home.screen=="maps")
+  assert(home:click(560,608)=="map_browse" and home.screen=="maps")
   -- A mod map is selectable without allowing an invalid host to crash:
   -- its exact required custom species are resolved from installed mods.
   local creatureMap
   for i,m in ipairs(home.mapCatalog) do
     if m.id=="reserva-criaturas" then
-      creatureMap={page=math.floor(i/6),row=i%6+1}
+      creatureMap={page=math.floor((i-1)/6),row=(i-1)%6+1}
       break
     end
   end
   assert(creatureMap,"mod map must be discoverable alongside bundled maps")
   home.mapPage=creatureMap.page
-  assert(home:click(690,249+(creatureMap.row-1)*64)=="map_select")
+  assert(home:click(690,249+(creatureMap.row-1)*64)=="map_toggle")
   assert(home.mapId=="reserva-criaturas" and home.modIds:find("novas-especies",1,true),
     "selecting creature map must enable its mandatory mod automatically")
   assert(home:checkMapMods(false)==true)
@@ -66,16 +70,15 @@ return function()
   local sawCave=false
   for i,m in ipairs(home.mapCatalog) do
     if m.id=="bunker-e-cavernas" then
-      local n=i+1
-      home.mapPage=math.floor((n-1)/6)
-      sawCave=home:click(690,256+64*((n-1)%6))=="map_select"
+      home.mapPage=math.floor((i-1)/6)
+      sawCave=home:click(690,256+64*((i-1)%6))=="map_toggle"
       break
     end
   end
   assert(sawCave and home:mapName()=="Bunker e Cavernas",
     "cave map must be a labeled selectable option")
   assert(home:click(820,656)=="maps_done" and home.screen=="create")
-  assert(home:click(200,577)=="mod_browse")
+  assert(home:click(555,560)=="mod_browse")
   assert(home.screen=="mods" and #home.modCatalog>=4,
     "mod installer list should show bundled data-only mods")
   local toggle=home.modCatalog[1].id
@@ -84,10 +87,10 @@ return function()
   assert(home.modIds:find(toggle,1,true)~=nil,
     "mod picker selection must be forwarded to room configuration")
   assert(home:click(862,656)=="mods_done" and home.screen=="create")
-  assert(home:click(169,262)=="mode_lan")
-  assert(home:click(412,262)=="mode_vpn")
+  assert(home:click(450,260)=="mode_lan")
+  assert(home:click(755,260)=="mode_vpn")
   assert(home.serverMode=="vpn")
-  assert(home:click(710,647)=="create","VPN room must be created explicitly")
+  assert(home:click(750,660)=="create","VPN room must be created explicitly")
   home.screen="play"
   home.hosting=true;home.hostAddress="192.168.1.7:8080";home.hostCode="abcd1234567890"
   assert(home:roomInvite()=="192.168.1.7:8080/abcd1234567890")
