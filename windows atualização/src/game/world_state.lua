@@ -197,9 +197,12 @@ function World:apply(name,args)
       self.map={id=handshake.map.id,
         name=type(handshake.map.name)=="string"
           and handshake.map.name:sub(1,70) or handshake.map.id,
-        portals=handshake.map.portals}
+        portals=handshake.map.portals,
+        interactables=type(handshake.map.interactables)=="table"
+           and handshake.map.interactables or {}}
       self.spaceId="surface"
-      self.space={id="surface",type="surface",portals=self.map.portals}
+      self.space={id="surface",type="surface",portals=self.map.portals,
+         interactables=self.map.interactables}
     else
       self.map=nil;self.spaceId="surface";self.space=nil
     end
@@ -226,7 +229,40 @@ function World:apply(name,args)
     end
     return true
   elseif name=="j" then
-    if args[1]=="remove-wall" then
+    if args[1]=="interaction-update" then
+      local update=args[4]
+      if not self.map or not self.space or type(update)~="table"
+        or update.spaceId~=self.spaceId
+        or type(update.id)~="string" then return false end
+      local item
+      for _,obj in ipairs(self.space.interactables or {}) do
+       if obj.id==update.id then item=obj;break end
+      end
+      if not item or item.kind~=update.kind or item.used then return false end
+      item.used=true
+      if item.kind=="lever" then
+       local gate
+       for _,obj in ipairs(self.space.interactables or {}) do
+        if obj.id==update.gateId and obj.kind=="gate" then gate=obj;break end
+       end
+       if not gate then return false end
+       gate.closed=false
+       for i=#self.space.obstacles,1,-1 do
+        if self.space.obstacles[i].interactiveGateId==gate.id then
+         table.remove(self.space.obstacles,i);break
+        end
+       end
+      end
+      return true
+    elseif args[1]=="interact-result" then
+      local payload=args[4]
+      if not self.map or type(payload)~="table"
+        or type(payload.message)~="string"
+        or #payload.message>120 then return false end
+      self.mapMessage=payload.message
+      self.mapMessageTimer=4
+      return true
+    elseif args[1]=="remove-wall" then
       local payload=args[4]
       if not self.map or type(payload)~="table" or
         not self.space or self.spaceId~=payload.spaceId or
