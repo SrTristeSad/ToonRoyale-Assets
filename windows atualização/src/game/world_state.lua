@@ -157,7 +157,7 @@ function World.new()
     map=nil,roomSettings=nil,spaceId="surface",space=nil,justChangedSpace=false,
     mapMessage=nil,mapMessageTimer=0,
     objectSlots={},objectSlotBySid={},objectSlotCount=0,
-    animals={},projectiles={},
+    animals={},projectiles={},mobDeathEffects={},
     entityPaintOrder={players={},animals={}},
     entityPaintTracked={players={},animals={}},
     resources={},resourceGain={},itemCounts={},inventory={weapons={},items={}},leaderboard={},
@@ -232,7 +232,26 @@ function World:apply(name,args)
     end
     return true
   elseif name=="j" then
-    if args[1]=="interaction-update" then
+    if args[1]=="mob-death" then
+      local data=args[4]
+      if not self.map or type(data)~="table"
+        or not validId(data.sid) or not validId(data.index)
+        or not number(data.x) or not number(data.y)
+        or not number(data.dir) then return false end
+      local set=self.map.animations
+        and self.map.animations[tostring(data.index)]
+      if not set or type(set.death)~="table" then return false end
+      local ttl=math.min(5,set.death.frames/set.death.fps)
+      if not number(ttl) or ttl<=0 then return false end
+      if #self.mobDeathEffects>=32 then table.remove(self.mobDeathEffects,1) end
+      local ghost={sid=data.sid,index=data.index,x=data.x,y=data.y,
+        visualX=data.x,visualY=data.y,dir=data.dir,
+        remaining=ttl}
+      Mob.onDeath(ghost,set)
+      Mob.update(ghost,set,0.001)
+      self.mobDeathEffects[#self.mobDeathEffects+1]=ghost
+      return true
+    elseif args[1]=="interaction-update" then
       local update=args[4]
       if not self.map or not self.space or type(update)~="table"
         or update.spaceId~=self.spaceId
@@ -436,6 +455,7 @@ function World:apply(name,args)
     self.itemCounts={}
     self.combatText={}
     self.bossEffects={}
+    self.mobDeathEffects={}
     -- Stats/profiles belong to server SIDs from this session, never a
     -- local estimate inferred from kills, damage text, or resource totals.
     self.profiles={};self.lifeStats={}
@@ -769,6 +789,12 @@ function World:update(dt)
   end
   CombatText.update(self.combatText,dt)
   BossEffects.update(self.bossEffects,dt)
+  for i=#self.mobDeathEffects,1,-1 do
+    local ghost=self.mobDeathEffects[i]
+    Mob.update(ghost,Mob.definition(self.map,ghost),dt)
+    ghost.remaining=ghost.remaining-dt
+    if ghost.remaining<=0 then table.remove(self.mobDeathEffects,i) end
+  end
   for key,gain in pairs(self.resourceGain) do
     gain.remaining=gain.remaining-dt
     if gain.remaining<=0 then self.resourceGain[key]=nil end
