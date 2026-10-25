@@ -199,7 +199,9 @@ function World:apply(name,args)
           and handshake.map.name:sub(1,70) or handshake.map.id,
         portals=handshake.map.portals,
         interactables=type(handshake.map.interactables)=="table"
-           and handshake.map.interactables or {}}
+           and handshake.map.interactables or {},
+        animations=type(handshake.map.animations)=="table"
+           and handshake.map.animations or {}}
       self.spaceId="surface"
       self.space={id="surface",type="surface",portals=self.map.portals,
          interactables=self.map.interactables}
