@@ -7,6 +7,28 @@ function Marker.make(x,y,spaceId)
  if not finite(x) or not finite(y) then return nil end
  return {x=x,y=y,spaceId=spaceId or "surface"}
 end
+-- The room owner's Play button creates a NEW client/socket after death.
+-- Only retain the last death for the same still-running hosted room.
+-- Never leak coordinates into an unrelated server or a newly created room.
+function Marker.forHostReconnect(world,wasHost,previous,target,hosted)
+ if not wasHost or not world or not world.lastDeath then return nil end
+ if not previous or not target or not hosted or hosted.state~="ready" then
+  return nil
+ end
+ local previousPort=tonumber(previous.port)
+ local targetPort=tonumber(target.port)
+ local hostedPort=tonumber(hosted.port)
+ if not previousPort or not targetPort or not hostedPort
+  or previousPort~=targetPort or targetPort~=hostedPort
+  or previous.host~=target.host or target.host~=hosted.hostIP
+  or previous.inviteCode~=target.inviteCode
+  or target.inviteCode~=hosted.code or type(target.inviteCode)~="string"
+  or target.inviteCode=="" then
+  return nil
+ end
+ local previousMark=world.lastDeath
+ return Marker.make(previousMark.x,previousMark.y,previousMark.spaceId)
+end
 function Marker.sameArea(world)
  local mark=world and world.lastDeath
  return mark and finite(mark.x) and finite(mark.y)
