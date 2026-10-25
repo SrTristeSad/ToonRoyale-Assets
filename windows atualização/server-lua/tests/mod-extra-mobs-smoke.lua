@@ -95,4 +95,38 @@ local function validateMapSpecies(profile)
 end
 assert(pcall(validateMapSpecies,merged))
 assert(not pcall(validateMapSpecies,noSpecies))
-print("PASS animation-only mods + 2 independent new species + LC-only spawns, client packets and map validation")
+local Creatures=require("server-lua.world.mod_creatures")
+local function deny(t)
+ assert(not pcall(Creatures.newSpecies,t),
+   "invalid user-defined mob bypassed sandbox")
+end
+deny({["14"]={}})
+deny({["64"]={}})
+deny({["15"]={name="unsafe",src="../escape",health=200,
+ scale=80,speed=0.001,turnSpeed=0.002,weightM=0.5}})
+deny({["15"]={name="boss",src="wolf_1",health=200,
+ scale=80,speed=0.001,turnSpeed=0.002,weightM=0.5,dmg=99999}})
+-- Full host integration: map names are arbitrary and species with IDs >=15
+-- are only permitted when their independent mod has been selected.
+assert(not pcall(Local.new,{bind="127.0.0.1",port=18999,
+ roomCode="missingextraspecies",dataDir=dir,
+ nowMs=function() return 100000 end,guiHost=true,botCount=0,
+ mapId="reserva-criaturas",modIds=""}),
+ "custom map unexpectedly accepted creature 15 without required mod")
+local mapped=Local.new({bind="127.0.0.1",port=19000,
+ roomCode="extraindoorcreatures",dataDir=dir,
+ nowMs=function() return 100000 end,guiHost=true,botCount=0,
+ mapId="reserva-criaturas",modIds="novas-especies"})
+local mappedRoom=mapped.rooms.LC.room
+local inside=0
+for _,mob in ipairs(mappedRoom.ais) do
+ if mob.active and mob.index>=15 and mob.spaceId=="mod-sala-gelo" then
+  inside=inside+1
+  assert(mob.mapSpawnId and mob.maxHealth>100)
+ end
+end
+assert(inside==2,"new species not spawned in arbitrary mod-map region")
+assert(mapped.rooms.MB.room.animal_manager.types[15]==nil)
+mapped:close()
+print("PASS animation-only mods + new species + surface & underground spawning + classic isolation")
+
