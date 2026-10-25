@@ -119,6 +119,26 @@ end
 local function number(v) return type(v)=="number" and v==v and v~=math.huge and v~=-math.huge end
 local function validId(v) return number(v) and v%1==0 and v>=0 end
 local function array(v) return type(v)=="table" and v or {} end
+local function inventoryList(raw)
+  -- The Node inventory is a zero-indexed JavaScript array. Lua MessagePack
+  -- decoding may expose the original indices (0,1,...) as map keys.
+  -- Convert only for client-side display; never alter the server packet IDs.
+  if type(raw)~="table" then return {} end
+  local result={}
+  if raw[0]~=nil then
+    local i=0
+    while raw[i]~=nil do
+      if type(raw[i])=="number" then result[#result+1]=raw[i] end
+      i=i+1
+    end
+  else
+    for _,id in ipairs(raw) do
+      if type(id)=="number" then result[#result+1]=id end
+    end
+  end
+  return result
+end
+
 -- Snapshot smoothing follows the 170ms transition used in the JS updateGame().
 local function receivePosition(entity,x,y,dir)
   entity.fromX=entity.visualX or entity.x or x
@@ -492,7 +512,7 @@ function World:apply(name,args)
     end
     return true
   elseif name=="V" then
-    local data=array(args[1])
+    local data=inventoryList(args[1])
     if args[2]==1 then self.inventory.weapons=data
     elseif args[2]==0 then self.inventory.items=data end
     return true
