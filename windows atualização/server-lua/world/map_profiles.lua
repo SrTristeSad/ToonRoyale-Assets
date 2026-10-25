@@ -73,6 +73,11 @@ local function blocked(zone,x,y)
    return true
   end
  end
+ for _,obj in ipairs(zone and zone.interactables or {}) do
+  if obj.kind=="gate" and x>=obj.x-obj.width/2
+    and x<=obj.x+obj.width/2 and y>=obj.y-obj.height/2
+    and y<=obj.y+obj.height/2 then return true end
+ end
  return false
 end
 local function checkPortals(portals,source,lookup,max)
@@ -235,6 +240,22 @@ function Maps.validate(content,wanted)
  checkPortals(map.portals,nil,lookup,64)
  for _,zone in ipairs(map.spaces) do
   checkPortals(zone.portals,zone,lookup,32)
+  -- Gates must never isolate a transition or cover the arrival/exit pad.
+  -- A reversible mechanism must always be able to close safely after
+  -- its destination passage has been used.
+  for _,obj in ipairs(zone.interactables or {}) do
+   if obj.kind=="gate" then
+    for _,portal in ipairs(zone.portals or {}) do
+     local px=math.max(obj.x-obj.width/2,
+       math.min(obj.x+obj.width/2,portal.x))
+     local py=math.max(obj.y-obj.height/2,
+       math.min(obj.y+obj.height/2,portal.y))
+     local dx,dy=portal.x-px,portal.y-py
+     assert(dx*dx+dy*dy>80*80,
+       "map gate too close to passage: "..obj.id)
+    end
+   end
+  end
  end
  return map
 end
