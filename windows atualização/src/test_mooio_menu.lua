@@ -61,13 +61,22 @@ return function()
   assert(home:overlayClick(902,191)=="close_overlay","overlay must close")
   assert(home:click(1121,110)=="back")
   assert(home:click(110,386)=="server_tab")
-  assert(home:click(745,309)==nil,
-    "V2 Firebase hotspot must not be clickable")
-  assert(home:click(212,300)==nil,
-    "V2 Lite hotspot must not be clickable")
-  assert(home.provider==nil,"removed V2 provider state must not return")
-  assert(home:click(460,548)=="server_to_play")
-  assert(home.screen=="play")
+  assert(home:click(210,286)=="focus",
+    "server screen must offer a dedicated IP:port field")
+  home:textinput("192.168.1.50:8080")
+  assert(home.serverAddress=="192.168.1.50:8080")
+  assert(home:click(860,281)=="server_browse",
+    "server screen must expose a read-only room directory query")
+  home.serverRooms={{id="arena",name="Arena",preset="custom",
+    port=8090,players=2,capacity=40,online=true,publicAccess=false}}
+  assert(home:click(180,356)=="server_select")
+  assert(home.serverSelected==1)
+  assert(home:click(850,535)=="focus")
+  home:textinput("codigo-da-sala")
+  assert(home.serverCode=="codigo-da-sala")
+  assert(home:click(850,593)=="server_join",
+    "client must select a listed V2 room before connecting")
+  assert(home.provider==nil,"the local game cannot create a V2 server")
   assert(home:click(1121,110)=="back")
   assert(home:click(140,460)=="settings_tab")
   assert(home:click(453,300)=="grid")
