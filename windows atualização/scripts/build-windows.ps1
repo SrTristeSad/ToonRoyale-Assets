@@ -10,9 +10,11 @@ if (-not $OutputDir) { $OutputDir = Join-Path $root 'dist\Moo-IO-Windows' }
 $OutputDir = [IO.Path]::GetFullPath($OutputDir)
 $LoveDir = [IO.Path]::GetFullPath($LoveDir)
 if (-not (Test-Path (Join-Path $LoveDir 'love.exe') -PathType Leaf)) { throw 'LÖVE 11.5 Windows x64 ausente.' }
-foreach ($required in @('socket\core.dll','socket.lua','socket\http.lua','ltn12.lua','mime\core.dll','mime.lua')) {
+# The official LÖVE 11.5 runtime already bundles LuaSocket.
+# Check the full official runtime, rather than demanding stand-alone socket DLLs.
+foreach ($required in @('love.dll','SDL2.dll')) {
   if (-not (Test-Path (Join-Path $LoveDir $required) -PathType Leaf)) {
-    throw "Dependencia LuaSocket ausente: $required (compativel com LuaJIT/LÖVE 11.5)."
+    throw "Runtime oficial LÖVE incompleto: $required."
   }
 }
 if (-not (Test-Path (Join-Path $root 'assets\custom\img\weapons\hammer_1.png') -PathType Leaf)) {
