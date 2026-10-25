@@ -28,6 +28,7 @@ local items={
 local world=World.new({config=Config,random=function()return 0.5 end})
 local room=Room.new({
  nowMs=10000,world=world,items=items,
+ broadcast=function()end, -- real Room supplies broadcast
  services={ensureAnimals=function()end}
 })
 local anti={
