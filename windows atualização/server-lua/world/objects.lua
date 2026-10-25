@@ -148,6 +148,7 @@ end
 -- Optional custom map generation; classic generate() remains byte-for-byte.
 function World:loadMap(profile)
  if not profile then return self:generate() end
+ self.mapSpawn=profile.spawn
  if profile.mode=="generated" then self:generate() end
  for _,o in ipairs(profile.surface or {}) do
   assert(self:canPlace(o.x,o.y,o.scale,0.6,nil,true),
@@ -156,7 +157,10 @@ function World:loadMap(profile)
  end
  -- Keep the surface approach to each authored door free of spawned resources.
  -- A generated tree cannot block a portal on one machine but not another.
- for _,portal in ipairs(profile.portals or {}) do
+ local entrances={}
+ for _,portal in ipairs(profile.portals or {}) do entrances[#entrances+1]=portal end
+ if profile.spawn then entrances[#entrances+1]=profile.spawn end
+ for _,portal in ipairs(entrances) do
   for _,obj in ipairs(self.objects) do
    if obj.active then
     local dx,dy=obj.x-portal.x,obj.y-portal.y
