@@ -57,7 +57,9 @@ local boxes={
   joinIP={704,287,421,51},joinCode={704,359,421,51},
   join={704,430,421,54},joinRetry={704,506,421,49},
   v2Login={704,557,421,38},
-  serverToPlay={381,526,518,54},
+  serverAddress={150,260,600,50},serverRefresh={768,260,335,50},
+  serverCode={773,513,326,49},serverEnter={773,573,326,51},
+  serverPrev={150,633,260,42},serverNext={448,633,260,42},
   grid={355,280,570,57},fullscreen={355,364,570,57},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43}
 }
@@ -108,6 +110,8 @@ function Home.new()
   return setmetatable({
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
     serverMode="lan",difficulty="normal",modIds="",focus=nil,
+    serverAddress="",serverCode="",serverRooms={},serverDirectory=nil,
+    serverPage=0,serverSelected=1,
     status="",error=false,hosting=false,starting=false,
     hostAddress="",hostCode="",connectionState="idle",serverLog="",
     showGrid=true,fullscreen=false,sessionTitle="",
@@ -189,7 +193,24 @@ function Home:click(sx,sy)
     if self.error and inside(x,y,boxes.joinRetry) then self.focus=nil;return "retry" end
     self.focus=nil
   elseif self.screen=="server" then
-    if inside(x,y,boxes.serverToPlay) then self.screen="play";return "server_to_play" end
+    if inside(x,y,boxes.serverAddress) then self.focus="serverAddress";return "focus" end
+    if inside(x,y,boxes.serverCode) then self.focus="serverCode";return "focus" end
+    if inside(x,y,boxes.serverRefresh) then self.focus=nil;return "server_browse" end
+    if inside(x,y,boxes.serverEnter) then self.focus=nil;return "server_join" end
+    if inside(x,y,boxes.serverPrev) then
+      self.serverPage=math.max(0,self.serverPage-1);return "server_page"
+    end
+    if inside(x,y,boxes.serverNext) then
+      self.serverPage=math.min(math.max(0,math.ceil(#self.serverRooms/4)-1),
+        self.serverPage+1);return "server_page"
+    end
+    for row=1,4 do
+      local box={155,332+(row-1)*70,565,62}
+      local index=self.serverPage*4+row
+      if inside(x,y,box) and self.serverRooms[index] then
+        self.serverSelected=index;self.focus=nil;return "server_select"
+      end
+    end
   elseif self.screen=="settings" then
     if inside(x,y,boxes.grid) then self.showGrid=not self.showGrid;return "grid" end
     if inside(x,y,boxes.fullscreen) then self.fullscreen=not self.fullscreen;return "fullscreen" end
@@ -236,6 +257,12 @@ function Home:textinput(chars)
   elseif self.focus=="modIds" then
     chars=chars:lower():gsub("[^a-z0-9,%- ]","")
     self.modIds=(self.modIds..chars):sub(1,120)
+  elseif self.focus=="serverAddress" then
+    chars=chars:gsub("[%c%s]","")
+    self.serverAddress=(self.serverAddress..chars):sub(1,190)
+  elseif self.focus=="serverCode" then
+    chars=chars:gsub("[^%w%-]","")
+    self.serverCode=(self.serverCode..chars):sub(1,64)
   elseif self.focus=="vpnIP" then
     chars=chars:gsub("[^%d%.]","")
     self.vpnIP=(self.vpnIP..chars):sub(1,15)
@@ -369,13 +396,44 @@ function Home:draw(state,detail,showWorld)
       end
     elseif self.screen=="server" then
       printText("SERVIDORES",140,165,31,C.white)
-      printText("Salas LAN/VPN e servidores V2 externos com HTTPS.",145,220,16,C.muted)
-      panel(130,239,995,265,C.panel,0)
-      printText("CRIAR SALA",159,282,22,C.green)
-      printText("Inicie o servidor Lua pelo menu JOGAR.",159,327,18,C.white)
-      printText("ENTRAR NA SALA",159,384,22,C.green)
-      printText("Use o IP, a porta e o codigo do anfitriao.",159,427,18,C.white)
-      button("serverToPlay","ENTRAR COM IP NO JOGAR",false)
+      printText("Endereço do servidor dedicado: IP:porta (LAN/VPN) ou HTTPS V2.",145,220,16,C.muted)
+      field("serverAddress",self.serverAddress,"192.168.1.10:8080",self.focus=="serverAddress")
+      button("serverRefresh","BUSCAR SALAS",true)
+      panel(147,325,582,310,C.panel,0)
+      panel(765,325,349,310,C.panel,0)
+      if #self.serverRooms==0 then
+        printText("Nenhuma sala carregada.",177,370,21,C.white)
+        printText("Informe o servidor e clique BUSCAR SALAS.",177,420,16,C.muted,520)
+      else
+        for row=1,4 do
+          local index=self.serverPage*4+row
+          local room=self.serverRooms[index]
+          if room then
+            local y=332+(row-1)*70
+            panel(155,y,565,62,index==self.serverSelected and C.raised or C.bg,0)
+            printText(room.name,169,y+7,19,room.online and C.white or C.muted,520)
+            local mode=room.preset=="traditional" and "Tradicional" or "Personalizada"
+            local state=room.online and "Online" or "Offline"
+            printText(mode.."  •  "..state.."  •  "..room.players.."/"..room.capacity..
+              " jogadores",169,y+35,14,C.muted,520)
+          end
+        end
+      end
+      local selected=self.serverRooms[self.serverSelected]
+      printText("SALA SELECIONADA",781,344,18,C.green,315)
+      if selected then
+        printText(selected.name,781,386,20,C.white,315)
+        printText(selected.publicAccess and "Publica: entrada pelo catalogo" or
+          "Privada: convite necessario",781,427,15,C.muted,315)
+        printText(selected.online and "Servidor disponivel" or "Sala offline",
+          781,455,15,selected.online and C.green or C.amber,315)
+      else
+        printText("Selecione uma sala na lista.",781,394,16,C.muted,315)
+      end
+      field("serverCode",self.serverCode,"Codigo da sala privada",self.focus=="serverCode")
+      button("serverEnter","ENTRAR NA SALA",true)
+      button("serverPrev","ANTERIOR",false)
+      button("serverNext","PROXIMAS",false)
     else
       printText("CONFIGURACOES",336,190,31,C.white)
       button("grid","GRADE DO MAPA     "..(self.showGrid and "LIGADA" or "DESLIGADA"),false)
