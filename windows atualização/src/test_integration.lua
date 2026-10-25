@@ -30,8 +30,8 @@ function I.new(mode)
     print("E2E: local Node account emulator issued auth token; never logging token")
   end
   local client=Original.new({
-    host="127.0.0.1",port=8080,server="LC",
-    autoSpawn=false,authToken=token
+    host="127.0.0.1",port=tonumber(os.getenv("PORT")) or 8080,server="LC",
+    inviteCode=os.getenv("MOO_IO_ROOM_CODE"),autoSpawn=false,authToken=token
   })
   local ok,err=client:connect()
   if not ok then error("Node connection: "..tostring(err)) end
