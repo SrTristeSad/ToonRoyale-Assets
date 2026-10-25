@@ -68,6 +68,7 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
  room.selectedDifficulty=rules.difficulty or "normal"
  room.projectile_manager.mapSpaces=room.mapSpaces
  animals.mapSpaces=room.mapSpaces
+ animals.mapAnimations=map and map.animalAnimations or nil
  if map and key=="LC" then
   room.houseStorePath=houseStorePath
   require("server-lua.world.house_build").load(room)
