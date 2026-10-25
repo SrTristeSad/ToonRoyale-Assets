@@ -14,6 +14,7 @@ local Accounts=require("server-lua.world.account_store")
 local Moderation=require("server-lua.anticheat.moderation_store")
 local Chat=require("server-lua.world.local_chat")
 local Build=require("server-lua.protocol.build")
+local Mods=require("server-lua.world.room_mods")
 local Local={}
 Local.__index=Local
 local function stamp()return math.floor(Socket.gettime()*1000)end
@@ -27,9 +28,11 @@ local function newSessionId()
  end
  return table.concat(out)
 end
-local function addWorld(key,capacity,botCount,accounts,moderation,clock,log)
+local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,profile)
  local players,ais={},{}
- local world=World.new({config=Config,random=math.random})
+ local rules=profile or {config=Config,types=require("server-lua.world.animal_types")}
+ local gameConfig=rules.config
+ local world=World.new({config=gameConfig,random=math.random})
  world:generate()
  local room
  local function broadcast(name,...)
@@ -40,12 +43,12 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log)
   ensureAnimals=function()return room.animal_manager:ensureAnimals()end,
   log=log
  }
- room=Room.new({key=key,config=Config,nowMs=clock(),wallTimeMs=clock,
+ room=Room.new({key=key,config=gameConfig,nowMs=clock(),wallTimeMs=clock,
   players=players,ais=ais,world=world,crabKillers=crabKillers,
   services=services,accounts=accounts:callbacks(),
   moderation=moderation:callbacks(),broadcast=broadcast})
  local animals=Animals.new({
-  world=world,players=players,ais=ais,config=Config,random=math.random,
+  world=world,players=players,ais=ais,config=gameConfig,types=rules.types,random=math.random,
   score=function(player,amount) return room:score(player,amount)end,
   send=function(id,name,...)return room:sendId(id,name,...)end,
   disable=function(obj)return world:disableObject(obj)end,
@@ -95,8 +98,10 @@ function Local.new(opts)
  moderation:migrateIds(accounts.migratedIds)
  local log=opts.log or function()end
  local rooms={}
+ local profile=Mods.build(opts.difficulty or "normal",
+   Mods.ids(opts.modIds or ""),opts.modDir or "server-lua/mods")
  rooms.LC=addWorld("LC",Config.maxPlayers,opts.botCount or 0,
-  accounts,moderation,now,log)
+  accounts,moderation,now,log,profile)
  rooms.MB=addWorld("MB",80,0,accounts,moderation,now,log)
  local chat=Chat.new(opts.dataDir.."/chat.json",{nowMs=now,store=accounts})
  rooms.LC.room.chat=chat
