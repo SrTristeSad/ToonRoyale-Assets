@@ -255,6 +255,28 @@ function API:handle(method,target,headers,raw,ip)
   if kicked==0 then return invalid("not online",404) end
   return response(200,object())
  end
+ if path=="/api/chat/history" or path=="/api/clan/online" or
+    path=="/api/page/friends" or path=="/api/mod/messages" then
+  local chat=assert(self.chat,"original Chat store required")
+  local game=assert(self.game,"original gameApi required")
+  local result
+  if path=="/api/chat/history" then
+   result=chat:history(account,body.kind,body.with)
+  elseif path=="/api/clan/online" then
+   result=chat:clanOnline(account,game)
+  elseif path=="/api/page/friends" then
+   result=chat:friendsOnline(account,body.friends,game)
+  else
+   if account.role~="admin" and account.role~="mod" then return invalid("rank") end
+   local list=chat:said(body.from,game)
+   if not list then return invalid("not found",404) end
+   local messages=array()
+   for i=1,math.min(#list,100) do messages[#messages+1]=list[i] end
+   return response(200,{messages=messages})
+  end
+  if result.error then return response(result.error=="not found" and 404 or 400,result) end
+  return response(200,result)
+ end
  if path=="/api/account" then return response(200,store:accountInfo(account)) end
  if path=="/api/account/prefs" then
   return response(200,{prefs=store:setPrefs(account,body.prefs)})
