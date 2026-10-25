@@ -4,6 +4,7 @@
 local Crypto=require("src.protocol.original_crypto")
 local Pack=require("src.protocol.msgpack")
 local Random=require("src.net.secure_random")
+local MapWire=require("src.protocol.map_wire")
 local Session={}
 Session.__index=Session
 local function hex(raw)
@@ -57,11 +58,13 @@ function Session.new(opts)
     end
     key=table.concat(bytes)
   end
+  local tables=Crypto.buildTables(seed,pinned and build.salt or nil)
+  MapWire.install(tables)
   local self=setmetatable({
     socketId=socketId,rawKey=raw,seed=seed,pinned=pinned,
     sealMode=sealMode,key=key,sha256=sha256,
     sealReport=nil,
-    tables=Crypto.buildTables(seed,pinned and build.salt or nil),
+    tables=tables,
     mask=pinned and Crypto.deriveMasks(key) or nil,
     lastSeq=0,sent=0,
     ledger=pinned and 2166136261 or 0,
