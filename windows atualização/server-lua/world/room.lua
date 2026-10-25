@@ -274,8 +274,11 @@ end
 function Room:buildHouse(player)
  return require("server-lua.world.house_build").build(self,player)
 end
-function Room:buildWall(player)
- return require("server-lua.world.house_build").wall(self,player)
+function Room:buildWall(player,request)
+ return require("server-lua.world.house_build").wall(self,player,request)
+end
+function Room:removeWall(player,index)
+ return require("server-lua.world.house_build").removeWall(self,player,index)
 end
 
 function Room:handleInput(player,name,args)
