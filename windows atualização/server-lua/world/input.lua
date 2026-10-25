@@ -43,6 +43,9 @@ function Input.handle(ctx,player,name,args)
       return bad(player,name,"world space unsupported")
     end
     if #args==0 then return ctx.game:usePortal(player) end
+    if #args==2 and args[1]=="interact" and type(args[2])=="string" then
+      return ctx.game:interactMapObject(player,args[2])
+    end
     if #args==1 and args[1]=="build" then
       return ctx.game:buildHouse(player)
     end
