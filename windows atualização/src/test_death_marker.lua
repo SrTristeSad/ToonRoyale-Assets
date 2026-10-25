@@ -34,6 +34,24 @@ return function()
    "last death position was wrongly removed by respawn")
  assert(world:apply("D",{{20,sid,"Jogador",6200,6600,0,100,100,35,0}}))
  Hud.draw(world,false,"",true)
+ -- Render the minimap AFTER the spawn confirmation, just like the user's
+ -- screenshot. The red X must visibly coexist with the white player dot.
+ local canvas=love.graphics.newCanvas(1280,720)
+ local previousCanvas=love.graphics.getCanvas()
+ love.graphics.setCanvas(canvas)
+ love.graphics.clear(0.35,0.47,0.36,1)
+ Hud.draw(world,false,"",true)
+ love.graphics.setCanvas(previousCanvas)
+ local image=canvas:newImageData()
+ local px,py=Marker.minimapPoint(world,130,14400)
+ assert(px and py,"last death disappeared after player respawn")
+ local r,g,b=image:getPixel(math.floor(20+px),math.floor(720-150+py))
+ assert(r>0.65 and g<0.55 and b<0.55,
+   string.format("minimap death X not red after respawn: %.2f %.2f %.2f",r,g,b))
+ if os.getenv("MOO_IO_CAPTURE_UI")=="1" then
+  image:encode("png","ui-death-minimap-after-respawn.png")
+ end
+ canvas:release()
  assert(Marker.drawWorld(world,camera,1280,720))
  -- A new death overwrites the previous mark, even if a player snapshot
  -- was removed before packet P arrived: fallback is authoritative a.
