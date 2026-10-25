@@ -27,7 +27,7 @@ if os.getenv("MOO_IO_LUA_SERVER")=="1" then
   -- Continuous cursor travel for controller navigation; axis callbacks only fire
 -- on changes, so relying on them makes menus nearly impossible to navigate.
 local function updateGamepadMenu(dt)
- if phase~="menu" then return end
+ if phase~="menu" and not pause:isOpen() then return end
  local joy=activeGamepad()
  if not joy then return end
  local xaxis,yaxis=joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty")
@@ -317,10 +317,10 @@ function love.update(dt)
   frameDelta=dt
   if integration then integration:update(dt);return end
   if diagnostic then return end
+  updateGamepadMenu(dt)
   -- The menu backdrop reuses the original top-down world preview even
   -- before connecting to a Node server.
   if phase=="menu" then
-    updateGamepadMenu(dt)
     menu.world:update(dt)
     previewAge=previewAge+dt
   end
@@ -483,8 +483,19 @@ function love.update(dt)
     end
   end
   if client.state=="spawn_confirmed" and not died and not pause:isOpen() then
-    if panels:isOpen() or clans:isOpen() then input.keys={} end
-    updateGamepad()
+    local blocked=panels:isOpen() or clans:isOpen() or profile:isOpen()
+      or chatOpen or home.roomOverlay
+    if blocked then
+      input.keys={}
+      input:gamepadMove(0,0)
+      gamepadAim=nil
+      if gamepadAttack then
+        gamepadAttack=false
+        client:send("F",{0,Pack.null})
+      end
+    else
+      updateGamepad()
+    end
     input:update(dt)
     movementClock=movementClock+dt
     if movementClock>=0.07 then
@@ -911,6 +922,9 @@ local function stopGameplay(owned)
 end
 local function stopPlayerControls()
   input.keys={}
+  input:gamepadMove(0,0)
+  gamepadAim=nil
+  gamepadAttack=false
   lastMove=false
   mouseAttack=false;spaceAttack=false
   chatOpen=false;chatDraft=""
