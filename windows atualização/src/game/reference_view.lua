@@ -458,7 +458,8 @@ function View.nearestInteraction(world)
  if not area or not player or type(player.x)~="number" then return nil end
  local best,dist
  for _,obj in ipairs(area.interactables or {}) do
-  if (obj.kind=="cache" or obj.kind=="lever") and not obj.used then
+  if (obj.kind=="cache" or obj.kind=="lever"
+    or obj.kind=="node" or obj.kind=="switch") and not obj.used then
    local dx,dy=obj.x-player.x,obj.y-player.y
    local d=dx*dx+dy*dy
    if d<=150*150 and (not dist or d<dist) then
@@ -482,15 +483,24 @@ local function drawMapInteractables(world,camera)
     love.graphics.setColor(obj.used and 0.4 or 0.85,0.65,0.29,1)
     love.graphics.rectangle("line",x-35*u,y-26*u,70*u,52*u,4*u)
     love.graphics.rectangle("fill",x-3*u,y-19*u,6*u,38*u)
-   elseif obj.kind=="lever" then
+   elseif obj.kind=="lever" or obj.kind=="switch" then
     love.graphics.setColor(0.27,0.31,0.31,1)
     love.graphics.circle("fill",x,y,29*u)
     love.graphics.setColor(obj.used and 0.35 or 0.94,
       obj.used and 0.80 or 0.58,0.18,1)
     love.graphics.setLineWidth(math.max(1,6*u))
-    local angle=obj.used and 0.8 or -0.8
+    local angle=(obj.kind=="switch" and (obj.version or 0)%2==1
+      or obj.used) and 0.8 or -0.8
     love.graphics.line(x,y,x+math.sin(angle)*43*u,y-math.cos(angle)*43*u)
     love.graphics.setLineWidth(1)
+   elseif obj.kind=="node" then
+    local n=obj.remaining or obj.charges or 0
+    love.graphics.setColor(n>0 and 0.28 or 0.18,
+      n>0 and 0.55 or 0.24,n>0 and 0.64 or 0.25,1)
+    love.graphics.polygon("fill",x,y-38*u,x+34*u,y-7*u,
+      x+22*u,y+27*u,x-25*u,y+30*u,x-37*u,y-5*u)
+    love.graphics.setColor(0.87,0.92,0.85,1)
+    love.graphics.print(tostring(n),x-5*u,y-9*u)
    elseif obj.kind=="gate" then
     -- The gate is already a real obstacle in zone.obstacles.
     love.graphics.setColor(0.95,0.75,0.31,1)
@@ -567,8 +577,13 @@ local function drawMapHelp(world)
   love.graphics.setColor(0.10,0.11,0.10,0.88)
   love.graphics.rectangle("fill",w/2-205,h-170,410,37,6,6)
   love.graphics.setColor(0.97,0.89,0.65,1)
-  local label=obj.label or (obj.kind=="cache" and "Bau de recursos" or "Alavanca")
-  love.graphics.printf("F: "..label:sub(1,38),w/2-196,h-161,392,"center")
+  local label=obj.label or (obj.kind=="cache" and "Bau de recursos"
+    or obj.kind=="node" and "Ponto de coleta"
+    or obj.kind=="switch" and "Interruptor" or "Alavanca")
+  if obj.kind=="node" then
+   label=label.." ("..tostring(obj.remaining or obj.charges)..")"
+  end
+  love.graphics.printf("F: "..label:sub(1,48),w/2-196,h-161,392,"center")
  end
  if world.mapMessage and (world.mapMessageTimer or 0)>0 then
   love.graphics.setColor(0.07,0.10,0.07,0.91)
