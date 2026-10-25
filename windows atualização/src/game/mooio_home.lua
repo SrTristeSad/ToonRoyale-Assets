@@ -48,14 +48,16 @@ local boxes={
   controls={355,447,570,57},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43},
   playConfigure={155,418,462,63},
-  chooseLan={122,242,212,43},chooseVpn={348,242,212,43},
-  createVpnIP={122,292,438,34},
-  easyDiff={122,349,210,40},normalDiff={348,349,212,40},
-  hardDiff={122,398,210,40},extremeDiff={348,398,212,40},
-  createBots={122,451,438,40},createBotsMinus={122,498,99,39},
-  createBotsPlus={461,498,99,39},createMods={122,554,438,45},
-  createSubmit={629,622,536,49},createBack={122,622,438,49},
-  chooseMapPrev={631,569,232,37},chooseMapNext={880,569,282,37}
+  -- One compact, centred setup panel. No giant map preview.
+  chooseLan={352,246,265,40},chooseVpn={630,246,265,40},
+  createVpnIP={352,295,543,34},
+  easyDiff={352,358,265,35},normalDiff={630,358,265,35},
+  hardDiff={352,400,265,35},extremeDiff={630,400,265,35},
+  createBots={352,444,543,36},createBotsMinus={352,489,107,37},
+  createBotsPlus={788,489,107,37},
+  createMods={352,539,543,43},
+  chooseMapNext={352,589,543,43},
+  createBack={352,644,191,34},createSubmit={554,644,341,34}
 }
 local function button(id,text,primary)
  local box=boxes[id]
@@ -138,7 +140,7 @@ function Home:refreshInstalled()
  self:refreshMaps()
  self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
  self.mapPage=math.min(self.mapPage,
-   math.max(0,math.ceil((#self.mapCatalog+1)/6)-1))
+   math.max(0,math.ceil(#self.mapCatalog/6)-1))
  self.modPage=math.min(self.modPage,
    math.max(0,math.ceil(#self.modCatalog/6)-1))
  self:setStatus(#self.mapCatalog.." mapas e "..
@@ -251,9 +253,9 @@ function Home:click(sx,sy)
       self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
       return "mod_browse"
     end
-    if inside(x,y,boxes.chooseMapPrev) or inside(x,y,boxes.chooseMapNext)
-      or inside(x,y,{629,239,534,210}) then
-      self.screen="maps";self.mapPage=0;return "map_browse"
+    if inside(x,y,boxes.chooseMapNext) then
+      self.screen="maps";self.mapPage=0;self.focus=nil
+      return "map_browse"
     end
     if inside(x,y,boxes.createSubmit) then
       self.focus=nil
@@ -297,25 +299,28 @@ function Home:click(sx,sy)
       self.mapPage=math.max(0,self.mapPage-1);return "map_page"
     end
     if inside(x,y,boxes.modsNext) then
-      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog+1)/6)-1),
+      self.mapPage=math.min(math.max(0,math.ceil(#self.mapCatalog/6)-1),
         self.mapPage+1);return "map_page"
     end
     for row=1,6 do
-      local n=self.mapPage*6+row
-      if inside(x,y,{151,242+(row-1)*64,976,57}) then
-        local entry=n==1 and {id="",name="DESATIVAR MAPA"} or self.mapCatalog[n-1]
-        if entry then
-          self.mapId=entry.id
-          local valid,reason=self:checkMapMods(true)
-          if valid then
-           if self.status:sub(1,22)~="Mod necessario ativado:" then
-            self:setStatus("Mapa selecionado: "..entry.name)
-           end
-          else
-           self:setStatus(reason,true)
-          end
-          return "map_select"
+      local entry=self.mapCatalog[self.mapPage*6+row]
+      if entry and inside(x,y,{151,242+(row-1)*64,976,57}) then
+        -- Mod-like toggle: one active map, second click unchecks it.
+        if self.mapId==entry.id then
+          self.mapId=""
+          self:setStatus("Mapa desativado. Mundo classico ativo.")
+          return "map_toggle"
         end
+        local previous=self.mapId
+        self.mapId=entry.id
+        local valid,reason=self:checkMapMods(true)
+        if not valid then
+          self.mapId=previous
+          self:setStatus(reason,true)
+          return "map_mod_required"
+        end
+        self:setStatus("Mapa ativado: "..entry.name)
+        return "map_toggle"
       end
     end
   elseif self.screen=="mods" then
@@ -384,7 +389,7 @@ function Home:navTargets()
   ids[#ids+1]="serverCode";ids[#ids+1]="serverEnter"
   ids[#ids+1]="serverPrev";ids[#ids+1]="serverNext";ids[#ids+1]="back"
  elseif self.screen=="maps" or self.screen=="mods" then
-  local total=self.screen=="maps" and (#self.mapCatalog+1) or #self.modCatalog
+  local total=self.screen=="maps" and #self.mapCatalog or #self.modCatalog
   local page=self.screen=="maps" and self.mapPage or self.modPage
   for i=1,6 do
    if page*6+i<=total then
@@ -600,51 +605,36 @@ function Home:draw(state,detail,showWorld)
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
     elseif self.screen=="create" then
-      printText("F5: atualizar mapas e mods instalados",635,172,13,C.amber,490)
-      panel(100,195,482,477,C.panel,0)
-      panel(613,195,564,477,C.panel,0)
-      printText("CONEXAO",122,206,17,C.green)
-      button("chooseLan",self.serverMode=="lan" and "LAN  ATIVA" or "LAN",self.serverMode=="lan")
-      button("chooseVpn",self.serverMode=="vpn" and "VPN  ATIVA" or "VPN",self.serverMode=="vpn")
+      printText("F5: atualizar mapas e mods",352,176,13,C.amber,543,"center")
+      panel(329,202,591,482,C.panel,0)
+      printText("CONEXAO",352,215,15,C.green)
+      button("chooseLan",self.serverMode=="lan" and "LAN ATIVA" or "LAN",self.serverMode=="lan")
+      button("chooseVpn",self.serverMode=="vpn" and "VPN ATIVA" or "VPN",self.serverMode=="vpn")
       if self.serverMode=="vpn" then
-        field("createVpnIP",self.vpnIP,"IP do seu computador na VPN",self.focus=="vpnIP")
+        field("createVpnIP",self.vpnIP,"IP do computador na VPN",self.focus=="vpnIP")
       else
-        printText("Amigos na mesma rede local.",122,310,16,C.muted,440)
+        printText("Amigos na mesma rede local.",352,300,15,C.muted,543,"center")
       end
-      printText("DIFICULDADE",122,330,14,C.green)
+      printText("DIFICULDADE",352,337,14,C.green)
       local opts={{"easyDiff","PACIFICO","pacifico"},
         {"normalDiff","NORMAL","normal"},{"hardDiff","DIFICIL","dificil"},
         {"extremeDiff","EXTREMO","extremo"}}
       for _,o in ipairs(opts) do button(o[1],o[2],o[3]==self.difficulty) end
       button("createBots",self.botsEnabled and "BOTS: ATIVADOS" or "BOTS: DESATIVADOS",self.botsEnabled)
       button("createBotsMinus","-")
-      printText("QUANTIDADE  "..(self.botsEnabled and self.botCount or 0).."/8",
-        229,504,17,C.white,223,"center")
+      printText("QUANTIDADE "..(self.botsEnabled and self.botCount or 0).."/8",
+        459,495,17,C.white,329,"center")
       button("createBotsPlus","+")
-      button("createMods",self.modIds=="" and "MODS: NENHUM  -  ESCOLHER" or "MODS: PERSONALIZADOS  -  EDITAR",false)
-      printText("MUNDO DA PARTIDA",635,207,18,C.green)
-      panel(629,239,534,210,C.raised,0)
-      printText("MUNDO SELECIONADO",650,254,15,C.green,485)
-      printText(UI.oneLine(self:mapName(),480,23),650,293,23,C.white,485)
-      local description=self:mapDescription()
-      if description and description~="" then
-        printText(UI.oneLine(description,480,15),650,348,15,C.muted,485)
-      end
-      printText("Mods necessarios: verificacao automatica",650,403,14,C.amber,485)
-      button("chooseMapPrev","ESCOLHER MAPA",true)
-      button("chooseMapNext","ABRIR LISTA",false)
+      button("createMods",self.modIds=="" and "MODS: NENHUM - ESCOLHER" or "MODS: PERSONALIZADOS - EDITAR",false)
+      button("chooseMapNext",self.mapId=="" and "MAPA: DESATIVADO - ESCOLHER"
+        or "MAPA: "..self:mapName().." - EDITAR",false)
       button("createBack","CANCELAR",false)
-      button("createSubmit","CRIAR SALA NESTE MAPA",true)
-      printText("Clique em ESCOLHER MAPA para trocar o mundo.",635,542,14,C.muted,515)
-      if #self.mapCatalog==0 then
-        printText("Aviso: nenhum mapa adicional encontrado no pacote.",
-          636,543,14,C.red,511)
-      end
+      button("createSubmit","CRIAR SALA",true)
     elseif self.screen=="maps" then
-      printText("Selecione um mapa instalado ou desative os mapas personalizados.",145,213,15,C.muted)
+      printText("Clique para ativar; clique novamente para desmarcar o mapa.",145,213,15,C.muted)
       for row=1,6 do
         local i=self.mapPage*6+row
-        local entry=i==1 and {id="",name="DESATIVAR MAPA",description="Jogar sem mapa personalizado."} or self.mapCatalog[i-1]
+        local entry=self.mapCatalog[i]
         if entry then
           local y=242+(row-1)*64
           local active=entry.id==self.mapId
@@ -653,7 +643,7 @@ function Home:draw(state,detail,showWorld)
       end
       button("modsPrevious","ANTERIOR",false)
       button("modsNext","PROXIMOS",false)
-      button("modsDone","VOLTAR PARA SALA",true)
+      button("modsDone","CONCLUIR",true)
     elseif self.screen=="mods" then
       printText("Ative ou desative antes de criar a sala. Sem codigo Lua externo.",145,213,15,C.muted)
       if #self.modCatalog==0 then
