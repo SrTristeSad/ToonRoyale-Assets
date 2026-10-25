@@ -82,6 +82,7 @@ jobs:
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/mod-core-session-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-profiles-smoke.lua
           lua5.4 server-lua/tests/local-map-interaction-smoke.lua
+          MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/house-build-smoke.lua
           lua5.4 server-lua/tests/map-wire-smoke.lua
       - name: Processo LOCAL Lua completo - HTTP, ticket, WebSocket, io-init e shutdown
         run: |
