@@ -62,6 +62,7 @@ local Controls=require("src.game.control_settings")
 local Panels=require("src.game.reference_panels")
 local Clans=require("src.game.account_clans")
 local Death=require("src.game.reference_death")
+local DeathMarker=require("src.game.death_marker")
 local Notices=require("src.game.reference_notices")
 local Profile=require("src.game.reference_profile")
 local Upgrades=require("src.game.reference_upgrades")
@@ -849,8 +850,14 @@ end
 
 -- Native menu actions. Only one authoritative Node session exists at a time.
 connectRoom=function(ip,port,inviteCode,authToken,secure)
+  -- Hosting continues after death, but this button previously discarded the
+  -- entire World and its death X when reconnecting to the SAME room.
+  local preservedDeath=DeathMarker.forHostReconnect(world,sessionIsHost,
+    client and {host=client.host,port=client.port,inviteCode=client.inviteCode},
+    {host=ip,port=port,inviteCode=inviteCode},hosted)
   if client then client:close();client=nil end
   world=World.new()
+  world.lastDeath=preservedDeath
   deathBackdrop=false;deathReturnPending=false;deathChoiceStatus=""
   death:reset()
   local ok,connection=pcall(Original.new,{
