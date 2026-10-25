@@ -1,15 +1,14 @@
 -- Server-authoritative interior physics. World grids and original river
 -- modifiers belong to surface only and must never run in an interior.
 local Vitals=require("server-lua.world.vitals")
+local WeaponTick=require("server-lua.world.weapon_tick")
 local Indoor={}
 local function clamp(v,min,max)return math.max(min,math.min(max,v))end
 function Indoor.step(player,delta,room)
  assert(room.mapSpaces and player.spaceId~="surface","indoor room required")
  Vitals.step(player,delta,room.config)
  if not player.alive then return false end
- -- No projectile/melee/build activity from one space into another space.
- player.mouseState=0;player.hits=0;player.gathering=0;player.autoGather=false
- player.buildIndex=-1
+ -- Indoor attacks use the original weapon controller; structure placement is disabled in Input.
  local area=assert(room.mapSpaces:get(player.spaceId),"zone removed during play")
  local dt=math.min(delta,250)
  local radius=player.scale
@@ -42,6 +41,12 @@ function Indoor.step(player,delta,room)
      and clearOfPlayers(x,yy) then y=yy end
  end
  player.x=x;player.y=y;player.zIndex=0
+ local weapon=assert(room.items.weapons[player.weaponIndex],"original weapon required")
+ WeaponTick.step(player,delta,{
+  weapon=weapon,projectiles=room.items.projectiles,
+  players=room.players,
+  addProjectile=function(...) return room.projectile_manager:addProjectile(...) end
+ })
  return true
 end
 return Indoor
