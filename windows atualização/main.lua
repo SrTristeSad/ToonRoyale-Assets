@@ -317,6 +317,16 @@ function love.update(dt)
       local packet=evt.data
       world:apply(packet.name,packet.args)
       serverPackets=serverPackets+1
+      if packet.name=="j" and world.justChangedSpace then
+        world.justChangedSpace=false
+        if camera then camera.hasTarget=false end
+        movementClock=0;lastMove=false;lastAim=nil
+        input.keys={};mouseAttack=false;spaceAttack=false
+        client:send("9",{Pack.null})
+        client:send("F",{0,Pack.null})
+        latestEvent="Area: "..tostring(world.spaceId)
+        home:setStatus("Explorando "..tostring(world.spaceId))
+      end
       if packet.name=="C" then
         profile:close()
         panels:reset()
@@ -924,6 +934,12 @@ function love.keypressed(key)
     mouseAttack=false;spaceAttack=false
     client:send("e",{})
     client:send("F",{0,Pack.null})
+    return
+  end
+  if key=="g" and phase=="playing" and client
+     and client.state=="spawn_confirmed" and world.map
+     and not panels:isOpen() and not chatOpen then
+    client:send("j",{})
     return
   end
   input:keypressed(key)
