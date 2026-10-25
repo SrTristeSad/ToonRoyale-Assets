@@ -249,8 +249,10 @@ function Room:checkPortalCrossing(player)
  -- No automatic ping-pong after arrival. The player has to leave the
  -- arrival circle before stepping into that passage again.
  if player.portalInside==nearest.id then return false end
- player.portalInside=nearest.id
  if self.nowMs<(player.nextPortalAt or 0) then return false end
+ -- A blocked exit, or an occupied arrival pad, is NOT a successful
+ -- crossing. Keep it armed so a player walking against that doorway can
+ -- enter as soon as the obstruction clears, without walking away first.
  return self:usePortal(player,nearest.id)
 end
 
