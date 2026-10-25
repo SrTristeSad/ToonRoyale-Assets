@@ -201,6 +201,12 @@ function love.load()
     love.event.quit(ok and 0 or 1)
     return
   end
+  if os.getenv("MOO_IO_MAP_VIEW_TEST")=="1" then
+    local ok,err=pcall(function() require("src.test_map_view")() end)
+    if not ok then print("MOO IO MAP VIEW FAIL: "..tostring(err)) end
+    love.event.quit(ok and 0 or 1)
+    return
+  end
   if os.getenv("MOO_IO_SPRITE_TEST")=="1" then
     local ok,err=pcall(function() require("src.test_sprite_render")() end)
     if not ok then print("MOO IO SPRITES FAIL: "..tostring(err)) end
