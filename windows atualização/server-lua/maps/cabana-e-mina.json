@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "id": "cabana-e-mina",
+  "name": "Cabana e Mina",
+  "description": "Geracao com interior de cabana e mina subterranea como zonas independentes.",
+  "mode": "generated",
+  "generation": {
+    "treesPerArea": 11,
+    "bushesPerArea": 4,
+    "totalRocks": 38,
+    "goldOres": 10,
+    "seed": 14827
+  },
+  "surface": [],
+  "portals": [
+    {
+      "id": "entrar-cabana",
+      "x": 1950,
+      "y": 1950,
+      "to": "cabana",
+      "targetX": 600,
+      "targetY": 900
+    }
+  ],
+  "spaces": [
+    {
+      "id": "cabana",
+      "type": "interior",
+      "width": 1400,
+      "height": 1200,
+      "obstacles": [
+        {
+          "x": 100,
+          "y": 100,
+          "width": 1200,
+          "height": 80
+        },
+        {
+          "x": 100,
+          "y": 100,
+          "width": 80,
+          "height": 1000
+        },
+        {
+          "x": 1220,
+          "y": 100,
+          "width": 80,
+          "height": 1000
+        }
+      ],
+      "portals": [
+        {
+          "id": "sair-cabana",
+          "x": 600,
+          "y": 900,
+          "to": "surface",
+          "targetX": 1950,
+          "targetY": 1950
+        },
+        {
+          "id": "escada-mina",
+          "x": 1050,
+          "y": 800,
+          "to": "mina",
+          "targetX": 400,
+          "targetY": 500
+        }
+      ]
+    },
+    {
+      "id": "mina",
+      "type": "underground",
+      "width": 2400,
+      "height": 1800,
+      "obstacles": [
+        {
+          "x": 100,
+          "y": 100,
+          "width": 1500,
+          "height": 90
+        },
+        {
+          "x": 1700,
+          "y": 350,
+          "width": 120,
+          "height": 1100
+        }
+      ],
+      "portals": [
+        {
+          "id": "subir-escada",
+          "x": 400,
+          "y": 500,
+          "to": "cabana",
+          "targetX": 1050,
+          "targetY": 800
+        }
+      ]
+    }
+  ]
+}
