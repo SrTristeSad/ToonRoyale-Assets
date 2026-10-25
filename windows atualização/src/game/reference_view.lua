@@ -484,18 +484,19 @@ local function drawMapHelp(world)
   if player and player.x and player.y and world.spaceId=="surface" then
    local nearest,dist
    for _,portal in ipairs(world.map.portals or {}) do
-    if portal.style=="cave" or portal.style=="bunker" then
+    if type(portal.x)=="number" and type(portal.y)=="number" then
      local dx,dy=portal.x-player.x,portal.y-player.y
      local d=math.floor(math.sqrt(dx*dx+dy*dy))
      if not dist or d<dist then nearest=portal;dist=d end
     end
    end
    if nearest then
-    local kind=nearest.style=="cave" and "CAVERNA" or "BUNKER"
+    local label=nearest.label or nearest.to or "PASSAGEM"
     love.graphics.setColor(0.07,0.10,0.07,0.88)
     love.graphics.rectangle("fill",16,129,math.min(500,w-32),33,5,5)
     love.graphics.setColor(0.96,0.88,0.55,1)
-    love.graphics.print("ENTRADA "..kind..": "..dist.."  -  ENTRE CAMINHANDO",25,138)
+    love.graphics.print("PASSAGEM "..label:upper():sub(1,22)..
+      ": "..dist.."  -  ENTRE CAMINHANDO",25,138)
    end
   end
  end
@@ -583,7 +584,8 @@ local function drawHouses(world,camera)
   if type(portal.x)=="number" and type(portal.y)=="number" then
    local x,y=camera:worldToScreen(portal.x,portal.y)
    local u=camera.zoom
-   if portal.style=="cave" then
+   local style=Materials.portalStyle(nil,portal)
+   if style=="tunnel" or style=="arch" then
      -- Rock ring and dark mouth; no house roof for caves.
      love.graphics.setColor(0.28,0.30,0.27)
      love.graphics.circle("fill",x,y,160*u)
@@ -591,7 +593,7 @@ local function drawHouses(world,camera)
      love.graphics.circle("line",x,y,150*u)
      love.graphics.setColor(0.085,0.095,0.085)
      love.graphics.circle("fill",x,y,96*u)
-   elseif portal.style=="bunker" then
+   elseif style=="hatch" or style=="stairs" then
      -- Steel hatch over reinforced concrete in the same top-down idiom.
      love.graphics.setColor(0.24,0.27,0.28)
      love.graphics.rectangle("fill",x-165*u,y-150*u,330*u,300*u)
@@ -623,8 +625,8 @@ local function drawHouses(world,camera)
    love.graphics.setColor(0.90,0.75,0.37)
    love.graphics.circle("fill",x,y+167*u,24*u)
    end -- house roof
-   if portal.style=="cave" or portal.style=="bunker" then
-    local label=portal.style=="cave" and "ENTRADA CAVERNA" or "PORTA BUNKER"
+   if portal.style then
+    local label=(portal.label or portal.to or "PASSAGEM"):upper():sub(1,25)
     love.graphics.setColor(0.08,0.10,0.08,0.85)
     love.graphics.rectangle("fill",x-94*u,y-191*u,188*u,31*u,5*u,5*u)
     love.graphics.setColor(0.97,0.87,0.55,1)
