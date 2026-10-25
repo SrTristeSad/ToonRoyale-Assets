@@ -1,12 +1,23 @@
 # Moo-IO — Windows (servidor local Lua)
 
-## Login V2 pelo navegador (LAN/VPN privada)
+## Entrar em servidores V2 existentes
 
-O cliente não solicita senha no jogo. No menu **Jogar**, informe o convite privado da sala (IP/porta/código), escolha **Entrar na conta V2 (navegador)** e autorize no site HTTPS da VPS. Volte ao Moo-IO; o cliente consulta a sala automaticamente e entra quando a autorização termina. O código PKCE é gerado com fonte criptográfica de entropia e usado uma só vez.
+O cliente Windows permite entrar em salas LAN/VPN pelo IP/porta/código e em servidores V2 externos pelo convite `https://sala.dominio/CODIGO`. Use **Jogar → Entrar em outra sala**; quando a sala exigir login, selecione **Entrar com conta V2 (navegador)**. O aplicativo abre o navegador para cadastro/autorização PKCE; a senha nunca é digitada no jogo. Ao autorizar, o cliente recebe um token da sala e estabelece um WebSocket com os mesmos pacotes do Moo-IO.
 
-O protocolo protege o segredo central: a sala consulta o serviço de identidade localmente, consome o código PKCE e devolve ao cliente somente um JWT específico de 15 minutos. Sem a infraestrutura Caddy/identidade da VPS, use a entrada LAN original.
+Convites públicos exigem DNS, HTTPS/WSS, certificados válidos e o gateway V2 já configurado na VPS. O pacote Windows inclui um `node.exe` 22 isolado **somente como ponte TLS verificada para conexões de saída do cliente**, iniciado sob demanda e encerrado ao fechar o jogo. Ele não hospeda partidas e não executa o servidor Node.js do V2. Criar sala local utiliza exclusivamente o servidor Lua.
 
-**Limite:** o transportador Lua continua usando HTTP/WS para partidas por IP privado. Para tráfego entre redes, use uma VPN criptografada; acesso público direto por domínio HTTPS/WSS ainda exige cliente TLS próprio. Não envie credenciais ou tokens por IP público sem TLS.
+## Dificuldade das salas
+
+- **Pacífico:** regeneração de 6 HP/s, menos animais hostis e criaturas comuns hostis deixam de perseguir espontaneamente; ideal para construção e exploração.
+- **Normal:** jogo clássico, com valores e comportamento originais.
+- **Difícil:** mais animais, lobos próximos compartilham alvos e tentam aproximar-se pelos flancos, além de prever o movimento do jogador.
+- **Extremo:** maior pressão de inimigos, interceptação e formação de caça mais intensa.
+
+Selecione o nível na tela **Criar minha sala**. O nível pertence à sala, não à conta do jogador. O Normal mantém todas as regras tradicionais.
+
+## Mods de dados
+
+Os mods do servidor local são arquivos JSON instalados em `server-lua/mods/`, sem código executável. Na criação da sala, informe os IDs separados por vírgula (por exemplo `mais-lobos,fauna-hostil`). Eles podem ajustar atributos dos animais e a população de cada tipo; os clientes convidados não precisam instalar mods para esses ajustes. Consulte `server-lua/mods/README.md`. Mods só entram em vigor ao reiniciar a sala.
 
 **Moo-IO** é um jogo multiplayer de sobrevivência e combate em 2D, com visão de cima. Explore o mapa, reúna recursos, construa estruturas, equipe armas e enfrente animais e outros jogadores.
 
@@ -21,7 +32,7 @@ O protocolo protege o segredo central: a sala consulta o serviço de identidade 
 
 ## Arquitetura desta copia
 
-O cliente LÖVE inicia somente o servidor local Lua (`server-lua/`) quando voce seleciona **Criar minha sala**. Nao e necessario executar Node.js, login V2 ou Firebase.
+O cliente LÖVE inicia somente o servidor local Lua (`server-lua/`) ao selecionar **Criar minha sala**. Para **entrar em um V2 externo**, a ponte TLS Node 22 do próprio cliente é acionada apenas sob demanda, sem hospedar motor V2.
 
 A pasta `server/` no checkout do GitHub permanece **somente como referencia historica Node.js para testes de paridade** e nao entra no ZIP Windows criado por `scripts/build-windows.ps1`. Essa distincao evita afirmar que o codigo-fonte historico foi apagado ou que a paridade ja e perfeita.
 
