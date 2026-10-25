@@ -1,6 +1,7 @@
 -- Death locations come exclusively from authoritative player position packets.
 -- A marker survives respawn but never teleports between map floors.
 local Marker={}
+local labelFont
 local function finite(v)return type(v)=="number" and v==v and math.abs(v)<1e8 end
 function Marker.make(x,y,spaceId)
  if not finite(x) or not finite(y) then return nil end
@@ -55,7 +56,8 @@ function Marker.drawWorld(world,camera,width,height)
  g.line(x-10,y-10,x+10,y+10)
  g.line(x-10,y+10,x+10,y-10)
  local label="ULTIMA MORTE"
- local f=g.newFont(14)
+ if not labelFont then labelFont=g.newFont(14) end
+ local f=labelFont
  local bw=math.max(124,f:getWidth(label)+18)
  local ty=y-57
  local tx=math.max(2,math.min(width-bw-2,x-bw/2))
