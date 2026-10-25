@@ -137,7 +137,7 @@ A infraestrutura de rede e o motor Lua já passam nos testes isolados e integrad
 
 Pendente: inicializar `player_registry.lua` junto com `net/host.lua` e os serviços reais numa instalação Windows; autenticação local e endpoints HTTP efetivamente usados por **Criar minha sala**, integração do mundo, bots e persistência e **testes cliente Windows↔Lua reais**. Excluir código exclusivo do modo V2 do escopo. O gateway Lua ainda aceita somente convidados LAN/VPN, sem substituir a autenticação V2.
 
-**O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
+**Teste explícito Lua:** abra `MOO-IO-Lua-Teste.vbs` (ou defina `MOO_IO_LOCAL_SERVER_RUNTIME=lua`) para usar `scripts/start-server-lua.ps1`. O launcher normal continua em Node. O processo Lua tem LC/MB, bots, contas, moderação e porta de encerramento separados; a paridade do cliente real ainda requer confirmação.\n\n**O jogo Windows continua usando seu servidor local Node.js original.** Não foi removida nenhuma dependência, nenhum arquivo de servidor original foi alterado e o cliente não foi apontado para um mundo Lua incompleto. Isso evita regressões no jogo que já funciona.
 
 ## Como executar os testes
 
