@@ -8,7 +8,7 @@ local function truthy(v)
   -- JS 0, false, null and undefined are all falsy, unlike Lua 0.
   return v~=nil and v~=false and v~=0
 end
-function Vitals.step(player,delta)
+function Vitals.step(player,delta,config)
   assert(type(delta)=="number" and delta==delta and delta>=0,
     "finite nonnegative millisecond tick required")
   if not player.alive then return false end
@@ -28,6 +28,9 @@ function Vitals.step(player,delta)
     local tail=player.tail
     local regen=(skin and truthy(skin.healthRegen) and skin.healthRegen or 0)
       +(tail and truthy(tail.healthRegen) and tail.healthRegen or 0)
+    if config and config.server and config.server.roomDifficulty=="pacifico" then
+      regen=regen+6 -- six HP/s in peaceful rooms, respecting maxHealth.
+    end
     if truthy(regen) then player:changeHealth(regen,player) end
     local effect=player.dmgOverTime
     if truthy(effect.dmg) then
