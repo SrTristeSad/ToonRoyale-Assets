@@ -182,7 +182,7 @@ return function()
   -- Render each page to an offscreen canvas to catch graphical/layout crashes.
   local canvas=love.graphics.newCanvas(1280,720)
   love.graphics.setCanvas(canvas)
-  for _,page in ipairs({"home","play","create","mods","server","settings"}) do
+  for _,page in ipairs({"home","play","create","maps","mods","server","settings"}) do
     home.screen=page
     home:draw("idle","")
     love.graphics.setCanvas()
