@@ -93,7 +93,7 @@ function Home.new()
     mapPage=0,focus=nil,navIndex=0,
     serverAddress="",serverCode="",serverRooms={},serverDirectory=nil,
     serverPage=0,serverSelected=1,
-    status="",error=false,hosting=false,starting=false,
+    status="",statusScreen=nil,error=false,hosting=false,starting=false,
     hostAddress="",hostCode="",connectionState="idle",serverLog="",
     showGrid=true,fullscreen=false,sessionTitle="",
     roomOverlay=false,botsEnabled=false,botCount=2
@@ -138,9 +138,9 @@ function Home:refreshInstalled()
  self:refreshMaps()
  self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
  self.mapPage=math.min(self.mapPage,
-   math.max(0,math.ceil((#self.mapCatalog)/4)-1))
+   math.max(0,math.ceil((#self.mapCatalog+1)/6)-1))
  self.modPage=math.min(self.modPage,
-   math.max(0,math.ceil(#self.modCatalog/4)-1))
+   math.max(0,math.ceil(#self.modCatalog/6)-1))
  self:setStatus(#self.mapCatalog.." mapas e "..
    #self.modCatalog.." mods de regras encontrados.")
 end
@@ -172,6 +172,7 @@ function Home:roomInvite()
 end
 function Home:setStatus(t,err)
   self.status=tostring(t or "")
+  self.statusScreen=self.screen
   self.error=err==true
 end
 function Home:click(sx,sy)
@@ -550,7 +551,6 @@ function Home:draw(state,detail,showWorld)
   else
     button("back","< VOLTAR",false)
     if self.screen=="play" then
-      printText("JOGAR",132,158,31,C.white)
       panel(130,194,505,493,C.panel,0)
       panel(672,194,477,402,C.panel,0)
       printText("01  CRIAR MINHA SALA",155,204,19,C.green)
@@ -598,7 +598,6 @@ function Home:draw(state,detail,showWorld)
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
     elseif self.screen=="create" then
-      printText("CONFIGURAR A PARTIDA",121,158,25,C.white)
       printText("F5: atualizar mapas e mods instalados",635,172,13,C.amber,490)
       panel(100,195,482,477,C.panel,0)
       panel(613,195,564,477,C.panel,0)
@@ -623,19 +622,23 @@ function Home:draw(state,detail,showWorld)
       button("createMods",self.modIds=="" and "MODS: NENHUM  -  ESCOLHER" or "MODS: PERSONALIZADOS  -  EDITAR",false)
       printText("MUNDO DA PARTIDA",635,207,18,C.green)
       panel(629,239,534,210,C.raised,0)
-      printText(self:mapName(),650,282,23,C.white,480)
-      printText("Selecione um mapa. Mods exigidos sao ativados automaticamente.",650,330,15,C.muted,490)
+      printText("MUNDO SELECIONADO",650,254,15,C.green,485)
+      printText(UI.oneLine(self:mapName(),480,23),650,293,23,C.white,485)
+      local description=self:mapDescription()
+      if description and description~="" then
+        printText(UI.oneLine(description,480,15),650,348,15,C.muted,485)
+      end
+      printText("Mods necessarios: verificacao automatica",650,403,14,C.amber,485)
       button("chooseMapPrev","ESCOLHER MAPA",true)
       button("chooseMapNext","ABRIR LISTA",false)
       button("createBack","CANCELAR",false)
       button("createSubmit","CRIAR SALA NESTE MAPA",true)
-      printText("SELECIONADO: "..self:mapName(),635,542,14,C.amber,510)
+      printText("Clique em ESCOLHER MAPA para trocar o mundo.",635,542,14,C.muted,515)
       if #self.mapCatalog==0 then
         printText("Aviso: nenhum mapa adicional encontrado no pacote.",
           636,543,14,C.red,511)
       end
     elseif self.screen=="maps" then
-      printText("MUNDOS INSTALADOS",140,165,25,C.white)
       printText("Selecione um mapa instalado ou desative os mapas personalizados.",145,213,15,C.muted)
       for row=1,6 do
         local i=self.mapPage*6+row
@@ -650,7 +653,6 @@ function Home:draw(state,detail,showWorld)
       button("modsNext","PROXIMOS",false)
       button("modsDone","VOLTAR PARA SALA",true)
     elseif self.screen=="mods" then
-      printText("PACOTES E MODS",140,165,25,C.white)
       printText("Ative ou desative antes de criar a sala. Sem codigo Lua externo.",145,213,15,C.muted)
       if #self.modCatalog==0 then
         printText("Nenhum mod JSON valido encontrado em server-lua/mods.",169,316,20,C.muted)
@@ -668,7 +670,6 @@ function Home:draw(state,detail,showWorld)
       button("modsNext","PROXIMOS",false)
       button("modsDone","VOLTAR PARA SALA",true)
     elseif self.screen=="server" then
-      printText("LISTA DE SERVIDORES",140,165,25,C.white)
       printText("Endereço do servidor dedicado: IP:porta (LAN/VPN) ou HTTPS V2.",145,220,16,C.muted)
       field("serverAddress",self.serverAddress,"192.168.1.10:8080",self.focus=="serverAddress")
       button("serverRefresh","BUSCAR SALAS",true)
@@ -683,12 +684,11 @@ function Home:draw(state,detail,showWorld)
           local room=self.serverRooms[index]
           if room then
             local y=332+(row-1)*70
-            panel(155,y,565,62,index==self.serverSelected and C.raised or C.bg,0)
-            printText(room.name,169,y+7,19,room.online and C.white or C.muted,520)
             local mode=room.preset=="traditional" and "Tradicional" or "Personalizada"
-            local state=room.online and "Online" or "Offline"
-            printText(mode.."  •  "..state.."  •  "..room.players.."/"..room.capacity..
-              " jogadores",169,y+35,14,C.muted,520)
+            local status=room.online and "Online" or "Offline"
+            UI.listRow(155,y,565,62,room.name,
+              mode.." | "..status.." | "..room.players.."/"..room.capacity..
+              " jogadores",index==self.serverSelected,false)
           end
         end
       end
@@ -708,7 +708,6 @@ function Home:draw(state,detail,showWorld)
       button("serverPrev","ANTERIOR",false)
       button("serverNext","PROXIMAS",false)
     else
-      printText("VIDEO E CONTROLES",336,190,25,C.white)
       button("grid","GRADE DO MAPA     "..(self.showGrid and "LIGADA" or "DESLIGADA"),false)
       button("fullscreen","TELA CHEIA       "..(self.fullscreen and "LIGADA" or "DESLIGADA"),false)
       button("controls","EDITAR TECLADO E JOYSTICK",false)
@@ -716,17 +715,18 @@ function Home:draw(state,detail,showWorld)
     end
   end
   panel(83,684,1111,34,{0.13,0.17,0.15},0)
-  local message=self.status~="" and self.status or
+  local currentStatus=self.status~="" and self.statusScreen==self.screen
+  local message=currentStatus and self.status or
     (state=="joining" and "Entrando na partida..." or
      state=="keyed_transport" and "Servidor conectado. Carregando mundo..." or
      state=="failed" and tostring(detail) or
      "Jogar abre as opcoes. Criar sala e uma escolha.")
   message=UI.oneLine(message,950,15)
-  love.graphics.setColor(self.error and C.red or C.green)
+  love.graphics.setColor(currentStatus and self.error and C.red or C.green)
   love.graphics.rectangle("fill",92,689,5,22)
-  printText(self.error and "ATENCAO" or "STATUS",111,692,13,
-    self.error and C.red or C.green)
-  printText(message,212,691,15,self.error and {1,0.85,0.77} or C.white,950)
+  printText(currentStatus and self.error and "ATENCAO" or "STATUS",111,692,13,
+    currentStatus and self.error and C.red or C.green)
+  printText(message,212,691,15,currentStatus and self.error and {1,0.85,0.77} or C.white,950)
   love.graphics.pop()
 end
 function Home:drawRoomOverlay()
