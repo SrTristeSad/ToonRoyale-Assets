@@ -17,7 +17,7 @@ if (Test-Path -LiteralPath $OutputDir) {
 New-Item -ItemType Directory -Force $OutputDir | Out-Null
 # Explicit runtime allowlist; no Node server, legacy JS, development fixtures,
 # test harnesses, original project folders or test-only launcher.
-foreach ($dir in @('src','assets','server-lua','licenses')) {
+foreach ($dir in @('src','assets','server-lua','licenses','docs')) {
   $from = Join-Path $root $dir
   $to = Join-Path $OutputDir $dir
   if (-not (Test-Path -LiteralPath $from -PathType Container)) {
@@ -41,6 +41,10 @@ foreach ($file in @('start-server-lua.ps1','tls-relay.mjs',
 }
 # Windows Lua release deliberately keeps developer tests in the staging repo,
 # not inside source archives for players or migration.
+$obsoleteGuide=Join-Path $OutputDir 'server-lua\MIGRATION_3_STEPS.md'
+if (Test-Path -LiteralPath $obsoleteGuide) {
+  Remove-Item -LiteralPath $obsoleteGuide -Force
+}
 $serverTests=Join-Path $OutputDir 'server-lua\tests'
 if (Test-Path -LiteralPath $serverTests) {
   Remove-Item -LiteralPath $serverTests -Recurse -Force
