@@ -3,6 +3,7 @@
 -- Gameplay authority lives in the bundled LOCAL Lua room; no client-side fake world.
 local Network=require("src.net.mooio_network")
 local Mods=require("server-lua.world.room_mods")
+local Maps=require("server-lua.world.map_profiles")
 local Home={}
 Home.__index=Home
 
@@ -50,7 +51,7 @@ local boxes={
   nickname={155,236,462,52},modeLan={155,312,223,46},
   modeVpn={393,312,224,46},vpnIP={155,368,462,46},
   createLan={155,623,462,53},createVpn={155,623,462,53},
-  difficulty={155,524,462,47},modIds={155,577,302,39},
+  difficulty={155,524,302,47},mapBrowse={468,524,149,47},modIds={155,577,302,39},
   modBrowse={468,577,149,39},modsPrevious={160,638,240,39},
   modsNext={419,638,240,39},modsDone={730,638,365,39},
   botsToggle={155,423,462,39},botsMinus={155,475,110,42},
@@ -113,7 +114,9 @@ function Home.new()
   local installed=Mods.available(love.filesystem,"server-lua/mods")
   return setmetatable({
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
-    serverMode="lan",difficulty="normal",modIds="",modCatalog=installed,modPage=0,focus=nil,
+    serverMode="lan",difficulty="normal",modIds="",modCatalog=installed,modPage=0,
+    mapId="",mapCatalog=Maps.available(love.filesystem,"server-lua/maps"),
+    mapPage=0,focus=nil,
     serverAddress="",serverCode="",serverRooms={},serverDirectory=nil,
     serverPage=0,serverSelected=1,
     status="",error=false,hosting=false,starting=false,
@@ -138,7 +141,7 @@ end
 function Home:click(sx,sy)
   local x,y=self:scale(sx,sy)
   if self.screen~="home" and inside(x,y,boxes.back) then
-    self.screen=self.screen=="mods" and "play" or "home"
+    self.screen=(self.screen=="mods" or self.screen=="maps") and "play" or "home"
     self.focus=nil;return "back"
   end
   if self.screen=="home" then
@@ -171,6 +174,11 @@ function Home:click(sx,sy)
         self:setStatus(descriptions[self.difficulty])
         self.focus=nil
         return "difficulty"
+      end
+      if inside(x,y,boxes.mapBrowse) then
+        self.screen="maps";self.focus=nil;self.mapPage=0
+        self.mapCatalog=Maps.available(love.filesystem,"server-lua/maps")
+        return "map_browse"
       end
       if inside(x,y,boxes.modIds) then self.focus="modIds";return "focus" end
       if inside(x,y,boxes.modBrowse) then
@@ -228,6 +236,30 @@ function Home:click(sx,sy)
         self.serverSelected=index;self.focus=nil;return "server_select"
       end
     end
+  elseif self.screen=="maps" then
+    if inside(x,y,boxes.modsDone) then self.screen="play";return "maps_done" end
+    if inside(x,y,boxes.modsPrevious) then
+      self.mapPage=math.max(0,self.mapPage-1);return "map_page"
+    end
+    if inside(x,y,boxes.modsNext) then
+      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog+1)/6)-1),
+        self.mapPage+1);return "map_page"
+    end
+    for row=1,6 do
+      local n=self.mapPage*6+row
+      if inside(x,y,{151,242+(row-1)*64,976,57}) then
+        if n==1 then
+          self.mapId="";self:setStatus("Mapa classico selecionado.")
+          return "map_select"
+        end
+        local entry=self.mapCatalog[n-1]
+        if entry then
+          self.mapId=entry.id
+          self:setStatus("Mapa selecionado: "..entry.name)
+          return "map_select"
+        end
+      end
+    end
   elseif self.screen=="mods" then
     if inside(x,y,boxes.modsDone) then
       self.screen="play";return "mods_done"
@@ -271,7 +303,7 @@ local function removeLast(s)
 end
 function Home:keypressed(key)
   if key=="escape" then
-    self.screen=self.screen=="mods" and "play" or "home"
+    self.screen=(self.screen=="mods" or self.screen=="maps") and "play" or "home"
     self.focus=nil;return "back"
   end
   if self.focus then
@@ -423,9 +455,10 @@ function Home:draw(state,detail,showWorld)
         printText("QUANTIDADE: "..(self.botsEnabled and self.botCount or 0).." / 8",
           274,485,17,C.white,225,"center")
         button("botsPlus","+")
-        local names={pacifico="PACIFICO",normal="NORMAL (CLASSICO)",
-          dificil="DIFICIL (LOBOS EM GRUPO)",extremo="EXTREMO"}
+        local names={pacifico="PACIFICO",normal="NORMAL",
+          dificil="DIFICIL",extremo="EXTREMO"}
         button("difficulty","DIFICULDADE: "..(names[self.difficulty] or "NORMAL"),false)
+        button("mapBrowse",self.mapId=="" and "MAPA: CLASS." or "MAPA: OUTRO",false)
         field("modIds",self.modIds,"IDs de mods (opcional)",self.focus=="modIds")
         button("modBrowse","ESCOLHER",false)
         button(self.serverMode=="vpn" and "createVpn" or "createLan",
@@ -445,6 +478,26 @@ function Home:draw(state,detail,showWorld)
       if not self.hosting and not self.starting then
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
+    elseif self.screen=="maps" then
+      printText("ESCOLHER MAPA",140,165,30,C.white)
+      printText("Mapas personalizados JSON: gerados ou montados manualmente.",145,213,15,C.muted)
+      for row=1,6 do
+        local i=self.mapPage*6+row
+        local entry=i==1 and {id="",name="Mundo Classico",
+          description="Geracao tradicional, sem alteracoes.",spaces=0}
+          or self.mapCatalog[i-1]
+        if entry then
+          local y=242+(row-1)*64
+          local active=entry.id==self.mapId
+          panel(151,y,976,57,active and C.raised or C.panel,0)
+          printText((active and "[ATIVO] " or "[ ] ")..entry.name,166,y+7,18,
+            active and C.green or C.white,930)
+          printText(entry.description,168,y+34,14,C.muted,920)
+        end
+      end
+      button("modsPrevious","ANTERIOR",false)
+      button("modsNext","PROXIMOS",false)
+      button("modsDone","VOLTAR PARA SALA",true)
     elseif self.screen=="mods" then
       printText("MODS INSTALADOS",140,165,30,C.white)
       printText("Ative ou desative antes de criar a sala. Sem codigo Lua externo.",145,213,15,C.muted)
