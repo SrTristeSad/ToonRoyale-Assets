@@ -323,16 +323,6 @@ end
 function Room:interactMapObject(player,objectId)
  return require("server-lua.world.map_interactions").use(self,player,objectId)
 end
-function Room:buildHouse(player)
- return require("server-lua.world.house_build").build(self,player)
-end
-function Room:buildWall(player,request)
- return require("server-lua.world.house_build").wall(self,player,request)
-end
-function Room:removeWall(player,index)
- return require("server-lua.world.house_build").removeWall(self,player,index)
-end
-
 function Room:handleInput(player,name,args)
   local present=false
   for _,p in ipairs(self.players) do
