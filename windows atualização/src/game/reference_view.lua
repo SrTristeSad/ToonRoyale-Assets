@@ -506,6 +506,23 @@ local function drawHouses(world,camera)
   if type(portal.x)=="number" and type(portal.y)=="number" then
    local x,y=camera:worldToScreen(portal.x,portal.y)
    local u=camera.zoom
+   if portal.style=="cave" then
+     -- Rock ring and dark mouth; no house roof for caves.
+     love.graphics.setColor(0.28,0.30,0.27)
+     love.graphics.circle("fill",x,y,160*u)
+     love.graphics.setColor(0.40,0.41,0.36)
+     love.graphics.circle("line",x,y,150*u)
+     love.graphics.setColor(0.085,0.095,0.085)
+     love.graphics.circle("fill",x,y,96*u)
+   elseif portal.style=="bunker" then
+     -- Steel hatch over reinforced concrete in the same top-down idiom.
+     love.graphics.setColor(0.24,0.27,0.28)
+     love.graphics.rectangle("fill",x-165*u,y-150*u,330*u,300*u)
+     love.graphics.setColor(0.48,0.53,0.53)
+     love.graphics.rectangle("fill",x-140*u,y-125*u,280*u,250*u)
+     love.graphics.setColor(0.14,0.19,0.19)
+     love.graphics.rectangle("fill",x-74*u,y-55*u,148*u,110*u)
+   else
    -- The roof is opaque outdoors. It is absent when the player enters,
    -- revealing the separately rendered interior on the next server packet.
    love.graphics.setColor(0.30,0.21,0.14)
@@ -518,6 +535,7 @@ local function drawHouses(world,camera)
    love.graphics.rectangle("fill",x-64*u,y+120*u,128*u,65*u)
    love.graphics.setColor(0.90,0.75,0.37)
    love.graphics.circle("fill",x,y+167*u,24*u)
+   end -- house roof
   end
  end
 end
