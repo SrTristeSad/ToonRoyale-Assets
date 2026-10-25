@@ -112,8 +112,8 @@ return function()
   assert(home:click(453,300)=="grid")
   assert(home.showGrid==false)
   assert(home:click(445,390)=="fullscreen")
-  assert(home:click(450,480)==nil,
-    "Invitations belong on the ESC pause root, not in Settings")
+  assert(home:click(450,480)=="edit_controls",
+    "Settings should open the keyboard and joystick editor")
   assert(home:keypressed("f2")==nil,
     "F2 is no longer a shortcut to copy invitation")
   -- Render each page to an offscreen canvas to catch graphical/layout crashes.
