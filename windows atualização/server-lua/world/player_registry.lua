@@ -144,7 +144,8 @@ function Registry:addBot(request)
  self.playersById[player.id]=player
  local init={teams=self.options.clanList(),animals=self.animalKinds}
  if room.customMap and room.key=="LC" then
-  init.map={id=room.mapId,portals=room.mapSpaces:get("surface").portals}
+  init.map={id=room.mapId,name=room.customMap.name,
+     portals=room.mapSpaces:get("surface").portals}
  end
  player:send("A",init)
  if self.options.count then self.options.count(room.key,#room.players) end
@@ -217,7 +218,12 @@ function Registry:onJoined(player,peer,ticket,room)
    "Room.bindPlayer must run before original welcome A")
  self.pending[peer]=nil
  self.playersById[player.id]=player
- player:send("A",{teams=self.options.clanList(),animals=self.animalKinds})
+ local init={teams=self.options.clanList(),animals=self.animalKinds}
+ if room.key=="LC" and room.customMap then
+  init.map={id=room.mapId,name=room.customMap.name,
+    portals=room.mapSpaces:get("surface").portals}
+ end
+ player:send("A",init)
  if player.account and self.options.presence then
    self.options.presence(player.account,room.key)
  end
