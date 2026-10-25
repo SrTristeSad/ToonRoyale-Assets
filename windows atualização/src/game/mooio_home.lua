@@ -572,9 +572,10 @@ function Home:draw(state,detail,showWorld)
           love.graphics.setColor(active and C.green or C.muted)
           love.graphics.rectangle("fill",640,y+19,17,28)
           printText(entry.name,673,y+9,19,C.white,474)
-          printText((entry.spaces or 0)>0 and
-            ("Zonas internas e subterraneas: "..entry.spaces) or
-            "Superficie personalizada ou classica",
+          local origin=entry.source=="mod" and "MOD INSTALADO  |  " or ""
+          printText(origin..((entry.spaces or 0)>0 and
+            ("Regioes disponiveis: "..entry.spaces) or
+            "Superficie personalizada ou classica"),
             673,y+39,14,active and C.amber or C.muted,474)
         end
       end
