@@ -22,4 +22,51 @@ function M.new()
     rotA=range(5,27),rotB=range(5,27),mult=C.bor(u32(),1)
   }
 end
+
+-- LOCAL Node createProtocolBuild pins parameters in protocol-build.json.
+-- Reuse an already generated Node pin without changing its build identity.
+local Json=require("server-lua.vendor.dkjson")
+local function pinValid(p)
+ if type(p)~="table" or type(p.buildId)~="string" or
+  type(p.salt)~="number" or type(p.constants)~="table" or
+  #p.constants~=8 or type(p.rounds)~="number" then return false end
+ for _,key in ipairs({"tapA","tapB","rotA","rotB","mult"}) do
+  if type(p[key])~="number" then return false end
+ end
+ return true
+end
+function M.open(path,opts)
+ opts=opts or {}
+ assert(type(path)=="string" and #path>0,"original protocol-build.json path required")
+ if not opts.rotate then
+  local f=io.open(path,"rb")
+  if f then
+   local raw=f:read("*a");f:close()
+   local p,_,err=Json.decode(raw,1,Json.null)
+   assert(not err and pinValid(p),"invalid original protocol-build.json")
+   return p
+  end
+ end
+ local p=M.new()
+ local random=Random.bytes
+ local function hex(data)
+  return data:gsub(".",function(c)return string.format("%02x",c:byte()) end)
+ end
+ local alphabet="abcdefghijklmnopqrstuvwxyz0123456789"
+ local id={}
+ for i=1,6 do
+  local byte=random(1):byte()
+  local k=byte%#alphabet+1
+  id[i]=alphabet:sub(k,k)
+ end
+ p.modulePath=table.concat(id)
+ p.sealHex=hex(random(16))
+ p.createdAt=opts.nowMs and opts.nowMs() or os.time()*1000
+ local encoded,err=Json.encode(p,{indent=true})
+ assert(encoded,err)
+ local f,why=io.open(path,"wb")
+ assert(f,why);assert(f:write(encoded));assert(f:close())
+ return p
+end
+
 return M
