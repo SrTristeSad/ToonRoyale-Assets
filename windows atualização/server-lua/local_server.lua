@@ -30,7 +30,7 @@ local function newSessionId()
  end
  return table.concat(out)
 end
-local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,profile)
+local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,profile,houseStorePath)
  local players,ais={},{}
  local rules=profile or {config=Config,types=require("server-lua.world.animal_types")}
  local gameConfig=rules.config
@@ -66,6 +66,10 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
  room.customMap=map
  room.projectile_manager.mapSpaces=room.mapSpaces
  animals.mapSpaces=room.mapSpaces
+ if map and key=="LC" then
+  room.houseStorePath=houseStorePath
+  require("server-lua.world.house_build").load(room)
+ end
  animals:ensureAnimals()
  if map and key=="LC" then
    for _,zone in ipairs(map.spaces or {}) do
@@ -126,7 +130,8 @@ function Local.new(opts)
  local log=opts.log or function()end
  local rooms={}
  rooms.LC=addWorld("LC",Config.maxPlayers,opts.botCount or 0,
-  accounts,moderation,now,log,profile)
+  accounts,moderation,now,log,profile,profile.map and
+   (opts.dataDir.."/houses-"..profile.map.id..".json") or nil)
  rooms.MB=addWorld("MB",80,0,accounts,moderation,now,log)
  local chat=Chat.new(opts.dataDir.."/chat.json",{nowMs=now,store=accounts})
  rooms.LC.room.chat=chat
