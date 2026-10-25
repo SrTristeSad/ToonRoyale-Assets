@@ -946,7 +946,7 @@ function love.gamepadpressed(joystick,button)
  end
  if phase~="playing" or pause:isOpen() or chatOpen or died then return end
  if button=="a" then love.keypressed("f")
- elseif button=="b" then love.keypressed("b")
+ elseif button=="b" then love.keypressed("escape")
  elseif button=="x" then love.keypressed("space")
  elseif button=="y" then love.keypressed("r")
  elseif button=="leftshoulder" then love.keypressed("q")
@@ -1063,26 +1063,6 @@ function love.keypressed(key)
     showDungeonMap=not showDungeonMap
     return
   end
-  if key=="h" and phase=="playing" and client
-     and client.state=="spawn_confirmed" and world.map
-     and not panels:isOpen() and not chatOpen then
-    if houseEditor:toggle(world) then
-      -- The editor owns the mouse; stop continuous attack before editing.
-      mouseAttack=false;spaceAttack=false
-      client:send("F",{0,Pack.null})
-    end
-    return
-  end
-  if houseEditor.active then
-    if key=="r" then houseEditor:rotate() end
-    return
-  end
-  if key=="b" and phase=="playing" and client
-     and client.state=="spawn_confirmed" and world.map
-     and not panels:isOpen() and not chatOpen then
-    client:send("j",{"build"})
-    return
-  end
   input:keypressed(key)
   -- Mirror the reference client's default gameplay bindings.
   if client and client.state=="spawn_confirmed" and not died then
@@ -1191,24 +1171,6 @@ function love.mousepressed(x,y,button)
     return
   end
   if not client or client.state~="spawn_confirmed" or died then return end
-  if houseEditor.active and (button==1 or button==2) then
-    if panels:isOpen() or clans:isOpen() or profile:isOpen()
-      or chatOpen then return end
-    if button==1 then
-      local proposed=houseEditor:placement(world,camera,x,y)
-      if proposed and proposed.valid then
-        client:send("j",{"wall",{x=proposed.x,y=proposed.y,
-          orientation=proposed.orientation}})
-      else
-        world.mapMessage="Posicao invalida para construir uma parede."
-        world.mapMessageTimer=3
-      end
-    elseif button==2 then
-      local index=houseEditor:wallAt(world,camera,x,y)
-      if index then client:send("j",{"remove-wall",index}) end
-    end
-    return
-  end
   if button==1 then
     local w,h=love.graphics.getDimensions()
     if profile:isOpen() then
