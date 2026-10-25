@@ -69,5 +69,34 @@ assert(player.spaceId=="casa-1" and player.x==700 and player.y==900)
 room.nowMs=207000
 assert(room:handleInput(player,"j",{})==true)
 assert(player.spaceId=="surface" and player.x==portal.x)
+-- Individual indoor walls consume resources, respect ownership, and are
+-- saved together with the house. Existing map exit remains unobstructed.
+player.x=550;player.y=450;player.dir=0
+room.nowMs=210000
+local zone=assert(room.mapSpaces:get("casa-1"))
+local beforeObstacles=#zone.obstacles
+assert(room:handleInput(player,"j",{"wall"})==true)
+assert(#zone.obstacles==beforeObstacles+1)
+assert(zone.obstacles[#zone.obstacles].material=="wood")
+assert(player.wood==65 and player.stone==60)
+local lastRect=zone.obstacles[#zone.obstacles]
+local clientZone={id=zone.id,type="interior",
+ width=zone.width,height=zone.height,portals=zone.portals,obstacles={}}
+assert(c:apply("j",{"casa-1",550,450,clientZone}))
+assert(c:apply("j",{"add-wall",0,0,{spaceId="casa-1",rect=lastRect}}))
+assert(#c.space.obstacles==1 and c.space.obstacles[1].material=="wood")
+local saved=assert(io.open(folder.."/houses-cabana-e-mina.json","rb"))
+local bytes=saved:read("*a");saved:close()
+assert(bytes:find("walls",1,true),"house file does not save walls")
 server:close()
-print("PASS house crafting: economy, world geometry, map broadcast, portal and abuse protection")
+-- Restart the SAME map with the SAME data directory: constructed geometry
+-- must survive without charging resources or affecting the MB room.
+local restarted=Local.new({bind="127.0.0.1",port=18965,
+ roomCode="houseagain123456",dataDir=folder,guiHost=true,botCount=0,
+ nowMs=function()return 100000 end,mapId="cabana-e-mina",mode="lan"})
+local restored=restarted.rooms.LC.room
+assert(#restored.builtHouses==1 and #restored.mapSpaces:get("casa-1").obstacles==4)
+assert(restored.mapSpaces:get("surface").portals[2].id=="entrar-casa-1")
+assert(#restarted.rooms.MB.room.mapSpaces:get("surface").portals==0)
+restarted:close()
+print("PASS house crafting: economy, abuse prevention, modular walls, saved geometry and restart isolation")
