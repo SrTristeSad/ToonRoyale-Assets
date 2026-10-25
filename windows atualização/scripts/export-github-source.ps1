@@ -36,11 +36,12 @@ New-Item -ItemType Directory -Force $scripts | Out-Null
 foreach ($file in @('start-server-lua.ps1','tls-relay.mjs',
     'import-json-pack.ps1','import-animation.ps1',
     'build-windows.ps1','test-lua-release.ps1',
-    'export-github-source.ps1')) {
+    'export-github-source.ps1','prepare-release-main.ps1')) {
   Copy-Item -LiteralPath (Join-Path $root "scripts\$file") -Destination (Join-Path $scripts $file) -Force
 }
 # Windows Lua release deliberately keeps developer tests in the staging repo,
 # not inside source archives for players or migration.
+& (Join-Path $root 'scripts\prepare-release-main.ps1') -Path (Join-Path $OutputDir 'main.lua')
 $obsoleteGuide=Join-Path $OutputDir 'server-lua\MIGRATION_3_STEPS.md'
 if (Test-Path -LiteralPath $obsoleteGuide) {
   Remove-Item -LiteralPath $obsoleteGuide -Force
