@@ -91,7 +91,7 @@ function Input.handle(ctx,player,name,args)
     if not player.alive then return end
     -- Item placement still belongs to the classic surface ObjectManager.
     -- Until structures are zone-aware, ignore attempted indoor building
-    -- rather than writing a house item into surface world coordinates.
+    -- rather than letting clients modify map geometry.
     if player.spaceId and player.spaceId~="surface" then
       player.mouseState=0;player.hits=0
       return
