@@ -28,8 +28,11 @@ function Vitals.step(player,delta,config)
     local tail=player.tail
     local regen=(skin and truthy(skin.healthRegen) and skin.healthRegen or 0)
       +(tail and truthy(tail.healthRegen) and tail.healthRegen or 0)
-    if config and config.server and config.server.roomDifficulty=="pacifico" then
-      regen=regen+6 -- six HP/s in peaceful rooms, respecting maxHealth.
+    local room=config and config.server
+    if room and room.roomRules then
+      regen=regen+(room.roomRules.healthRegenPerSecond or 0)
+    elseif room and room.roomDifficulty=="pacifico" then
+      regen=regen+6 -- Legacy peaceful fixtures preserve their behavior.
     end
     if truthy(regen) then player:changeHealth(regen,player) end
     local effect=player.dmgOverTime
