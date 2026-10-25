@@ -142,7 +142,11 @@ function Registry:addBot(request)
  self.available[sid]=false
  room:bindPlayer(player)
  self.playersById[player.id]=player
- player:send("A",{teams=self.options.clanList(),animals=self.animalKinds})
+ local init={teams=self.options.clanList(),animals=self.animalKinds}
+ if room.customMap and room.key=="LC" then
+  init.map={id=room.mapId,portals=room.mapSpaces:get("surface").portals}
+ end
+ player:send("A",init)
  if self.options.count then self.options.count(room.key,#room.players) end
  return player
 end
