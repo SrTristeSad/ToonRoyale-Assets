@@ -28,7 +28,7 @@ return function(perform,home,hosted,getClient)
   local selected
   for i,entry in ipairs(home.mapCatalog) do
     if entry.id=="bunker-e-cavernas" then
-      local n=i+1
+      local n=i
       home.mapPage=math.floor((n-1)/4)
       local row=(n-1)%4+1
       selected=home:click(705,249+(row-1)*74)
