@@ -46,8 +46,8 @@ local function inside(x,y,b)
 end
 local boxes={
   back={1041,93,171,45},
-  homePlay={95,278,400,68},homeServers={95,362,400,68},
-  homeSettings={95,446,400,68},
+  homePlay={360,278,560,64},homeServers={360,354,560,64},
+  homeSettings={360,452,266,58},homeQuit={654,452,266,58},
   nickname={155,236,462,52},modeLan={155,312,223,46},
   modeVpn={393,312,224,46},vpnIP={155,368,462,46},
   createLan={155,623,462,53},createVpn={155,623,462,53},
@@ -203,6 +203,8 @@ function Home:click(sx,sy)
       self.screen="server";self.focus=nil;return "server_tab"
     elseif inside(x,y,boxes.homeSettings) then
       self.screen="settings";self.focus=nil;return "settings_tab"
+    elseif inside(x,y,boxes.homeQuit) then
+      self.focus=nil;return "quit_game"
     end
   elseif self.screen=="play" then
     if not self.hosting and not self.starting
@@ -464,6 +466,29 @@ function Home:draw(state,detail,showWorld)
   love.graphics.translate((w-1280*z)/2,(h-720*z)/2)
   love.graphics.scale(z)
   if not showWorld then love.graphics.clear(C.bg) end
+  if self.screen=="home" then
+    -- Classic PC title layout: wide world backdrop, centered logo, stacked
+    -- native beveled buttons. Graphics/text are original to Moo-IO.
+    love.graphics.setColor(0.035,0.05,0.04,0.34)
+    love.graphics.rectangle("fill",0,0,1280,720)
+    love.graphics.setColor(0,0,0,0.53)
+    printText("MOO IO",368,83,100,{0,0,0,0.7},550,"center")
+    printText("MOO IO",360,75,100,C.white,560,"center")
+    printText("SEU MUNDO, SEUS AMIGOS",425,205,19,C.muted,430,"center")
+    love.graphics.push()
+    love.graphics.translate(812,198)
+    love.graphics.rotate(-0.18)
+    printText("MAPAS! MODS! AVENTURAS!",-114,0,19,C.amber,315,"center")
+    love.graphics.pop()
+    button("homePlay","JOGAR / CRIAR SALA",true)
+    button("homeServers","SERVIDORES",false)
+    button("homeSettings","OPCOES",false)
+    button("homeQuit","SAIR DO JOGO",false)
+    printText("Moo-IO  |  Windows Lua",20,681,16,C.white,470)
+    printText("Multiplayer LAN, VPN e V2",827,681,16,C.white,433,"right")
+    love.graphics.pop()
+    return
+  end
   decorate(showWorld)
   -- Fixed header: the back button lives at the upper right, never over logo.
   love.graphics.setColor(0.09,0.12,0.095)
