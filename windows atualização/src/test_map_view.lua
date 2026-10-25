@@ -27,6 +27,16 @@ local function run()
  assert(View.nearestInteraction(vicinity).id=="cache-near")
  vicinity.space.interactables[2].used=true
  assert(View.nearestInteraction(vicinity)==nil)
+ vicinity.space.interactables[#vicinity.space.interactables+1]={
+  id="resource-node",kind="node",x=115,y=100,
+  charges=3,remaining=2,used=false}
+ assert(View.nearestInteraction(vicinity).id=="resource-node")
+ vicinity.space.interactables[#vicinity.space.interactables+1]={
+  id="gate-switch",kind="switch",x=101,y=100,
+  used=false,version=1}
+ assert(View.nearestInteraction(vicinity).id=="gate-switch")
+ vicinity.space.interactables[#vicinity.space.interactables].used=true
+ assert(View.nearestInteraction(vicinity).id=="resource-node")
  local world=World.new()
  local portal={id="entrar-cabana",x=1950,y=1950,to="cabana",
   targetX=600,targetY=900}
