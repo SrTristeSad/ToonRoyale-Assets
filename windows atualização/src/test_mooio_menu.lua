@@ -20,7 +20,7 @@ return function()
   assert(not home.botsEnabled,"Bots cannot turn on automatically")
   assert(home:click(210,446)=="configure")
   assert(home.screen=="create","room options must have their own screen")
-  assert(home.mapId~="" and home.mapId~="classico","installed JSON map must be selected")
+  assert(home.mapId=="","new rooms must not auto-select a map requiring species mods")
   assert(#home.mapCatalog>=3,"built-in cave and cabin maps must be installed")
   assert(home:click(160,463)=="bots_toggle")
   assert(home.botsEnabled and home.botCount==2)
@@ -39,6 +39,30 @@ return function()
   assert(home.mapId=="","F5 refresh silently re-enabled a disabled map")
   assert(home:mapName()=="Mapa desativado")
   assert(home:click(730,587)=="map_browse" and home.screen=="maps")
+  -- A mod map is selectable without allowing an invalid host to crash:
+  -- its exact required custom species are resolved from installed mods.
+  local creatureMap
+  for i,m in ipairs(home.mapCatalog) do
+    if m.id=="reserva-criaturas" then
+      creatureMap={page=math.floor(i/6),row=i%6+1}
+      break
+    end
+  end
+  assert(creatureMap,"mod map must be discoverable alongside bundled maps")
+  home.mapPage=creatureMap.page
+  assert(home:click(690,249+(creatureMap.row-1)*64)=="map_select")
+  assert(home.mapId=="reserva-criaturas" and home.modIds:find("novas-especies",1,true),
+    "selecting creature map must enable its mandatory mod automatically")
+  assert(home:checkMapMods(false)==true)
+  home.screen="create"
+  home.modIds=""
+  assert(home:checkMapMods(false)==false,
+    "disabling a required species mod must prevent creating an invalid room")
+  assert(home:checkMapMods(true) and home.modIds=="novas-especies",
+    "room creation should recover missing map dependencies")
+  -- Return to the bundled caves without leaving the species mod forced on.
+  home.modIds=""
+  home.screen="maps";home.mapPage=0
   local sawCave=false
   for i,m in ipairs(home.mapCatalog) do
     if m.id=="bunker-e-cavernas" then
