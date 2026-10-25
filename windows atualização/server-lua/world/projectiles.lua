@@ -80,6 +80,7 @@ function Projectiles:addProjectile(x,y,dir,range,speed,index,owner,ignoreObj,lay
   proj.ignoreObj=ignoreObj
   proj.layer=jsOr(layer,data.layer)
   proj.src=data.src
+  proj.spaceId=owner and owner.spaceId or "surface"
   -- Node Game.tick iterates Projectile instances and invokes projectile.update.
   -- Bind the actual manager simulation to each live/reused Lua projectile.
   proj.manager=self
@@ -119,7 +120,7 @@ function Projectiles:updateOne(proj,delta)
   local targets={}
   local function candidate(target)
     if target.alive and target~=proj.owner
-      and (target.spaceId or "surface")=="surface"
+      and (target.spaceId or "surface")==(proj.spaceId or "surface")
       and not (truthy(proj.owner.team) and target.team==proj.owner.team) then
       if lineInRect(target.x-target.scale,target.y-target.scale,
         target.x+target.scale,target.y+target.scale,
@@ -131,6 +132,17 @@ function Projectiles:updateOne(proj,delta)
   end
   for _,player in ipairs(self.players) do candidate(player) end
   for _,ai in ipairs(self.ais) do candidate(ai) end
+  local zone=self.mapSpaces and self.mapSpaces:get(proj.spaceId)
+  if zone and zone.type~="surface" then
+    local endX=proj.x+speed*math.cos(proj.dir)
+    local endY=proj.y+speed*math.sin(proj.dir)
+    local t=self.mapSpaces:firstWallHit(proj.spaceId,proj.x,proj.y,endX,endY)
+    if t then
+      targets[#targets+1]={isWall=true,active=true,
+        x=proj.x+(endX-proj.x)*t,y=proj.y+(endY-proj.y)*t}
+    end
+  end
+  if not zone or zone.type=="surface" then
   for _,grid in ipairs(self.world:getGridArrays(proj.x,proj.y,proj.scale)) do
     for _,obj in ipairs(grid) do
       local scale=(type(obj.getScale)=="function") and obj:getScale()
@@ -147,6 +159,7 @@ function Projectiles:updateOne(proj,delta)
       end
     end
   end
+  end -- Surface objects do not exist in interiors.
   if #targets==0 then return end
   local hit=nil
   local closest=nil
@@ -170,7 +183,7 @@ function Projectiles:updateOne(proj,delta)
       assert(type(hit.changeHealth)=="function","real victim changeHealth required")
       hit:changeHealth(-proj.dmg,proj.owner,proj.owner,proj)
     end
-  else
+  elseif not hit.isWall then
     if truthy(hit.projDmg) and truthy(hit.health) then
       assert(type(hit.changeHealth)=="function","real structure changeHealth required")
       if hit:changeHealth(-proj.dmg) then self.world:disableObject(hit) end
