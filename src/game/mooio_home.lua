@@ -55,8 +55,6 @@ local boxes={
   roomStop={392,485,225,55},
   joinIP={704,287,421,51},joinCode={704,359,421,51},
   join={704,430,421,54},joinRetry={704,506,421,49},
-  v2Login={704,557,421,38},
-  serverLite={159,274,433,58},serverFirebase={661,274,433,58},
   serverToPlay={381,526,518,54},
   grid={355,280,570,57},fullscreen={355,364,570,57},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43}
@@ -103,7 +101,7 @@ end
 function Home.new()
   return setmetatable({
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
-    serverMode="lan",provider="lite",focus=nil,
+    serverMode="lan",focus=nil,
     status="",error=false,hosting=false,starting=false,
     hostAddress="",hostCode="",connectionState="idle",serverLog="",
     showGrid=true,fullscreen=false,sessionTitle="",
@@ -172,14 +170,9 @@ function Home:click(sx,sy)
       if inside(x,y,boxes.roomStop) then self.focus=nil;return "stop" end
     end
     if inside(x,y,boxes.join) then self.focus=nil;return "join" end
-    if not self.hosting and not self.starting and inside(x,y,boxes.v2Login) then
-      self.focus=nil;return "v2_login"
-    end
     if self.error and inside(x,y,boxes.joinRetry) then self.focus=nil;return "retry" end
     self.focus=nil
   elseif self.screen=="server" then
-    if inside(x,y,boxes.serverLite) then self.provider="lite";return "provider_lite" end
-    if inside(x,y,boxes.serverFirebase) then self.provider="firebase";return "provider_firebase" end
     if inside(x,y,boxes.serverToPlay) then self.screen="play";return "server_to_play" end
   elseif self.screen=="settings" then
     if inside(x,y,boxes.grid) then self.showGrid=not self.showGrid;return "grid" end
@@ -343,33 +336,18 @@ function Home:draw(state,detail,showWorld)
       printText("Codigo de acesso (separado ou no convite)",704,340,14,C.muted)
       field("joinCode",self.joinCode,"Codigo da sala",self.focus=="joinCode")
       button("join","ENTRAR NA SALA",true)
-      if not self.hosting and not self.starting then
-        button("v2Login","ENTRAR NA CONTA V2 (NAVEGADOR)",false)
-      end
       if self.error then
         button("joinRetry","TENTAR NOVAMENTE",false)
       else
         printText("Entre pelo IP da rede local ou VPN privada.",706,517,15,C.muted)
       end
     elseif self.screen=="server" then
-      printText("SERVIDORES",140,165,31,C.white)
-      printText("Servidores dedicados e descoberta de partidas.",145,220,16,C.muted)
-      panel(130,239,491,265,self.provider=="lite" and C.raised or C.panel,0)
-      panel(633,239,492,265,self.provider=="firebase" and C.raised or C.panel,0)
-      button("serverLite","SERVIDOR V2 LITE",self.provider=="lite")
-      button("serverFirebase","FIREBASE",self.provider=="firebase")
-      if self.provider=="lite" then
-        printText("Servidor dedicado comunitario.",158,355,18,C.muted)
-        printText("A integracao com o protocolo V2 Lite",158,389,16,C.muted)
-        printText("ainda depende da API compativel.",158,413,16,C.amber)
-        printText("Contas, amigos e lista de salas.",661,355,18,C.muted)
-      else
-        printText("Servidor dedicado comunitario.",158,355,18,C.muted)
-        printText("Identidade, amigos e catalogo de salas.",661,355,17,C.muted)
-        printText("Exige configurar um projeto Firebase.",661,390,16,C.amber)
-        printText("Nao hospeda o motor do jogo.",661,414,16,C.muted)
-      end
-      button("serverToPlay","ENTRAR COM IP NO JOGAR",false)
+      printText("SALAS LOCAIS",140,165,31,C.white)
+      panel(130,239,1010,265,C.panel,0)
+      printText("Conecte-se a um amigo na mesma rede LAN ou VPN privada.",160,284,21,C.white)
+      printText("Para hospedar, escolha CRIAR MINHA SALA no menu JOGAR.",160,340,18,C.green)
+      printText("Para entrar, informe o IP e codigo de convite fornecidos pelo anfitriao.",160,387,17,C.muted)
+      button("serverToPlay","IR PARA JOGAR",true)
     else
       printText("CONFIGURACOES",336,190,31,C.white)
       button("grid","GRADE DO MAPA     "..(self.showGrid and "LIGADA" or "DESLIGADA"),false)
