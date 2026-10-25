@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "id": "reserva-criaturas",
+  "name": "Reserva de Criaturas (mod)",
+  "description": "Mapa demonstrativo com novas especies 15 e 16; selecione tambem o mod Novas Especies.",
+  "mode": "generated",
+  "generation": {
+    "treesPerArea": 7,
+    "bushesPerArea": 3,
+    "totalRocks": 36,
+    "goldOres": 9,
+    "seed": 29387
+  },
+  "surface": [],
+  "spawn": {
+    "x": 3520,
+    "y": 3670
+  },
+  "portals": [
+    {
+      "id": "entrada-refugio",
+      "x": 3520,
+      "y": 3520,
+      "to": "mod-sala-metal",
+      "targetX": 530,
+      "targetY": 710,
+      "style": "hatch",
+      "label": "Refugio"
+    }
+  ],
+  "spaces": [
+    {
+      "id": "mod-sala-metal",
+      "type": "interior",
+      "width": 1300,
+      "height": 1100,
+      "visual": {
+        "floor": "metal",
+        "wall": "brick",
+        "tileSize": 96,
+        "name": "Sala metalica"
+      },
+      "obstacles": [
+        {
+          "x": 80,
+          "y": 80,
+          "width": 1024,
+          "height": 70,
+          "material": "metal"
+        },
+        {
+          "x": 80,
+          "y": 80,
+          "width": 70,
+          "height": 880,
+          "material": "brick"
+        },
+        {
+          "x": 1150,
+          "y": 80,
+          "width": 70,
+          "height": 880,
+          "material": "brick"
+        },
+        {
+          "x": 890,
+          "y": 380,
+          "width": 70,
+          "height": 280,
+          "material": "metal"
+        }
+      ],
+      "portals": [
+        {
+          "id": "sair-refugio",
+          "x": 530,
+          "y": 710,
+          "to": "surface",
+          "targetX": 3520,
+          "targetY": 3520,
+          "style": "hatch",
+          "label": "Sair"
+        },
+        {
+          "id": "porta-gelo",
+          "x": 900,
+          "y": 850,
+          "to": "mod-sala-gelo",
+          "targetX": 400,
+          "targetY": 450,
+          "style": "door",
+          "label": "Sala gelada"
+        }
+      ],
+      "mobs": [],
+      "interactables": [
+        {
+          "id": "bau-madeira",
+          "kind": "cache",
+          "x": 580,
+          "y": 520,
+          "label": "Bau com madeira",
+          "resource": "wood",
+          "amount": 35
+        },
+        {
+          "id": "alavanca-portao",
+          "kind": "lever",
+          "x": 665,
+          "y": 740,
+          "label": "Abrir portao",
+          "target": "portao-metal"
+        },
+        {
+          "id": "portao-metal",
+          "kind": "gate",
+          "x": 750,
+          "y": 730,
+          "width": 48,
+          "height": 175,
+          "material": "metal",
+          "label": "Portao reforcado"
+        },
+        {
+          "id": "mina-pedra",
+          "kind": "node",
+          "x": 550,
+          "y": 930,
+          "label": "Minerio renovavel",
+          "resource": "stone",
+          "amount": 8,
+          "charges": 3,
+          "cooldownMs": 1500
+        },
+        {
+          "id": "interruptor-portao",
+          "kind": "switch",
+          "x": 690,
+          "y": 880,
+          "label": "Abrir ou fechar portao",
+          "target": "portao-metal",
+          "cooldownMs": 500
+        }
+      ]
+    },
+    {
+      "id": "mod-sala-gelo",
+      "type": "underground",
+      "width": 1200,
+      "height": 900,
+      "visual": {
+        "floor": "ice",
+        "wall": "stone",
+        "tileSize": 64,
+        "name": "Camara congelada"
+      },
+      "obstacles": [
+        {
+          "x": 80,
+          "y": 80,
+          "width": 70,
+          "height": 740,
+          "material": "ice"
+        },
+        {
+          "x": 950,
+          "y": 100,
+          "width": 100,
+          "height": 480,
+          "material": "stone"
+        }
+      ],
+      "portals": [
+        {
+          "id": "retorno-metal",
+          "x": 400,
+          "y": 450,
+          "to": "mod-sala-metal",
+          "targetX": 900,
+          "targetY": 850,
+          "style": "stairs",
+          "label": "Retornar"
+        }
+      ],
+      "mobs": [
+        {
+          "kind": 15,
+          "x": 670,
+          "y": 450
+        },
+        {
+          "kind": 16,
+          "x": 770,
+          "y": 540
+        }
+      ]
+    }
+  ],
+  "interactables": [
+    {
+      "id": "suprimentos-exterior",
+      "kind": "cache",
+      "x": 3620,
+      "y": 3660,
+      "label": "Suprimentos na superficie",
+      "resource": "food",
+      "amount": 12
+    }
+  ]
+}
