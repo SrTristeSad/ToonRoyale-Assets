@@ -165,6 +165,12 @@ jobs:
           diff -u /tmp/moo-crab-rewards-node.txt /tmp/moo-crab-rewards-lua.txt
           test "$(wc -l < /tmp/moo-crab-rewards-node.txt)" -eq 12
           echo 'PASS 12 cenarios de vitoria e Crab Shell'
+      - name: Spawn points Node vs Lua - consumo, pacote Q e inventario
+        run: |
+          set -euo pipefail
+          node server-lua/tests/spawn-point-reference.mjs > /tmp/moo-spawn-node.txt
+          lua5.4 server-lua/tests/spawn-point-reference.lua > /tmp/moo-spawn-lua.txt
+          diff -u /tmp/moo-spawn-node.txt /tmp/moo-spawn-lua.txt
       - name: Respawn em construcao - pacote Q e contagem de itens
         run: |
           set -euo pipefail
