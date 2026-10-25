@@ -691,7 +691,7 @@ function Home:draw(state,detail,showWorld)
      state=="keyed_transport" and "Servidor conectado. Carregando mundo..." or
      state=="failed" and tostring(detail) or
      "Jogar abre as opcoes. Criar sala e uma escolha.")
-  if #message>135 then message=message:sub(1,132).."..." end
+  message=UI.oneLine(message,950,15)
   love.graphics.setColor(self.error and C.red or C.green)
   love.graphics.rectangle("fill",92,689,5,22)
   printText(self.error and "ATENCAO" or "STATUS",111,692,13,
