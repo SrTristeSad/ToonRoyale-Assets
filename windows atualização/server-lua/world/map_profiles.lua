@@ -182,8 +182,8 @@ local function checkAnimalAnimations(definitions)
  local count=0
  for key,set in pairs(definitions) do
   count=count+1
-  assert(count<=15 and type(key)=="string" and key:match("^%d+$")
-    and tonumber(key)>=0 and tonumber(key)<=14
+  assert(count<=64 and type(key)=="string" and key:match("^%d+$")
+    and tonumber(key)>=0 and tonumber(key)<=63
     and tostring(tonumber(key))==key,"invalid animated animal ID")
   only(set,{sheet=true,frameWidth=true,frameHeight=true,
     idle=true,walk=true,attack=true,hurt=true,death=true})
