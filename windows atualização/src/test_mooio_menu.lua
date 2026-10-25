@@ -77,6 +77,18 @@ return function()
   end
   assert(sawCave and home:mapName()=="Bunker e Cavernas",
     "cave map must be a labeled selectable option")
+  -- Both the active-green state and click-again deselection match mod UI.
+  local currentRow
+  for i,map in ipairs(home.mapCatalog) do
+    if map.id=="bunker-e-cavernas" then
+      currentRow=(i-1)%6+1
+      break
+    end
+  end
+  assert(home:click(690,250+(currentRow-1)*64)=="map_toggle"
+    and home.mapId=="","selected cave must be deselectable in one click")
+  assert(home:click(690,250+(currentRow-1)*64)=="map_toggle"
+    and home.mapId=="bunker-e-cavernas","reselect must restore the same map")
   assert(home:click(820,656)=="maps_done" and home.screen=="create")
   assert(home:click(555,560)=="mod_browse")
   assert(home.screen=="mods" and #home.modCatalog>=4,
