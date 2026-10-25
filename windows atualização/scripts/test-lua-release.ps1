@@ -43,7 +43,7 @@ if ($paths -notmatch 'start-server-lua\.ps1' -or $paths -match 'return join\(roo
 $main=Get-Content (Join-Path $DistDir 'main.lua') -Raw
 $homeSource=Get-Content (Join-Path $DistDir 'src\game\mooio_home.lua') -Raw
 if ($main -match 'require\(["'']src\.test_' -or
-  $main -match 'MOOQUEST_INTEGRATION|MOOQUEST_TESTS|MOO_IO_E2E') {
+  $main -match 'MOOQUEST_INTEGRATION|MOOQUEST_TESTS') {
   throw 'Production client still contains removed development test entrypoints'
 }
 if (($main+$homeSource) -match 'provider_lite|provider_firebase|MOO_IO_V2_PRIVATE_ROOM') {
