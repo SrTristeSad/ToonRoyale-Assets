@@ -20,8 +20,8 @@ function Input:update(dt)
 end
 function Input:gamepadMove(x,y)
  local function deadzone(v)
-  if type(v)~="number" or math.abs(v)<0.22 then return 0 end
-  return (math.abs(v)-0.22)/0.78*(v<0 and -1 or 1)
+  if type(v)~="number" or v~=v then return 0 end
+  return math.max(-1,math.min(1,v))
  end
  self.gamepadX=deadzone(x);self.gamepadY=deadzone(y)
 end
