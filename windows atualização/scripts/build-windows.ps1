@@ -10,8 +10,10 @@ if (-not $OutputDir) { $OutputDir = Join-Path $root 'dist\Moo-IO-Windows' }
 $OutputDir = [IO.Path]::GetFullPath($OutputDir)
 $LoveDir = [IO.Path]::GetFullPath($LoveDir)
 if (-not (Test-Path (Join-Path $LoveDir 'love.exe') -PathType Leaf)) { throw 'LÖVE 11.5 Windows x64 ausente.' }
-if (-not (Test-Path (Join-Path $LoveDir 'socket\core.dll') -PathType Leaf)) {
-  throw 'LuaSocket nao encontrado. Coloque a pasta socket com core.dll para LuaJIT do LÖVE 11.5 em LoveDir.'
+foreach ($required in @('socket\core.dll','socket.lua','socket\http.lua','ltn12.lua','mime\core.dll','mime.lua')) {
+  if (-not (Test-Path (Join-Path $LoveDir $required) -PathType Leaf)) {
+    throw "Dependencia LuaSocket ausente: $required (compativel com LuaJIT/LÖVE 11.5)."
+  }
 }
 if (-not (Test-Path (Join-Path $root 'assets\custom\img\weapons\hammer_1.png') -PathType Leaf)) {
   throw 'Pacote de artes incompleto.'
