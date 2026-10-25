@@ -28,7 +28,7 @@ local items={
 local world=World.new({config=Config,random=function()return 0.5 end})
 local room=Room.new({
  nowMs=10000,world=world,items=items,
- services={ensureAnimals=function()end}
+ services={ensureAnimals=function()end},broadcast=function()end
 })
 local anti={
  allow=function()return true end,
