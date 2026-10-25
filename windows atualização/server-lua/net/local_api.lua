@@ -38,7 +38,7 @@ function API.new(opts)
   "original ModerationStore banEntry/lockedFor required")
  return setmetatable({store=opts.store,moderation=opts.moderation,
   roomCode=assert(opts.roomCode,"local invitation code required"),
-  game=opts.game,
+  game=opts.game,chat=opts.chat,
   servers=assert(opts.servers,"original local LC and MB server list required"),
   nowMs=opts.nowMs or function()return os.time()*1000 end,
   friendRate={},social=Social.new({store=opts.store,
@@ -162,6 +162,8 @@ function API:handle(method,target,headers,raw,ip)
   ["/api/friends/allow"]=true,["/api/top"]=true,
   ["/api/mod/role"]=true,["/api/mod/clan"]=true,
   ["/api/mod/verdict"]=true,["/api/mod/kick"]=true,
+  ["/api/chat/history"]=true,["/api/clan/online"]=true,
+  ["/api/page/friends"]=true,["/api/mod/messages"]=true,
   ["/api/mod/player"]=true
  }
  local clanAction=path:match("^/api/clan/([%w]+)$")
