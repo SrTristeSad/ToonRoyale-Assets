@@ -455,6 +455,33 @@ local function drawMapHelp(world)
  if not world.map then return end
  local w,h=love.graphics.getDimensions()
  local near=world.spaceId=="surface"
+ local mapName=world.map.name or world.map.id or "Personalizado"
+ love.graphics.setColor(0.07,0.10,0.07,0.86)
+ love.graphics.rectangle("fill",16,69,math.min(500,w-32),54,5,5)
+ love.graphics.setColor(0.96,0.93,0.79,1)
+ love.graphics.print("MAPA: "..mapName:upper(),25,76)
+ love.graphics.setColor(0.66,0.88,0.53,1)
+ love.graphics.print(near and "SUPERFICIE" or ("REGIAO: "..world.spaceId:upper()),25,99)
+ if near then
+  local player=world:localPlayer()
+  if player and player.x and player.y and world.spaceId=="surface" then
+   local nearest,dist
+   for _,portal in ipairs(world.map.portals or {}) do
+    if portal.style=="cave" or portal.style=="bunker" then
+     local dx,dy=portal.x-player.x,portal.y-player.y
+     local d=math.floor(math.sqrt(dx*dx+dy*dy))
+     if not dist or d<dist then nearest=portal;dist=d end
+    end
+   end
+   if nearest then
+    local kind=nearest.style=="cave" and "CAVERNA" or "BUNKER"
+    love.graphics.setColor(0.07,0.10,0.07,0.88)
+    love.graphics.rectangle("fill",16,129,math.min(500,w-32),33,5,5)
+    love.graphics.setColor(0.96,0.88,0.55,1)
+    love.graphics.print("ENTRADA "..kind..": "..dist.." DE DISTANCIA  |  G",25,138)
+   end
+  end
+ end
  if near then
   love.graphics.setColor(0.09,0.11,0.09,0.83)
   love.graphics.rectangle("fill",16,h-52,345,36,5,5)
@@ -542,6 +569,13 @@ local function drawHouses(world,camera)
    love.graphics.setColor(0.90,0.75,0.37)
    love.graphics.circle("fill",x,y+167*u,24*u)
    end -- house roof
+   if portal.style=="cave" or portal.style=="bunker" then
+    local label=portal.style=="cave" and "CAVERNA - G" or "BUNKER - G"
+    love.graphics.setColor(0.08,0.10,0.08,0.85)
+    love.graphics.rectangle("fill",x-94*u,y-191*u,188*u,31*u,5*u,5*u)
+    love.graphics.setColor(0.97,0.87,0.55,1)
+    love.graphics.printf(label,x-90*u,y-187*u,180*u,"center")
+   end
   end
  end
 end
