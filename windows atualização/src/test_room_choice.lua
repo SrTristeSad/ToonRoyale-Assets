@@ -20,28 +20,27 @@ return function(perform,home,hosted,getClient)
   assert(home.screen=="create" and starts==0,
     "room cannot launch before explicit confirmation")
   assert(not home.botsEnabled,"bots must be disabled by default")
-  assert(home:click(160,466)=="bots_toggle")
+  assert(home:click(400,460)=="bots_toggle")
   assert(home.botsEnabled and home.botCount==2)
-  assert(home:click(508,517)=="bots_count" and home.botCount==3)
-  assert(home:click(170,517)=="bots_count" and home.botCount==2)
-  assert(home:click(160,408)=="difficulty" and home.difficulty=="dificil")
-  assert(home:click(730,587)=="map_browse" and home.screen=="maps")
+  assert(home:click(840,505)=="bots_count" and home.botCount==3)
+  assert(home:click(401,505)=="bots_count" and home.botCount==2)
+  assert(home:click(404,412)=="difficulty" and home.difficulty=="dificil")
+  assert(home:click(540,609)=="map_browse" and home.screen=="maps")
   local selected
   for i,entry in ipairs(home.mapCatalog) do
     if entry.id=="bunker-e-cavernas" then
-      local n=i+1
-      home.mapPage=math.floor((n-1)/6)
-      local row=(n-1)%6+1
+      home.mapPage=math.floor((i-1)/6)
+      local row=(i-1)%6+1
       selected=home:click(705,249+(row-1)*64)
       break
     end
   end
-  assert(selected=="map_select" and home.mapId=="bunker-e-cavernas",
+  assert(selected=="map_toggle" and home.mapId=="bunker-e-cavernas",
     "cave map missing from native package map picker")
   assert(home:mapName()=="Bunker e Cavernas",
     "selection must show exact map name, not MAPA: OUTRO")
   assert(home:click(820,650)=="maps_done" and home.screen=="create")
-  assert(home:click(720,647)=="create")
+  assert(home:click(705,661)=="create")
   perform("create")
   assert(starts==1 and lastCount==2 and home.starting,
     "only explicit Create button may launch room")
