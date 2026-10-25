@@ -101,7 +101,7 @@ function Maps.validate(content,wanted)
  assert(type(map.spaces)=="table" and #map.spaces<=24,"too many map spaces")
  local lookup={}
  for _,zone in ipairs(map.spaces) do
-  only(zone,{id=true,type=true,width=true,height=true,obstacles=true,portals=true})
+  only(zone,{id=true,type=true,width=true,height=true,obstacles=true,portals=true,mobs=true})
   assert(id(zone.id) and zone.id~="surface" and not lookup[zone.id],
     "invalid or duplicate space ID")
   assert(zone.type=="interior" or zone.type=="underground","invalid space type")
@@ -110,6 +110,15 @@ function Maps.validate(content,wanted)
   zone.obstacles=zone.obstacles or {}
   zone.portals=zone.portals or {}
   checkObstacles(zone.obstacles,zone.width,zone.height)
+  zone.mobs=zone.mobs or {}
+  assert(type(zone.mobs)=="table" and #zone.mobs<=24,"too many indoor mobs")
+  for _,mob in ipairs(zone.mobs) do
+   only(mob,{kind=true,x=true,y=true})
+   assert(integer(mob.kind,0,14) and mob.kind~=11,"invalid mob index")
+   assert(integer(mob.x,100,zone.width-100) and integer(mob.y,100,zone.height-100),
+    "mob spawn out of zone")
+   assert(not blocked(zone,mob.x,mob.y),"mob spawn inside wall")
+  end
   lookup[zone.id]=zone
  end
  map.portals=map.portals or {}
