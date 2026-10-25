@@ -386,9 +386,21 @@ function Maps.available(fs,dir)
       local good,map=pcall(Maps.validate,body,mapId)
       if good then
        seen[mapId]=true
+       -- Expose read-only dependency metadata to the room creator.
+       -- A map can request a modded species, but must not launch without it.
+       local species,seenSpecies={},{}
+       for _,zone in ipairs(map.spaces) do
+        for _,mob in ipairs(zone.mobs or {}) do
+         if not seenSpecies[mob.kind] then
+          species[#species+1]=mob.kind
+          seenSpecies[mob.kind]=true
+         end
+        end
+       end
+       table.sort(species)
        found[#found+1]={id=map.id,name=map.name,
         description=map.description or "",mode=map.mode,
-        spaces=#map.spaces,source=root=="server-lua/mods/maps"
+        spaces=#map.spaces,species=species,source=root=="server-lua/mods/maps"
           and "mod" or "base"}
       end
      end
