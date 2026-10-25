@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "animacao-lobo",
+  "name": "Animacao Independente do Lobo",
+  "description": "Animacoes opcionais do lobo original, sem exigir mapa personalizado. Instale lobo_animado.png para ver os quadros.",
+  "requiresClient": "base",
+  "animalAnimations": {
+    "4": {
+      "sheet": "lobo_animado.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "idle": {
+        "row": 0,
+        "frames": 4,
+        "fps": 6
+      },
+      "walk": {
+        "row": 1,
+        "frames": 6,
+        "fps": 10
+      },
+      "attack": {
+        "row": 2,
+        "frames": 4,
+        "fps": 12,
+        "loop": false
+      }
+    }
+  }
+}
