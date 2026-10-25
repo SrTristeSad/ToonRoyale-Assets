@@ -1,6 +1,7 @@
 -- User-editable keyboard and gamepad controls; saved in LÖVE's save directory.
 -- No executable configuration files; only validated key/button identifiers.
 local Pad=require("src.game.gamepad_controls")
+local UI=require("src.game.pc_menu_style")
 local Settings={}
 Settings.__index=Settings
 local actions={
@@ -229,10 +230,9 @@ function Settings:draw(joy)
  local scale=math.min(w/1280,h/720)
  love.graphics.translate((w-1280*scale)/2,(h-720*scale)/2)
  love.graphics.scale(scale)
- love.graphics.setColor(0.12,0.17,0.14)
- love.graphics.rectangle("fill",100,72,1080,620)
- love.graphics.setColor(0.43,0.73,0.26)
- love.graphics.rectangle("fill",100,72,1080,7)
+ UI.panel(100,72,1080,620,{0.19,0.21,0.20})
+ love.graphics.setColor(0.75,0.80,0.74,0.3)
+ love.graphics.rectangle("fill",104,77,1072,4)
  local f1,f2=font(27),font(15)
  love.graphics.setFont(f1);love.graphics.setColor(1,1,1)
  love.graphics.print("CONTROLES - TECLADO E JOYSTICK",140,97)
@@ -241,14 +241,13 @@ function Settings:draw(joy)
  love.graphics.print("Teclado (clique para editar)",496,135)
  love.graphics.print("Joystick (clique para editar)",755,135)
  local function button(label,x,y,bw,bh,active)
-  love.graphics.setColor(active and 0.46 or 0.25,active and 0.57 or 0.31,0.27)
-  love.graphics.rectangle("fill",x,y,bw,bh,3,3)
-  love.graphics.setColor(1,1,1)
-  love.graphics.printf(label,x,y+6,bw,"center")
+  local mx,my=love.mouse.getPosition()
+  local tx,ty=uiPoint(mx,my)
+  UI.button(x,y,bw,bh,label,active,false,inRect(tx,ty,{x,y,bw,bh}))
  end
  for i,a in ipairs(actions) do
   local y=154+(i-1)*38
-  love.graphics.setColor(i%2==0 and 0.17 or 0.15,0.21,0.17)
+  love.graphics.setColor(i%2==0 and 0.21 or 0.18,0.22,0.20)
   love.graphics.rectangle("fill",138,y,910,34)
   love.graphics.setColor(1,1,1)
   love.graphics.print(a.label,145,y+9)
