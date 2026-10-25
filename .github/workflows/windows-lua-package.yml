@@ -83,7 +83,16 @@ jobs:
           if ((Get-Item $installed).Length -ne (Get-Item $path).Length) {
             throw 'Spritesheet instalada com dados alterados'
           }
-          Write-Host 'PASS instalador PNG: dimensoes, assinatura e copia preservada'
+          if (-not (Test-Path (Join-Path $out 'INSTALAR-MOB-ARTE.bat'))) {
+            throw 'Instalador de sprite estatico de especie ausente'
+          }
+          & $install -Source $path -Kind static
+          $static=Join-Path $out 'assets\custom\img\animals\mob-teste.png'
+          if (-not (Test-Path $static)) { throw 'Sprite estatico nao instalado' }
+          if ((Get-Item $static).Length -ne (Get-Item $path).Length) {
+            throw 'Sprite estatico alterado na importacao'
+          }
+          Write-Host 'PASS instaladores PNG: animacao e arte de mob novo'
       - name: Smoke do executavel Windows - iniciar sala e encerrar
         run: |
           $ErrorActionPreference='Stop'
@@ -128,6 +137,7 @@ jobs:
           Remove-Item -LiteralPath (Join-Path $out 'server-lua\mods\maps\mapa-importado-teste.json') -Force
           Remove-Item -LiteralPath (Join-Path $out 'server-lua\mods\mod-importado-teste.json') -Force
           Remove-Item -LiteralPath (Join-Path $out 'assets\custom\img\animals\animations\mob-teste.png') -Force
+          Remove-Item -LiteralPath (Join-Path $out 'assets\custom\img\animals\mob-teste.png') -Force
       - name: Compactar jogo completo
         run: |
           $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
