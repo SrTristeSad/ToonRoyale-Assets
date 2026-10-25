@@ -11,6 +11,7 @@ local CombatText=require("src.game.reference_combat_text")
 local BossEffects=require("src.game.reference_boss_effects")
 local SecretMap=require("src.game.reference_secret_map")
 local View={}
+local Materials=require("src.game.map_materials")
 -- client/src/index.js updateGame waterMult / waterPlus (Canvas only).
 local waterMult=1
 local waterPlus=1
@@ -535,51 +536,42 @@ local function mapPortalMarkers(world,camera,indoor)
  if not indoor then return end
  local area=world.space
  if not area then return end
- local bunker=type(area.id)=="string" and area.id:match("^bunker")~=nil
  for _,p in ipairs(area.portals or {}) do
   if type(p.x)=="number" and type(p.y)=="number" then
    local x,y=camera:worldToScreen(p.x,p.y)
    local u=camera.zoom
+   local style=Materials.portalStyle(area,p)
+   local theme=Materials.themes[Materials.visual(area).wall]
    local open=doorProgress(world,p)
-   -- A floor recess and structural rim occupy precise portal coordinates.
-   -- These are drawn BELOW the avatar; stepping on the recess triggers the
-   -- server-owned level transition, not a clickable overlay.
    local w,h=176*u,144*u
    love.graphics.setColor(0.07,0.08,0.08,1)
    love.graphics.rectangle("fill",x-w/2,y-h/2,w,h,5*u,5*u)
-   if bunker then
-    love.graphics.setColor(0.48,0.55,0.56,1)
-   else
-    love.graphics.setColor(0.40,0.42,0.36,1)
-   end
+   love.graphics.setColor(theme.trim)
    love.graphics.setLineWidth(math.max(1,4*u))
    love.graphics.rectangle("line",x-w/2,y-h/2,w,h,5*u,5*u)
    love.graphics.setLineWidth(1)
-   -- Stair treads descend into a darker recess, all inside the floor.
-   for k=0,4 do
-    local sy=y-49*u+k*25*u
-    love.graphics.setColor(0.32-k*0.035,0.34-k*0.035,0.32-k*0.035,1)
-    love.graphics.rectangle("fill",x-62*u,sy,124*u,17*u)
-    love.graphics.setColor(0.53-k*0.04,0.55-k*0.04,0.49-k*0.04,1)
-    love.graphics.line(x-62*u,sy,x+62*u,sy)
-   end
-   if bunker then
-    -- Steel hatch slides into its own frame when approached.
-    love.graphics.setColor(0.36,0.42,0.44,0.95)
-    love.graphics.rectangle("fill",x-68*u-(open*105*u),y-51*u,
-      136*u*(1-open),102*u,3*u,3*u)
-    for i=0,2 do
-     love.graphics.setColor(0.54,0.6,0.6,0.8)
-     love.graphics.line(x-(56+i*20)*u-open*105*u,y-45*u,
-       x-(56+i*20)*u-open*105*u,y+43*u)
+   if style=="stairs" or style=="tunnel" or style=="hatch" then
+    for k=0,4 do
+     local sy=y-49*u+k*25*u
+     love.graphics.setColor(0.29-k*0.035,0.32-k*0.035,0.29-k*0.035,1)
+     love.graphics.rectangle("fill",x-62*u,sy,124*u,17*u)
+     love.graphics.setColor(theme.trim)
+     love.graphics.line(x-62*u,sy,x+62*u,sy)
     end
-   else
-    -- Rock staircase rim instead of a floating golden teleport icon.
-    love.graphics.setColor(0.46,0.45,0.38,1)
-    love.graphics.circle("fill",x-83*u,y-42*u,21*u)
-    love.graphics.circle("fill",x+81*u,y+49*u,25*u)
-    love.graphics.circle("fill",x+79*u,y-44*u,18*u)
-    love.graphics.circle("fill",x-80*u,y+54*u,19*u)
+   end
+   if style=="hatch" or style=="door" then
+    love.graphics.setColor(theme.wall)
+    love.graphics.rectangle("fill",x-68*u-open*105*u,y-51*u,
+      136*u*(1-open),102*u,3*u,3*u)
+    love.graphics.setColor(theme.trim)
+    love.graphics.rectangle("line",x-68*u-open*105*u,y-51*u,
+      136*u*(1-open),102*u,3*u,3*u)
+   elseif style=="tunnel" or style=="arch" then
+    love.graphics.setColor(theme.wall)
+    for _,rock in ipairs({{-83,-42,21},{81,49,25},
+       {79,-44,18},{-80,54,19}}) do
+     love.graphics.circle("fill",x+rock[1]*u,y+rock[2]*u,rock[3]*u)
+    end
    end
   end
  end
@@ -718,11 +710,12 @@ local function drawIndoor(world,camera,dt,options)
  love.graphics.setColor(mine and 0.39 or 0.78,
   mine and 0.37 or 0.67,mine and 0.33 or 0.53,1)
  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
- -- Tile-aligned floors: the SAME server zone dimensions delimit the
- -- playable ground. Collision walls below come from area.obstacles, not art.
- local bunker=type(area.id)=="string" and area.id:match("^bunker")~=nil
- local cave=mine and not bunker
- local tile=128
+ -- All geometry is described by map JSON; zone IDs do not select
+ -- materials. Community maps can mix wood, metal, rock, sand, ice and more.
+ local visual=Materials.visual(area)
+ local material=Materials.themes[visual.floor]
+ local wallMaterial=Materials.themes[visual.wall]
+ local tile=visual.tileSize
  local xmin=math.max(0,math.floor(camera:screenToWorld(0,0)/tile)-1)
  local xmax=math.min(math.ceil(area.width/tile),
    math.ceil(camera:screenToWorld(w,0)/tile)+1)
@@ -730,45 +723,33 @@ local function drawIndoor(world,camera,dt,options)
  local _,wy1=camera:screenToWorld(0,h)
  local ymin=math.max(0,math.floor(wy0/tile)-1)
  local ymax=math.min(math.ceil(area.height/tile),math.ceil(wy1/tile)+1)
- love.graphics.setColor(cave and 0.16 or (bunker and 0.12 or 0.48),
-   cave and 0.18 or (bunker and 0.17 or 0.39),
-   cave and 0.16 or (bunker and 0.18 or 0.27),1)
+ love.graphics.setColor(material.floor)
  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
  for iy=ymin,ymax do
   for ix=xmin,xmax do
    local px,py=camera:worldToScreen(ix*tile,iy*tile)
    local size=tile*camera.zoom
    local hash=(ix*137+iy*97+ix*iy*17)%13
-   if cave then
-    local c=0.24+hash*0.004
-    love.graphics.setColor(c,c+0.012,c-0.016,1)
-    love.graphics.rectangle("fill",px+1,py+1,size-2,size-2)
-    love.graphics.setColor(0.42,0.43,0.38,0.35)
+   local variation=(hash-6)*0.003
+   local color=material.floor
+   love.graphics.setColor(math.min(1,color[1]+variation),
+     math.min(1,color[2]+variation),math.min(1,color[3]+variation),1)
+   love.graphics.rectangle("fill",px+1,py+1,size-2,size-2)
+   love.graphics.setColor(material.trim[1],material.trim[2],
+     material.trim[3],0.36)
+   love.graphics.rectangle("line",px+3,py+3,size-6,size-6)
+   if visual.floor=="rock" or visual.floor=="stone"
+     or visual.floor=="earth" or visual.floor=="sand" then
     love.graphics.line(px+size*0.15,py+size*0.28,
       px+size*0.47,py+size*0.41,
       px+size*0.65,py+size*0.66)
-    love.graphics.setColor(0.11,0.14,0.12,0.38)
-    love.graphics.polygon("line",
-      px+size*0.23,py+size*0.08,
-      px+size*0.72,py+size*0.18,
-      px+size*0.90,py+size*0.60,
-      px+size*0.41,py+size*0.91)
-   elseif bunker then
-    local c=0.20+hash*0.003
-    love.graphics.setColor(c,c+0.055,c+0.06,1)
-    love.graphics.rectangle("fill",px+2,py+2,size-4,size-4)
-    love.graphics.setColor(0.37,0.44,0.45,0.65)
-    love.graphics.rectangle("line",px+5,py+5,size-10,size-10)
-    love.graphics.setColor(0.51,0.56,0.55,0.7)
+   elseif visual.floor=="metal" then
     for _,corner in ipairs({{11,11},{tile-11,11},{11,tile-11},
       {tile-11,tile-11}}) do
      love.graphics.circle("fill",px+corner[1]*camera.zoom,
        py+corner[2]*camera.zoom,2.5*camera.zoom)
     end
-   else
-    love.graphics.setColor(0.55+hash*0.008,0.41+hash*0.006,0.29,1)
-    love.graphics.rectangle("fill",px+1,py+1,size-2,size-2)
-    love.graphics.setColor(0.26,0.20,0.14,0.25)
+   elseif visual.floor=="wood" then
     love.graphics.line(px,py+size*0.5,px+size,py+size*0.5)
    end
   end
@@ -778,22 +759,13 @@ local function drawIndoor(world,camera,dt,options)
   local a,b=obstacle.width*camera.zoom,obstacle.height*camera.zoom
   love.graphics.setColor(0.08,0.09,0.08,0.5)
   love.graphics.rectangle("fill",x+4*camera.zoom,y+5*camera.zoom,a,b)
-  if obstacle.material=="wood" then
-    love.graphics.setColor(0.55,0.35,0.18)
-  elseif cave then
-    love.graphics.setColor(0.29,0.30,0.27)
-  elseif bunker then
-    love.graphics.setColor(0.32,0.37,0.39)
-  else
-    love.graphics.setColor(mine and 0.35 or 0.47,
-      mine and 0.36 or 0.32,mine and 0.36 or 0.20)
-  end
+  local wallTheme=Materials.themes[obstacle.material] or wallMaterial
+  love.graphics.setColor(wallTheme.wall)
   love.graphics.rectangle("fill",x,y,a,b)
-  if cave and obstacle.material~="wood" then
-   love.graphics.setColor(0.54,0.56,0.49,0.55)
-   love.graphics.rectangle("line",x+3*camera.zoom,y+3*camera.zoom,
-     math.max(2,a-6*camera.zoom),math.max(2,b-6*camera.zoom))
-  end
+  love.graphics.setColor(wallTheme.trim[1],wallTheme.trim[2],
+    wallTheme.trim[3],0.56)
+  love.graphics.rectangle("line",x+3*camera.zoom,y+3*camera.zoom,
+    math.max(2,a-6*camera.zoom),math.max(2,b-6*camera.zoom))
   if obstacle.material=="wood" then
     love.graphics.setColor(0.22,0.15,0.09,0.52)
     local along=(obstacle.width>obstacle.height)
@@ -834,7 +806,9 @@ local function drawIndoor(world,camera,dt,options)
  love.graphics.setColor(0.06,0.07,0.06,0.85)
  love.graphics.rectangle("fill",15,14,250,39,5,5)
  love.graphics.setColor(1,1,1,1)
- love.graphics.print(cave and "CAVERNA" or (bunker and "BUNKER" or "INTERIOR"),27,24)
+ love.graphics.print(
+   visual.name or (area.type=="underground" and "SUBSOLO" or "INTERIOR"),
+   27,24)
 end
 
 function View.draw(world,camera,dt,options)
