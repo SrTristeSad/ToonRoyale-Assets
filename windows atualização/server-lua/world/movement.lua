@@ -111,7 +111,9 @@ function Movement.step(player,delta,world,players,opts)
   if selfIndex then
     for i=selfIndex+1,#players do
       local other=players[i]
-      if other~=player and other.alive then Collision.checkCollision(player,other,nil,collisionOptions) end
+      if other~=player and other.alive and (other.spaceId or "surface")=="surface" then
+        Collision.checkCollision(player,other,nil,collisionOptions)
+      end
     end
   end
   if player.xVel~=0 then
