@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "floresta-densa",
+  "name": "Floresta Densa",
+  "description": "Aumenta arvores, arbustos e depositos minerais ao gerar a sala.",
+  "requiresClient": "base",
+  "changes": {
+    "world": {
+      "treesPerArea": 17,
+      "bushesPerArea": 7,
+      "totalRocks": 54,
+      "goldOres": 12
+    }
+  }
+}
