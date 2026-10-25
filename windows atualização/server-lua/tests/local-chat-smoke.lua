@@ -19,5 +19,12 @@ assert(reopened.data.clans.XYZ[1].text=="Member joined the clan")
 local guest={name="Guest"}
 for i=1,55 do chat:gameChat(guest,"line"..i,"LC")end
 assert(#guest.saidLog==50 and guest.saidLog[1].text=="line6")
+local online=chat:clanOnline({clan="XYZ"},{
+ sessionFor=function(id)return id=="member1" and {server="LC"} or nil end})
+assert(#online.online==1 and online.online[1].server=="LC")
+local clanHistory=chat:history({id="member1",clan="XYZ"},"clan")
+assert(#clanHistory.messages==1 and clanHistory.messages[1].system==true)
+local said=chat:said("member1",{playerBySession=function()end})
+assert(#said==1 and said[1].text=="hello member")
 os.remove(path)
 print("PASS chat LOCAL persistido Node: gameChat clanSystem 200/50 retention")
