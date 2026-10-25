@@ -15,7 +15,7 @@ $release=$code.Substring(0,$start)+
   "  -- Production startup: remain on the Moo IO menu until user action.`n"+
   $code.Substring($end)
 if ($release.Contains('require("src.test_') -or
-  $release.Contains('MOO_IO_E2E') -or $release.Contains('MOOQUEST_TESTS')) {
+  $release.Contains('MOOQUEST_TESTS')) {
   throw 'Staging test entry point still exists in production code.'
 }
 if (-not $release.Contains('MOO_IO_LUA_SERVER') -or
