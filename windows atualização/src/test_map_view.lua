@@ -16,6 +16,17 @@ local function run()
    and floorPlan.top>0,
    "floor plan must use exact level-world scale and centered avatar")
  assert(View.dungeonMapGeometry(nil,{},174)==nil)
+ local vicinity={
+  space={interactables={
+   {id="cache-far",kind="cache",x=350,y=100,used=false},
+   {id="cache-near",kind="cache",x=170,y=100,used=false},
+   {id="lever-used",kind="lever",x=110,y=100,used=true}
+  }},
+  localPlayer=function() return {x=100,y=100} end
+ }
+ assert(View.nearestInteraction(vicinity).id=="cache-near")
+ vicinity.space.interactables[2].used=true
+ assert(View.nearestInteraction(vicinity)==nil)
  local world=World.new()
  local portal={id="entrar-cabana",x=1950,y=1950,to="cabana",
   targetX=600,targetY=900}
