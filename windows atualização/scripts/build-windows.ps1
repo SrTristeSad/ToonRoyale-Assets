@@ -49,7 +49,7 @@ if ($LASTEXITCODE -ne 0 -or $version -notmatch '^v22[.]') {
 $nodeDir=Join-Path $OutputDir 'runtime\node'
 New-Item -ItemType Directory -Force $nodeDir | Out-Null
 Copy-Item $TlsNodeExe (Join-Path $nodeDir 'node.exe') -Force
-foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','INSTALAR-MAPA.bat','INSTALAR-MOD.bat','INSTALAR-ANIMACAO.bat','README.md','LICENSE','NOTICE.md')) {
+foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','INSTALAR-MAPA.bat','INSTALAR-MOD.bat','INSTALAR-ANIMACAO.bat','INSTALAR-MOB-ARTE.bat','README.md','LICENSE','NOTICE.md')) {
   Copy-Item (Join-Path $root $file) (Join-Path $OutputDir $file) -Force
 }
 if (Test-Path (Join-Path $root 'licenses')) {
