@@ -27,15 +27,17 @@ local function sendPeer(peer,name,...)
  end
  return peer:send(name,args)
 end
-local function kinds()
+local function kinds(definitions)
  local result={}
- for i=0,14 do
-   local definition=assert(Types[i],"original type missing")
+ for i=0,63 do
+   local definition=definitions[i]
+   if definition then
    local obj={}
    for _,key in ipairs(FIELDS) do
      if definition[key]~=nil then obj[key]=definition[key] end
    end
    result[#result+1]=obj
+   end
  end
  return result
 end
@@ -108,7 +110,7 @@ function Registry.new(room,opts)
  local registry=setmetatable({
    room=room,options=opts,available=available,
    playersById={},pending=setmetatable({},{__mode="k"}),
-   animalKinds=kinds()
+   animalKinds=kinds(room.animal_manager and room.animal_manager.types or Types)
  },Registry)
  if opts.botCount~=nil then registry:attachBots(opts.botCount) end
  return registry
@@ -143,6 +145,7 @@ function Registry:addBot(request)
  room:bindPlayer(player)
  self.playersById[player.id]=player
  local init={teams=self.options.clanList(),animals=self.animalKinds}
+ if room.key=="LC" then init.animations=room.mobAnimations or {} end
  if room.key=="LC" then
   local surfaceTotal=0
   for _,row in ipairs(room.config.server.animalSpawnPlan) do
@@ -162,7 +165,7 @@ function Registry:addBot(request)
   init.map={id=room.mapId,name=room.customMap.name,
      portals=room.mapSpaces:get("surface").portals,
      interactables=room.mapSpaces:get("surface").interactables,
-     animations=room.customMap.animalAnimations or {}}
+     animations=room.mobAnimations or {}}
  end
  player:send("A",init)
  if self.options.count then self.options.count(room.key,#room.players) end
@@ -236,6 +239,7 @@ function Registry:onJoined(player,peer,ticket,room)
  self.pending[peer]=nil
  self.playersById[player.id]=player
  local init={teams=self.options.clanList(),animals=self.animalKinds}
+ if room.key=="LC" then init.animations=room.mobAnimations or {} end
  if room.key=="LC" then
   local surfaceTotal=0
   for _,row in ipairs(room.config.server.animalSpawnPlan) do
@@ -253,7 +257,7 @@ function Registry:onJoined(player,peer,ticket,room)
   init.map={id=room.mapId,name=room.customMap.name,
     portals=room.mapSpaces:get("surface").portals,
      interactables=room.mapSpaces:get("surface").interactables,
-     animations=room.customMap.animalAnimations or {}}
+     animations=room.mobAnimations or {}}
  end
  player:send("A",init)
  if player.account and self.options.presence then
