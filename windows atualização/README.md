@@ -25,7 +25,7 @@ O cliente LÖVE inicia somente o servidor local Lua (`server-lua/`) quando voce 
 
 A pasta `server/` no checkout do GitHub permanece **somente como referencia historica Node.js para testes de paridade** e nao entra no ZIP Windows criado por `scripts/build-windows.ps1`. Essa distincao evita afirmar que o codigo-fonte historico foi apagado ou que a paridade ja e perfeita.
 
-O build offline exige uma distribuicao LÖVE 11.5 x64 acompanhada dos modulos LuaSocket compativeis (socket/http, ltn12, mime e suas bibliotecas nativas). A compilacao deve falhar se essas dependencias nao estiverem presentes.
+O build offline usa a distribuicao oficial LÖVE 11.5 Windows x64, que ja inclui LuaSocket. O empacotamento valida os arquivos essenciais do runtime e nao exige DLLs LuaSocket separadas.
 
 **Paridade 1:1:** ainda depende de testes executaveis Node/Lua e regressao grafica de uma partida completa. Nao trate a replica como integralmente homologada ate tais verificacoes passarem.
 
