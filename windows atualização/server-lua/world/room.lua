@@ -314,7 +314,8 @@ function Room:usePortal(player,requestedPortal)
  local newZone=self.mapSpaces:get(destination.spaceId)
  player:send("j",destination.spaceId,destination.x,destination.y,{
   id=newZone.id,type=newZone.type,width=newZone.width,height=newZone.height,
-  portals=newZone.portals,obstacles=newZone.obstacles
+  portals=newZone.portals,obstacles=newZone.obstacles,
+  visual=newZone.visual
  })
  return true
 end
