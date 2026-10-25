@@ -49,15 +49,19 @@ if ($LASTEXITCODE -ne 0 -or $version -notmatch '^v22[.]') {
 $nodeDir=Join-Path $OutputDir 'runtime\node'
 New-Item -ItemType Directory -Force $nodeDir | Out-Null
 Copy-Item $TlsNodeExe (Join-Path $nodeDir 'node.exe') -Force
-foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','INSTALAR-MAPA.bat','INSTALAR-MOD.bat','INSTALAR-ANIMACAO.bat','INSTALAR-MOB-ARTE.bat','README.md','LICENSE','NOTICE.md')) {
+foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','README.md','LICENSE','NOTICE.md')) {
   Copy-Item (Join-Path $root $file) (Join-Path $OutputDir $file) -Force
 }
 if (Test-Path (Join-Path $root 'licenses')) {
   Copy-Item (Join-Path $root 'licenses') (Join-Path $OutputDir 'licenses') -Recurse -Force
 }
 Copy-Item (Join-Path $LoveDir '*') $OutputDir -Recurse -Force
-# Keep the Windows release free from Node differential fixtures and tests.
-foreach ($relative in @('server-lua\tests','src\test_browser_auth.lua','src\test_tls_bridge.lua')) {
+# Keep production free of tests, Node differential fixtures and debug launchers.
+# Tests are retained in the staging repository for parity auditing, but they
+# must not ship to players or be published as project source.
+$clientTests=Get-ChildItem -LiteralPath (Join-Path $OutputDir 'src') -Filter 'test_*.lua' -File -ErrorAction SilentlyContinue
+foreach ($test in $clientTests) { Remove-Item -LiteralPath $test.FullName -Force }
+foreach ($relative in @('server-lua\tests')) {
   $target=Join-Path $OutputDir $relative
   if (Test-Path $target) { Remove-Item $target -Recurse -Force }
 }
