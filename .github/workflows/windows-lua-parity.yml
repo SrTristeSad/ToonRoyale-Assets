@@ -41,7 +41,11 @@ jobs:
           test -f scripts/start-server-lua.ps1
           test -f MOO-IO-Lua-Teste.vbs
           grep -Fq "'server-lua'" scripts/build-windows.ps1
-          grep -Fq 'MOO_IO_LOCAL_SERVER_RUNTIME' src/net/mooio_paths.lua
+          grep -Fq 'start-server-lua.ps1' src/net/mooio_paths.lua
+          ! grep -Fq 'start-server.ps1' src/net/mooio_paths.lua
+          ! grep -Fq 'server/src/index.js' src/net/mooio_paths.lua
+          ! grep -Fq 'BrowserAuth' main.lua
+          ! grep -Fq 'v2_login' src/game/mooio_home.lua
       - name: Compilar sintaxe de todos os módulos Lua do servidor local
         run: |
           set -euo pipefail
@@ -207,6 +211,10 @@ jobs:
           diff -u /tmp/moo-tribes-node.txt /tmp/moo-tribes-lua.txt
           test "$(wc -l < /tmp/moo-tribes-node.txt)" -eq 26
           echo 'PASS 26 cenarios de tribos, pedidos, membros e dissolucao'
+      - name: Regressao do inventario cliente - espada e arma secundaria
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/client-weapon-inventory-smoke.lua
       - name: Upgrades H e loja c originais Node vs Lua
         run: |
           set -euo pipefail
