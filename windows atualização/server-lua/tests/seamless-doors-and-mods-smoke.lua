@@ -72,14 +72,23 @@ assert(map.generation.treesPerArea==8,
  "mod mutated the installed map")
 opts.port=18988
 opts.modIds="floresta-densa,mais-lobos"
-opts.dataDir=dataDir.."/custom"
--- Data directory created by CI or local isolated run.
-local fs=require("server-lua.vendor.dkjson")
-local cfg=Mods.build("normal",Mods.ids(opts.modIds),"server-lua/mods",map)
-assert(cfg.config.treesPerArea==17 and cfg.config.goldOres==12)
+opts.dataDir=dataDir
+local modded=Local.new(opts)
+local changed=modded.rooms.LC.room
+assert(changed.config.treesPerArea==17 and changed.config.goldOres==12,
+ "custom map overwrote active world mod configuration")
+assert(changed.activeMods[1]=="floresta-densa"
+ and changed.activeMods[2]=="mais-lobos",
+ "selected mods were not applied to the actual LC room")
+assert(changed.animal_manager.types[4].dmg==16,
+ "wolf combat mod was not applied to local AI")
 local count=0
-for _,row in ipairs(cfg.config.server.animalSpawnPlan) do
- count=count+row.desired
+for _,ai in ipairs(changed.ais) do
+ if ai.active then count=count+1 end
 end
-assert(count==63,"more-wolves mod must add twelve to baseline")
+assert(count==63,
+ "selected wolf mod did not raise total active AI from 51 to 63")
+assert(modded.rooms.MB.room.config.treesPerArea==Base.treesPerArea,
+ "custom LC world mod contaminated classic MB room")
+modded:close()
 print("PASS seamless rooms + original 51 normal mobs + map-before-mod precedence")
