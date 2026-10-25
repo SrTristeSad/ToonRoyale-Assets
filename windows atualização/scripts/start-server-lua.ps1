@@ -20,14 +20,35 @@ try {
   $assigned = @(Get-NetIPAddress -AddressFamily IPv4 -IPAddress $env:MOO_IO_BIND_IP -ErrorAction SilentlyContinue | Where-Object { $_.AddressState -eq 'Preferred' })
   if ($assigned.Count -eq 0) { throw "O IP $($env:MOO_IO_BIND_IP) nao esta em um adaptador LAN/VPN ativo." }
   $loveExe = $null
-  foreach ($candidate in @((Join-Path $root 'runtime\love\love.exe'),(Join-Path $root 'love.exe'))) {
-    if (Test-Path $candidate -PathType Leaf) { $loveExe=$candidate;break }
+  # The hidden local host must reuse the executable chosen by MOO-IO.vbs.
+  $candidates = @($env:MOO_IO_LOVE_EXE, (Join-Path $root 'love.exe'),
+    (Join-Path $root 'runtime\love\love.exe'))
+  if ($env:ProgramFiles) {
+    $candidates += (Join-Path $env:ProgramFiles 'LOVE\love.exe')
+  }
+  if (${env:ProgramFiles(x86)}) {
+    $candidates += (Join-Path ${env:ProgramFiles(x86)} 'LOVE\love.exe')
+  }
+  foreach ($candidate in $candidates) {
+    if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+      $loveExe = (Resolve-Path -LiteralPath $candidate).ProviderPath
+      break
+    }
   }
   if (-not $loveExe) {
     $installed=Get-Command love.exe -ErrorAction SilentlyContinue
-    if ($installed) { $loveExe=$installed.Source }
+    if ($installed -and (Test-Path -LiteralPath $installed.Source -PathType Leaf)) {
+      $loveExe=$installed.Source
+    }
   }
-  if (-not $loveExe) { throw 'Runtime LÖVE Lua ausente no pacote Windows. Precisa de love.exe e LuaSocket.' }
+  if (-not $loveExe) {
+    throw 'LÖVE 11.5 nao encontrado. Abra MOO-IO.vbs do pacote Windows completo ou instale o LÖVE 2D.'
+  }
+  if ($env:MOO_IO_LUA_RUNTIME_CHECK -eq '1') {
+    # Test the actual host runtime resolution in CI without launching a server.
+    [System.IO.File]::AppendAllText($log,"MOOIO_PHASE_RUNTIME_FOUND " + $loveExe + [Environment]::NewLine,$utf8)
+    exit 0
+  }
   [System.IO.File]::AppendAllText($log,"MOOIO_PHASE_STARTING" + [Environment]::NewLine,$utf8)
   $process=Start-Process -FilePath $loveExe -ArgumentList ('"' + $root + '"') -WorkingDirectory $root -NoNewWindow -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
   if ($process.ExitCode -ne 0) {
