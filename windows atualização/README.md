@@ -1,5 +1,22 @@
 # Moo-IO — Windows (servidor local Lua)
 
+## Menu inicial e tela de morte
+
+A tela inicial tem estilo de menu classico de PC: logo original Moo-IO centralizado,
+fundo animado do proprio mundo, botoes grandes de jogar, servidores, opcoes e
+sair. O cliente continua usando a navegacao nativa de teclado, mouse e gamepad.
+
+Quando um **visitante morre na sala de um amigo**, a animacao original de tres
+segundos ocorre sobre a ultima area explorada. Em seguida, aparece uma escolha:
+**Voltar a partida** envia o pedido de renascimento pela conexao autenticada
+existente e aguarda confirmacao do servidor; **Sair da sala** desconecta
+somente o visitante, preservando a sala do anfitriao. Teclas Enter/R e Esc,
+alem de A/B no gamepad, controlam a escolha.
+
+Quando o **anfitriao morre**, o fluxo original de retorno ao menu e mantido,
+mas o fundo mostra o ultimo local da morte em vez de recentralizar o mundo.
+Sair do cliente com uma sala ainda aberta continua exigindo confirmacao.
+
 ## Controle USB / Bluetooth (gamepad)
 
 O cliente Windows aceita controles reconhecidos pelo LÖVE como gamepads, inclusive
