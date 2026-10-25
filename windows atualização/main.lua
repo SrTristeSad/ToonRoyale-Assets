@@ -162,6 +162,7 @@ function love.load()
     local ok,err=pcall(function()
       require("src.test_tls_bridge")()
       require("src.test_browser_auth")()
+      require("src.test_server_directory")()
       local invite=require("src.game.mooio_home").parseInvite(
         "https://normal.play.example.org/abcdefgh12345678","")
       assert(invite and invite.secure and invite.port==443,
