@@ -141,7 +141,7 @@ function Home:scale(x,y)
   return (x-(w-1280*z)/2)/z,(y-(h-720*z)/2)/z
 end
 function Home:mapName()
- if self.mapId=="" or self.mapId=="classico" then return "Nenhum mapa instalado" end
+ if self.mapId=="" or self.mapId=="classico" then return "Mapa desativado" end
  for _,m in ipairs(self.mapCatalog) do
   if m.id==self.mapId then return m.name end
  end
@@ -297,7 +297,7 @@ function Home:click(sx,sy)
       end
     end
   elseif self.screen=="maps" then
-    if inside(x,y,boxes.modsDone) then self.screen="play";return "maps_done" end
+    if inside(x,y,boxes.modsDone) then self.screen="create";return "maps_done" end
     if inside(x,y,boxes.modsPrevious) then
       self.mapPage=math.max(0,self.mapPage-1);return "map_page"
     end
@@ -571,7 +571,7 @@ function Home:draw(state,detail,showWorld)
       end
     elseif self.screen=="maps" then
       printText("ESCOLHER MAPA",140,165,30,C.white)
-      printText("Mapas personalizados JSON: gerados ou montados manualmente.",145,213,15,C.muted)
+      printText("Selecione um mapa instalado ou desative os mapas personalizados.",145,213,15,C.muted)
       for row=1,6 do
         local i=self.mapPage*6+row
         local entry=i==1 and {id="",name="DESATIVAR MAPA",description="Jogar sem mapa personalizado."} or self.mapCatalog[i-1]
