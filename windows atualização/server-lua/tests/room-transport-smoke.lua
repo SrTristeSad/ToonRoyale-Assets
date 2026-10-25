@@ -72,6 +72,20 @@ room.players[1]:send("a",1,nil,3)
 local args=peer.sent[#peer.sent].args
 assert(#args==3 and args[1]==1 and args[2]==Pack.null and args[3]==3,
   "nil must keep its MessagePack array position")
+-- The original Node sends a real array for packet V.
+room.players[1]:send("V",{[0]=3},1)
+local firstV=peer.sent[#peer.sent].args
+assert(firstV[2]==1 and #firstV[1]==1 and firstV[1][1]==3,
+  "primary sword must serialize to a one-element JS array")
+assert(Pack.encode(firstV[1]):byte(1)==0x91,
+  "primary sword must encode as MessagePack array")
+room.players[1]:send("V",{[0]=4,[1]=9},1)
+local secondV=peer.sent[#peer.sent].args
+assert(secondV[2]==1 and #secondV[1]==2
+  and secondV[1][1]==4 and secondV[1][2]==9,
+  "katana and bow must keep the original wire order")
+assert(Pack.encode(secondV[1]):byte(1)==0x92,
+  "primary and secondary must encode as MessagePack array")
 local rogue={closed=false}
 assert(not pcall(callbacks.onPacket,rogue,"D",{0.8}),
   "unknown peer must not control a room player")
