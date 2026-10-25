@@ -3,6 +3,7 @@
 -- Operates only on an actual io-init from the unchanged local server.
 local Crypto=require("src.protocol.original_crypto")
 local MP=require("src.protocol.msgpack")
+local MapWire=require("src.protocol.map_wire")
 local S={}
 S.__index=S
 function S.new(handshake,build,sha256)
@@ -18,9 +19,11 @@ function S.new(handshake,build,sha256)
   local rawKey=Crypto.hexToBinary(handshake.rawKeyHex)
   local key=handshake.pinned and Crypto.mixKey(rawKey,handshake.seed,build) or rawKey
   local masks=handshake.pinned and Crypto.deriveMasks(key) or nil
+  local tables=Crypto.buildTables(handshake.seed,salt)
+  MapWire.install(tables)
   return setmetatable({
     key=key,sha256=sha256,masks=masks,
-    tables=Crypto.buildTables(handshake.seed,salt),
+    tables=tables,
     sent=0,received=0,ledger=2166136261,
     pinned=handshake.pinned,sealMode=handshake.sealMode
   },S)
