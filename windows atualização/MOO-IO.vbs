@@ -7,6 +7,10 @@ base = fso.GetParentFolderName(WScript.ScriptFullName)
 loveExe = ""
 If fso.FileExists(base & "\love.exe") Then loveExe = base & "\love.exe"
 If loveExe = "" Then
+  candidate = base & "\runtime\love\love.exe"
+  If fso.FileExists(candidate) Then loveExe = candidate
+End If
+If loveExe = "" Then
   pf = sh.ExpandEnvironmentStrings("%ProgramFiles%")
   candidate = pf & "\LOVE\love.exe"
   If fso.FileExists(candidate) Then loveExe = candidate
@@ -38,5 +42,9 @@ If Not fso.FileExists(base & "\assets\custom\img\weapons\hammer_1.png") Then
   WScript.Quit 1
 End If
 sh.Environment("PROCESS")("MOO_IO_PROJECT_ROOT") = base
+' Use the exact runtime that launched the client for the hidden Lua host.
+' Without this, a repository checkout runs the client with installed LOVE,
+' while the hidden server incorrectly demands love.exe inside the project.
+sh.Environment("PROCESS")("MOO_IO_LOVE_EXE") = loveExe
 sh.CurrentDirectory = base
 sh.Run Chr(34) & loveExe & Chr(34) & " " & Chr(34) & base & Chr(34), 1, False
