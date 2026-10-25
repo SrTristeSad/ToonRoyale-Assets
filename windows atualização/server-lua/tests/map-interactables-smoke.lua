@@ -12,7 +12,7 @@ local roomServer=Local.new({bind="127.0.0.1",port=18995,
  mapId="refugio-personalizado"})
 local room=roomServer.rooms.LC.room
 local zone=assert(room.mapSpaces:get("mod-sala-metal"))
-assert(#zone.interactables==3)
+assert(#zone.interactables==5)
 local closed=zone.interactables[3]
 assert(closed.closed and not
  room.mapSpaces:canOccupy(zone.id,closed.x,closed.y,35),
