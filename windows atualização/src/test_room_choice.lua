@@ -25,13 +25,14 @@ return function(perform,home,hosted,getClient)
   assert(home:click(508,517)=="bots_count" and home.botCount==3)
   assert(home:click(170,517)=="bots_count" and home.botCount==2)
   assert(home:click(160,408)=="difficulty" and home.difficulty=="dificil")
+  assert(home:click(730,587)=="map_browse" and home.screen=="maps")
   local selected
   for i,entry in ipairs(home.mapCatalog) do
     if entry.id=="bunker-e-cavernas" then
-      local n=i
-      home.mapPage=math.floor((n-1)/4)
-      local row=(n-1)%4+1
-      selected=home:click(705,249+(row-1)*74)
+      local n=i+1
+      home.mapPage=math.floor((n-1)/6)
+      local row=(n-1)%6+1
+      selected=home:click(705,249+(row-1)*64)
       break
     end
   end
@@ -39,6 +40,7 @@ return function(perform,home,hosted,getClient)
     "cave map missing from native package map picker")
   assert(home:mapName()=="Bunker e Cavernas",
     "selection must show exact map name, not MAPA: OUTRO")
+  assert(home:click(820,650)=="maps_done" and home.screen=="create")
   assert(home:click(720,647)=="create")
   perform("create")
   assert(starts==1 and lastCount==2 and home.starting,
