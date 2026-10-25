@@ -156,8 +156,8 @@ jobs:
           done
           mkdir -p ci-ui-captures
           find "$XDG_DATA_HOME" -type f -name 'ui-*.png' -exec cp {} ci-ui-captures/ \;
-          test "$(find ci-ui-captures -type f -name 'ui-*.png' | wc -l)" -eq 9
-          echo "PASS nove telas capturadas com LÖVE real (incluindo evolucao de armas)"
+          test "$(find ci-ui-captures -type f -name 'ui-*.png' | wc -l)" -eq 10
+          echo "PASS dez telas LÖVE capturadas, incluindo mods e evolucao de armas"
       - name: Publicar capturas da interface (auditoria visual)
         uses: actions/upload-artifact@v4
         with:
