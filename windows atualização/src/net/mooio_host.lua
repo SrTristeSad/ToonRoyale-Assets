@@ -115,6 +115,15 @@ function Host:start(mode,requestedIP,requestedBots,difficulty,modIds)
   if #modIds>400 or modIds:find("[^a-z0-9,%- ]") then
     return false,"IDs de mods invalidos."
   end
+  -- Verify every manifest, conflict and room difficulty *before* Windows
+  -- CreateProcess. Invalid mods never leave half-initialized sessions behind.
+  local valid,modError=pcall(function()
+    local Mods=require("server-lua.world.room_mods")
+    Mods.build(difficulty,Mods.ids(modIds),root.."/server-lua/mods")
+  end)
+  if not valid then
+    return false,"Nao foi possivel criar sala com esses mods: "..tostring(modError)
+  end
   local keys={"MOO_IO_ROOM_CODE","MOO_IO_GUI_HOST","MOO_IO_BIND_IP","MOO_IO_NETWORK_MODE","MOO_IO_BOT_COUNT","MOO_IO_DIFFICULTY","MOO_IO_MODS"}
   local originals={}
   for _,key in ipairs(keys) do originals[key]=getenv(key) end
