@@ -510,6 +510,10 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/animal-decisions-smoke.lua
+      - name: Sobrevivencia, recursos, experiencia, ouro e compras dos bots
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/bot-goals-smoke.lua
       - name: Evolucao real de armas e escolhas dos bots
         run: |
           set -euo pipefail
