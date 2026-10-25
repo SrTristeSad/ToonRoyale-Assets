@@ -32,6 +32,27 @@ jobs:
           $hash=(Get-FileHash $zip -Algorithm SHA256).Hash
           if ($hash -ne $expected) { throw "SHA256 LÖVE divergente: $hash" }
           Expand-Archive -Path $zip -DestinationPath (Join-Path $env:RUNNER_TEMP 'love') -Force
+      - name: Testar host Lua com LÖVE externo ao projeto (instalacao de fontes)
+        run: |
+          $ErrorActionPreference='Stop'
+          $root=Join-Path $env:GITHUB_WORKSPACE 'windows atualização'
+          $runtime=Join-Path $env:RUNNER_TEMP 'love\love-11.5-win64\love.exe'
+          if (-not (Test-Path $runtime)) { throw 'Runtime externo indisponivel para smoke' }
+          if (Test-Path (Join-Path $root 'love.exe')) { throw 'A origem nao pode ter love.exe nesta prova' }
+          $env:MOO_IO_LOVE_EXE=$runtime
+          $env:MOO_IO_LUA_RUNTIME_CHECK='1'
+          $env:MOO_IO_BIND_IP='127.0.0.1'
+          $env:MOO_IO_ROOM_CODE='runtime-check-ci'
+          & (Join-Path $root 'scripts\start-server-lua.ps1')
+          if ($LASTEXITCODE -ne 0) { throw "Preflight do servidor Lua falhou: $LASTEXITCODE" }
+          $log=Join-Path $root 'server-lua\data\lua-host.log'
+          $text=Get-Content -LiteralPath $log -Raw
+          if (-not $text.Contains("MOOIO_PHASE_RUNTIME_FOUND $runtime")) {
+            throw "O host nao reutilizou o LÖVE externo: $text"
+          }
+          Remove-Item Env:MOO_IO_LUA_RUNTIME_CHECK -ErrorAction SilentlyContinue
+          Remove-Item Env:MOO_IO_LOVE_EXE -ErrorAction SilentlyContinue
+          Write-Host 'PASS: cliente iniciado a partir do repositorio usa LÖVE externo no servidor Lua'
       - name: Gerar cliente Windows Lua com TLS para entrar no V2
         run: |
           $ErrorActionPreference='Stop'
