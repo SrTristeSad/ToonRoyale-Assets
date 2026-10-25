@@ -158,7 +158,8 @@ function Home:mapDescription()
 end
 function Home:refreshMaps()
  self.mapCatalog=Maps.available(love.filesystem,"server-lua/maps")
- if (self.mapId=="" or self.mapId=="classico") and self.mapCatalog[1] then self.mapId=self.mapCatalog[1].id end
+ -- Empty selection is explicit: never silently re-enable a map after F5.
+ if self.mapId=="classico" then self.mapId="" end
  if self.mapId~="" and self.mapId~="classico" then
   local found=false
   for _,m in ipairs(self.mapCatalog) do
