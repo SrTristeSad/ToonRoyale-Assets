@@ -72,12 +72,12 @@ local forest,forestProfile=generated(45123,{"floresta-densa"})
 assert(forestProfile.config.treesPerArea==17 and forestProfile.config.goldOres==12,
  "world mod no longer overrides original random generator")
 assert(forest.portals[1].x and forest.portals[2].x)
-local older=Maps.load("server-lua/maps","mapa-de-exemplo")
-local authored=World.new({config=Base,random=Maps.random(721)})
-authored:loadMap(older)
-assert(older.mode=="authored"
- and older.surface[1].x==1200 and older.surface[1].y==1800,
- "authored map objects were incorrectly converted to generated")
+local example=Maps.load("server-lua/maps","mapa-de-exemplo")
+local exampleWorld=World.new({config=Base,random=Maps.random(721)})
+exampleWorld:loadMap(example)
+assert(example.mode=="generated" and #example.surface==0
+  and #exampleWorld.objects>0,
+  "example map must use original random resources")
 -- Prevent "random" placement from being used to smuggle fixed coordinates
 -- that could reveal all resources via a mod or bypass the collision rules.
 local function reject(map,edit)
