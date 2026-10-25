@@ -34,4 +34,17 @@ room.bots:tick(270)
 assert(room.bots.agents[1].at==270 and room.bots.agents[2].at==270)
 assert(room.players[1].moveDir~=nil and room.players[2].moveDir~=nil,
  "bots must produce movement using the original decision logic")
+-- Joining is optional, not a mandatory property of all AI participants.
+local one,two=room.bots.agents[1],room.bots.agents[2]
+one.p.x=1000;one.p.y=1000;two.p.x=1070;two.p.y=1050
+one.prefersGroup=true;two.prefersGroup=true
+local random=math.random
+math.random=function()return 0.10 end
+assert(room.bots:socialize(one),"a bot should sometimes create a genuine tribe")
+math.random=random
+assert(one.p.team and one.p.team==two.p.team,
+ "voluntary teammates must share the game's real tribe membership")
+assert(room.tribes.tribes[one.p.team].owner==one.p)
+assert(one.p.name=="Lince" and two.p.name=="Ari",
+ "bot display names should look like regular players")
 print("PASS original local bots: real Player spawn, SID, slots, movement")
