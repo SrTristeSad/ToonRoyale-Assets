@@ -6,6 +6,7 @@
 -- its original dive/raid callbacks rather than an invented behavior.
 local Collision=require("server-lua.world.collision")
 local Pack=require("server-lua.world.wolf_pack")
+local Brain=require("server-lua.world.animal_decisions")
 local Angles=require("server-lua.world.atan2")
 local DefaultConfig=require("src.game.config")
 local AI={}
@@ -132,6 +133,7 @@ function AI:update(delta)
    return
  end
  local players=assert(opts.players,"original player array required")
+ Brain.assess(self,delta,players,opts.ais,cfg)
  local world=assert(opts.world,"original ObjectManager required")
  local charging=false
  local slow=1
@@ -222,6 +224,9 @@ function AI:update(delta)
    end
    if truth(self.hitWait) then speed=speed*0.3 end
    if self.submerged then speed=speed*1.6 end
+   if cfg.server and cfg.server.roomDifficulty then
+     self.targetDir=Brain.steer(self,self.targetDir,spaces,opts.ais,cfg)
+   end
    if self.dir~=self.targetDir then
      self.dir=rem(self.dir,TWO_PI)
      local net=rem(self.dir-self.targetDir+TWO_PI,TWO_PI)
