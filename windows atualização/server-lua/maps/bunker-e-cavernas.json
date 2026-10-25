@@ -4,38 +4,26 @@
   "name": "Bunker e Cavernas",
   "description": "Bunker de dois niveis, cavernas profundas conectadas e criaturas do mundo original.",
   "mode": "generated",
-  "generation": {
-    "treesPerArea": 8,
-    "bushesPerArea": 2,
-    "totalRocks": 46,
-    "goldOres": 20,
-    "seed": 240419
-  },
-  "spawn": {
-    "x": 4200,
-    "y": 4800
-  },
+  "generation": {},
   "surface": [],
   "portals": [
     {
       "id": "entrada-bunker",
-      "x": 4200,
-      "y": 4700,
       "to": "bunker-01",
       "targetX": 750,
       "targetY": 850,
       "style": "bunker",
-      "label": "Bunker"
+      "label": "Bunker",
+      "placement": "random"
     },
     {
       "id": "entrada-caverna",
-      "x": 4670,
-      "y": 4700,
       "to": "caverna-01",
       "targetX": 500,
       "targetY": 700,
       "style": "cave",
-      "label": "Caverna"
+      "label": "Caverna",
+      "placement": "random"
     }
   ],
   "spaces": [
