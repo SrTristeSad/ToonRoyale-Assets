@@ -1,7 +1,7 @@
 -- Headless LÖVE regression for death/respawn paths of a guest and owner.
 -- No network, no fabricated game success: confirmations are server packets.
 return function(death,home,hosted,setWorld,getWorld,setClient,getClient,
-    setOwner,setPhase,getPhase,getCamera)
+    setOwner,setPhase,getPhase,getCamera,connectRoom)
  local World=require("src.game.world_state")
  local function prepare(owner)
   local fake={name="Visitante",sid=7,state="spawn_confirmed",
@@ -75,9 +75,49 @@ return function(death,home,hosted,setWorld,getWorld,setClient,getClient,
   "owner death must not close its game connection")
  assert(getWorld().lastDeath.x==1240 and getCamera().x==1240)
  love.draw() -- Owner sees last death site behind familiar menu.
+ -- Regression for the actual user's path: owner presses JOGAR AGORA after
+ -- dying. connectRoom() used to close the old socket and construct a new
+ -- World, silently discarding its lastDeath position.
+ local original=require("src.net.original_client")
+ local Marker=require("src.game.death_marker")
+ local previousNew=original.new
+ local oldState,oldIP,oldPort,oldCode=
+  hosted.state,hosted.hostIP,hosted.port,hosted.code
+ hosted.state="ready"
+ hosted.hostIP="127.0.0.1"
+ hosted.port=19128
+ hosted.code="owner-death-room"
+ owner.host=hosted.hostIP
+ owner.port=hosted.port
+ owner.inviteCode=hosted.code
+ local nextClient={name="Visitante",state="keyed_transport",
+   host=hosted.hostIP,port=hosted.port,inviteCode=hosted.code}
+ function nextClient:connect() return true end
+ function nextClient:close() self.closed=true end
+ original.new=function() return nextClient end
+ assert(connectRoom(hosted.hostIP,hosted.port,hosted.code),
+  "owner must be able to reconnect to the SAME still-running local room")
+ local rejoined=getWorld()
+ assert(owner.closed==1 and getClient()==nextClient,
+  "rejoin must replace the owner client socket")
+ assert(rejoined~=world and rejoined.lastDeath
+   and rejoined.lastDeath.x==1240 and rejoined.lastDeath.y==1780,
+  "owner reconnect erased the last death X from the map")
+ assert(rejoined:apply("C",{7}) and rejoined.lastDeath.x==1240,
+  "server spawn confirmation erased owner's last death X")
+ assert(rejoined:apply("D",{{18,7,"Visitante",8400,9400,0,100,100,35,0}}))
+ assert(Marker.minimapPoint(rejoined,130,14400),
+  "owner's death marker must be visible on the minimap after respawn")
+ assert(not Marker.forHostReconnect(rejoined,true,
+   {host=owner.host,port=owner.port,inviteCode=owner.inviteCode},
+   {host=owner.host,port=owner.port,inviteCode="DIFFERENT-ROOM"},hosted),
+   "the death X must not leak to another room")
+ original.new=previousNew
+ hosted.state,hosted.hostIP,hosted.port,hosted.code=
+  oldState,oldIP,oldPort,oldCode
  setClient(nil)
  setOwner(false)
  setPhase("menu")
  death:reset()
- print("MOO IO DEATH FLOW PASS: guest return/exit and owner death-site background")
+ print("MOO IO DEATH FLOW PASS: guest return/exit, owner rejoin and persistent original minimap X")
 end
