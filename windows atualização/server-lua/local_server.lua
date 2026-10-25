@@ -30,7 +30,7 @@ local function newSessionId()
  end
  return table.concat(out)
 end
-local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,profile,houseStorePath)
+local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,profile)
  local players,ais={},{}
  local rules=profile or {config=Config,types=require("server-lua.world.animal_types")}
  local gameConfig=rules.config
@@ -78,10 +78,6 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
       " (select the species mod before starting this room)")
    end
   end
- end
- if map and key=="LC" then
-  room.houseStorePath=houseStorePath
-  require("server-lua.world.house_build").load(room)
  end
  if map and key=="LC" then
    -- A normal game uses the original 51-animal total, not 51 outdoors
@@ -159,8 +155,7 @@ function Local.new(opts)
  local log=opts.log or function()end
  local rooms={}
  rooms.LC=addWorld("LC",Config.maxPlayers,opts.botCount or 0,
-  accounts,moderation,now,log,profile,profile.map and
-   (opts.dataDir.."/houses-"..profile.map.id..".json") or nil)
+  accounts,moderation,now,log,profile)
  rooms.MB=addWorld("MB",80,0,accounts,moderation,now,log)
  local chat=Chat.new(opts.dataDir.."/chat.json",{nowMs=now,store=accounts})
  rooms.LC.room.chat=chat
