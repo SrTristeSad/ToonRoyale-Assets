@@ -94,7 +94,7 @@ function UI.backdrop(showWorld)
   g.setColor(0.015,0.025,0.021,0.51)
   g.rectangle("fill",0,0,1280,720)
  else
-  g.clear(UI.colors.background)
+  g.clear(0.105,0.119,0.111,1)
   for iy=0,30 do
    for ix=0,54 do
     local n=(ix*17+iy*23+ix*iy*3)%11
