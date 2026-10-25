@@ -393,7 +393,8 @@ function World:apply(name,args)
     if not validId(args[1]) then return false end
     self.sid=args[1];self.spawned=true;self.dead=false
     self.spaceId="surface";self.justChangedSpace=false
-    self.space=self.map and {id="surface",type="surface",portals=self.map.portals} or nil
+    self.space=self.map and {id="surface",type="surface",
+      portals=self.map.portals,interactables=self.map.interactables} or nil
     -- The Node sends a fresh D after every C. Do not render the previous
     -- life's position while waiting for its new authoritative D snapshot.
     self.players[self.sid]=nil
