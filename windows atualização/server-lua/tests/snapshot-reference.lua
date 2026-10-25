@@ -1,3 +1,10 @@
+-- Connected but not yet spawned viewers have undefined x/y in Node.
+-- JS comparisons with NaN reject visibility instead of crashing.
+local PreSpawnSync=require("server-lua.world.snapshot")
+assert(PreSpawnSync.canSee({alive=false},{x=10,y=20,scale=35})==false,
+  "unspawned viewer must not crash snapshot visibility")
+assert(PreSpawnSync.canSee({x=10,y=20},{scale=35})==false,
+  "other without position must not crash snapshot visibility")
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Same state transitions as snapshot-reference.mjs; compares actual S2C packet payloads.
 local Config=require("src.game.config")
