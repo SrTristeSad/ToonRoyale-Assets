@@ -39,9 +39,14 @@ function Input.handle(ctx,player,name,args)
   assert(ctx.items and ctx.items.weapons and ctx.items.list,
     "source item catalogue mandatory for authoritative input validation")
   if name=="j" then
-    if ctx.gameKey~="LC" or not ctx.game or not ctx.game.customMap
-       or #args~=0 then return bad(player,name,"world space unsupported") end
-    return ctx.game:usePortal(player)
+    if ctx.gameKey~="LC" or not ctx.game or not ctx.game.customMap then
+      return bad(player,name,"world space unsupported")
+    end
+    if #args==0 then return ctx.game:usePortal(player) end
+    if #args==1 and args[1]=="build" then
+      return ctx.game:buildHouse(player)
+    end
+    return bad(player,name,"invalid map command")
   elseif name=="M" then
     local data=args[1]
     if type(data)~="table" or data==MP.null or #data>0 then
