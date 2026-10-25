@@ -408,6 +408,10 @@ jobs:
           node server-lua/tests/object-cleanup-reference.mjs > /tmp/moo-cleanup-node.txt
           lua5.4 server-lua/tests/object-cleanup-reference.lua > /tmp/moo-cleanup-lua.txt
           diff -u /tmp/moo-cleanup-node.txt /tmp/moo-cleanup-lua.txt
+      - name: Reutilizacao do protocol-build.json original Node no servidor Lua
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/protocol-pin-smoke.lua
       - name: Moderacao LOCAL Node persistente integrada ao join
         run: |
           set -euo pipefail
