@@ -54,8 +54,10 @@ jobs:
           grep -Fq 'start-server-lua.ps1' src/net/mooio_paths.lua
           ! grep -Fq 'start-server.ps1' src/net/mooio_paths.lua
           ! grep -Fq 'server/src/index.js' src/net/mooio_paths.lua
-          ! grep -Fq 'BrowserAuth' main.lua
-          ! grep -Fq 'v2_login' src/game/mooio_home.lua
+          grep -Fq 'BrowserAuth.begin' main.lua
+          ! grep -Fq 'MOO_IO_V2_PRIVATE_ROOM' main.lua
+          grep -Fq 'v2_login' src/game/mooio_home.lua
+          test -f scripts/tls-relay.mjs
       - name: Compilar sintaxe de todos os módulos Lua do servidor local
         run: |
           set -euo pipefail
