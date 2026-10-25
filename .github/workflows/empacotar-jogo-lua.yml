@@ -29,6 +29,7 @@ jobs:
           lua5.4 server-lua/tests/local-api-smoke.lua
           lua5.4 server-lua/tests/moderation-local-smoke.lua
           lua5.4 server-lua/tests/weapon-upgrade-client-smoke.lua
+          lua5.4 server-lua/tests/weapon-reselect-reference-smoke.lua
           lua5.4 server-lua/tests/equipment-reference.lua
       - name: Baixar runtime oficial LÖVE 11.5 Win64
         run: |
