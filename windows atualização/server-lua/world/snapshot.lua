@@ -13,6 +13,7 @@ local function nullable(v) return v==nil and MP.null or v end
 function Sync.canSee(viewer,other,cfg)
   cfg=cfg or Config
   if not other then return false end
+  if (viewer.spaceId or "surface")~=(other.spaceId or "surface") then return false end
   -- Node Math.abs(undefined - x) becomes NaN and comparison returns false.
   -- A connected viewer may not have sent its spawn M packet yet.
   if type(viewer.x)~="number" or type(viewer.y)~="number"
@@ -109,6 +110,7 @@ end
 
 function Sync.syncObjects(game,viewer,cfg)
   cfg=cfg or Config
+  if viewer.spaceId and viewer.spaceId~="surface" then return end
   assert(game and type(game.game_objects)=="table","object list required")
   assert(viewer and type(viewer.send)=="function","network sender required")
   local fresh={}
