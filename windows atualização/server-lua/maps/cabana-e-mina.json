@@ -19,7 +19,9 @@
       "y": 1950,
       "to": "cabana",
       "targetX": 600,
-      "targetY": 900
+      "targetY": 900,
+      "label": "Cabana",
+      "style": "house"
     }
   ],
   "spaces": [
@@ -55,7 +57,9 @@
           "y": 900,
           "to": "surface",
           "targetX": 1950,
-          "targetY": 1950
+          "targetY": 1950,
+          "style": "door",
+          "label": "Superficie"
         },
         {
           "id": "escada-mina",
@@ -63,10 +67,18 @@
           "y": 800,
           "to": "mina",
           "targetX": 400,
-          "targetY": 500
+          "targetY": 500,
+          "style": "stairs",
+          "label": "mina"
         }
       ],
-      "mobs": []
+      "mobs": [],
+      "visual": {
+        "floor": "wood",
+        "wall": "wood",
+        "tileSize": 112,
+        "name": "Cabana"
+      }
     },
     {
       "id": "mina",
@@ -94,7 +106,9 @@
           "y": 500,
           "to": "cabana",
           "targetX": 1050,
-          "targetY": 800
+          "targetY": 800,
+          "style": "stairs",
+          "label": "cabana"
         }
       ],
       "mobs": [
@@ -113,7 +127,13 @@
           "x": 850,
           "y": 1200
         }
-      ]
+      ],
+      "visual": {
+        "floor": "rock",
+        "wall": "stone",
+        "tileSize": 128,
+        "name": "Caverna"
+      }
     }
   ],
   "spawn": {
