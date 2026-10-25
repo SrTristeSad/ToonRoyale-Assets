@@ -243,7 +243,11 @@ function Home:click(sx,sy)
       local index=self.modPage*6+row
       local item=self.modCatalog[index]
       if item and inside(x,y,{151,242+(row-1)*64,976,57}) then
-        local selected=Mods.ids(self.modIds)
+        local valid,selected=pcall(Mods.ids,self.modIds)
+        if not valid then
+          self:setStatus("Confira os IDs digitados, separados por virgula.",true)
+          return "mods_invalid"
+        end
         local found
         for j,id in ipairs(selected) do if id==item.id then found=j;break end end
         if found then table.remove(selected,found)
