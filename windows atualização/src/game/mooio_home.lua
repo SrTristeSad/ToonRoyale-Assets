@@ -225,6 +225,9 @@ function Home:textinput(chars)
   elseif self.focus=="joinCode" then
     chars=chars:gsub("[^%w%-]","")
     self.joinCode=(self.joinCode..chars):sub(1,64)
+  elseif self.focus=="modIds" then
+    chars=chars:lower():gsub("[^a-z0-9,%- ]","")
+    self.modIds=(self.modIds..chars):sub(1,120)
   elseif self.focus=="vpnIP" then
     chars=chars:gsub("[^%d%.]","")
     self.vpnIP=(self.vpnIP..chars):sub(1,15)
