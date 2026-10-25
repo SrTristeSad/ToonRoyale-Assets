@@ -652,12 +652,14 @@ function love.draw()
     -- instead of instantly replacing it with the game entry card.
     View.draw(world,camera,frameDelta,{showGrid=menu.grid})
     death:draw(w,h)
+    Hud.drawDeathMap(world)
     Notices.draw(world,w,h)
     return
   end
   if phase=="death_choice" then
     View.draw(world,camera,frameDelta,{showGrid=menu.grid})
     death:drawChoices(w,h,deathReturnPending,deathChoiceStatus)
+    Hud.drawDeathMap(world)
     return
   end
   if phase=="menu" then
