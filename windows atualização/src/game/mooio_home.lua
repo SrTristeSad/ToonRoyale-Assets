@@ -4,42 +4,21 @@
 local Network=require("src.net.mooio_network")
 local Mods=require("server-lua.world.room_mods")
 local Maps=require("server-lua.world.map_profiles")
+local UI=require("src.game.pc_menu_style")
 local Home={}
 Home.__index=Home
 
 -- Stone, soil and grass: block-game-inspired original interface. No copied textures.
 local C={
-  bg={0.15,0.19,0.18}, panel={0.23,0.255,0.25},
-  raised={0.32,0.345,0.33}, border={0.095,0.12,0.11},
-  green={0.43,0.72,0.26}, greenDark={0.10,0.19,0.095},
-  white={0.96,0.955,0.89}, muted={0.79,0.81,0.76},
-  amber={1.0,0.80,0.39}, red={0.99,0.52,0.43}
+ bg={0.11,0.12,0.115},panel={0.21,0.23,0.22},
+ raised={0.30,0.34,0.30},border={0.07,0.09,0.08},
+ green={0.68,0.82,0.61},greenDark={0.10,0.19,0.12},
+ white={0.97,0.97,0.96},muted={0.80,0.83,0.80},
+ amber={1,0.84,0.38},red={0.98,0.54,0.45}
 }
-local fonts={}
-local function f(n)
-  if not fonts[n] then fonts[n]=love.graphics.newFont(n) end
-  love.graphics.setFont(fonts[n])
-end
-local function panel(x,y,w,h,color,r)
-  -- Dark stepped border and top-left light edge give the UI a carved-block feel.
-  color=color or C.panel
-  love.graphics.setColor(0.055,0.068,0.062,0.9)
-  love.graphics.rectangle("fill",x+5,y+6,w,h,0,0)
-  love.graphics.setColor(C.border)
-  love.graphics.rectangle("fill",x-2,y-2,w+4,h+4,0,0)
-  love.graphics.setColor(color)
-  love.graphics.rectangle("fill",x,y,w,h,0,0)
-  love.graphics.setColor(1,1,1,0.11)
-  love.graphics.rectangle("fill",x+2,y+2,w-4,3)
-  love.graphics.rectangle("fill",x+2,y+2,3,h-4)
-  love.graphics.setColor(0,0,0,0.25)
-  love.graphics.rectangle("fill",x+2,y+h-5,w-4,4)
-  love.graphics.rectangle("fill",x+w-5,y+2,4,h-4)
-end
+local function panel(x,y,w,h,color) UI.panel(x,y,w,h,color or C.panel) end
 local function printText(t,x,y,size,color,w,align)
-  f(size or 17); love.graphics.setColor(color or C.white)
-  if w then love.graphics.printf(tostring(t),x,y,w,align or "left")
-  else love.graphics.print(tostring(t),x,y) end
+ UI.text(t,x,y,size,color or C.white,w,align)
 end
 local function inside(x,y,b)
   return x>=b[1] and y>=b[2] and x<b[1]+b[3] and y<b[2]+b[4]
@@ -78,34 +57,17 @@ local boxes={
   chooseMapPrev={631,569,232,37},chooseMapNext={880,569,282,37}
 }
 local function button(id,text,primary)
-  local b=boxes[id]
-  local mx,my=love.mouse.getPosition()
-  local w,h=love.graphics.getDimensions()
-  local z=math.min(w/1280,h/720)
-  mx=(mx-(w-1280*z)/2)/z;my=(my-(h-720*z)/2)/z
-  local hover=inside(mx,my,b)
-  local bg=primary and (hover and {0.55,0.82,0.34} or C.green)
-     or (hover and {0.39,0.43,0.40} or C.raised)
-  panel(b[1],b[2],b[3],b[4],bg,0)
-  if primary then
-    love.graphics.setColor(0.71,0.92,0.50,0.38)
-    love.graphics.rectangle("fill",b[1]+5,b[2]+4,b[3]-10,4)
-  end
-  printText(text,b[1]+10,b[2]+math.floor((b[4]-21)/2)-1,19,
-    primary and C.greenDark or C.white,b[3]-20,"center")
+ local box=boxes[id]
+ local mx,my=love.mouse.getPosition()
+ local w,h=love.graphics.getDimensions()
+ local z=math.min(w/1280,h/720)
+ mx=(mx-(w-1280*z)/2)/z
+ my=(my-(h-720*z)/2)/z
+ UI.button(box[1],box[2],box[3],box[4],text,false,primary,inside(mx,my,box))
 end
 local function field(id,value,placeholder,focused)
-  local b=boxes[id]
-  panel(b[1],b[2],b[3],b[4],{0.17,0.21,0.19},0)
-  if focused then
-    love.graphics.setColor(C.green)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line",b[1]+1,b[2]+1,b[3]-2,b[4]-2)
-  end
-  local show=value~="" and value or placeholder
-  if #show>51 then show="..."..show:sub(-48) end
-  printText(show..(focused and "|" or ""),b[1]+14,b[2]+15,17,
-    value=="" and C.muted or C.white,b[3]-28)
+ local b=boxes[id]
+ UI.field(b[1],b[2],b[3],b[4],value,placeholder,focused)
 end
 function Home.parseInvite(value,code)
   if type(value)=="string" and type(code)=="string" and #code>0
@@ -418,48 +380,15 @@ function Home:textinput(chars)
     self.vpnIP=(self.vpnIP..chars):sub(1,15)
   end
 end
-local function decorate(showWorld)
-  if showWorld then
-    -- Existing MooMoo top-down map preview is already drawn underneath.
-    -- No counterfeit server players; keep the real world art visible.
-    love.graphics.setColor(0.025,0.055,0.037,0.25)
-    love.graphics.rectangle("fill",0,0,1280,720)
-    love.graphics.setColor(0.06,0.11,0.075,0.20)
-    love.graphics.rectangle("fill",30,34,1220,657,5,5)
-    love.graphics.setColor(0.45,0.75,0.28,0.94)
-    love.graphics.rectangle("fill",36,40,1208,6)
-    love.graphics.setColor(1,1,1,0.08)
-    love.graphics.rectangle("line",34,38,1212,650,5,5)
-    return
-  end
-  -- Fallback decor only when no game background is provided.
-  for iy=0,18 do
-    for ix=0,32 do
-      local x,y=ix*40,iy*40
-      local v=(ix*13+iy*7)%6
-      local g=0.18+v*0.008
-      love.graphics.setColor(g,g+0.025,g+0.006,0.33)
-      love.graphics.rectangle("fill",x+1,y+1,39,39)
-      love.graphics.setColor(0.07,0.09,0.075,0.12)
-      love.graphics.rectangle("fill",x+1,y+36,39,3)
-    end
-  end
-  panel(30,34,1220,657,{0.21,0.24,0.22},0)
-  love.graphics.setColor(0.31,0.48,0.23)
-  love.graphics.rectangle("fill",36,40,1208,13)
-  love.graphics.setColor(0.49,0.70,0.31)
-  love.graphics.rectangle("fill",36,40,1208,5)
-  -- Pixel foliage remains decorative, never a game sprite.
-  local trees={{1130,120,1},{1220,191,0.65},{1060,455,0.7}}
-  for _,t in ipairs(trees) do
-    love.graphics.setColor(0.30,0.20,0.13,0.55)
-    love.graphics.rectangle("fill",t[1]+15*t[3],t[2]+32*t[3],20*t[3],72*t[3])
-    love.graphics.setColor(0.24,0.43,0.21,0.62)
-    love.graphics.rectangle("fill",t[1],t[2],62*t[3],56*t[3])
-    love.graphics.setColor(0.42,0.66,0.28,0.51)
-    love.graphics.rectangle("fill",t[1]+10*t[3],t[2]+9*t[3],43*t[3],27*t[3])
-  end
-end
+local function decorate(showWorld) UI.backdrop(showWorld) end
+local titles={
+ play={"JOGAR","Crie sua sala ou entre na partida de um amigo"},
+ create={"CRIAR NOVA SALA","Conexao, dificuldade, jogadores e conteudo"},
+ maps={"SELECIONAR MAPA","Escolha um mundo instalado"},
+ mods={"PACOTES E MODS","Ative as modificacoes instaladas"},
+ server={"MULTIPLAYER","Procure salas no servidor dedicado"},
+ settings={"OPCOES","Personalize video e controles"}
+}
 function Home:draw(state,detail,showWorld)
   self.connectionState=state or self.connectionState
   love.graphics.push("all")
@@ -467,12 +396,12 @@ function Home:draw(state,detail,showWorld)
   local z=math.min(w/1280,h/720)
   love.graphics.translate((w-1280*z)/2,(h-720*z)/2)
   love.graphics.scale(z)
-  if not showWorld then love.graphics.clear(C.bg) end
+  decorate(showWorld)
   if self.screen=="home" then
     -- Classic PC title layout: wide world backdrop, centered logo, stacked
     -- native beveled buttons. Graphics/text are original to Moo-IO.
-    love.graphics.setColor(0.035,0.05,0.04,0.34)
-    love.graphics.rectangle("fill",0,0,1280,720)
+    love.graphics.setColor(0,0,0,0.50)
+    love.graphics.rectangle("fill",0,51,1280,207)
     love.graphics.setColor(0,0,0,0.53)
     printText("MOO IO",368,83,100,{0,0,0,0.7},550,"center")
     printText("MOO IO",360,75,100,C.white,560,"center")
@@ -482,8 +411,8 @@ function Home:draw(state,detail,showWorld)
     love.graphics.rotate(-0.18)
     printText("MAPAS! MODS! AVENTURAS!",-114,0,19,C.amber,315,"center")
     love.graphics.pop()
-    button("homePlay","JOGAR / CRIAR SALA",true)
-    button("homeServers","SERVIDORES",false)
+    button("homePlay","JOGAR",false)
+    button("homeServers","MULTIPLAYER",false)
     button("homeSettings","OPCOES",false)
     button("homeQuit","SAIR DO JOGO",false)
     printText("Moo-IO  |  Windows Lua",20,681,16,C.white,470)
@@ -491,15 +420,8 @@ function Home:draw(state,detail,showWorld)
     love.graphics.pop()
     return
   end
-  decorate(showWorld)
-  -- Fixed header: the back button lives at the upper right, never over logo.
-  love.graphics.setColor(0.09,0.12,0.095)
-  love.graphics.rectangle("fill",58,72,325,83)
-  love.graphics.setColor(0.20,0.29,0.19)
-  love.graphics.rectangle("fill",63,77,315,73)
-  printText("MOO",88,78,44,C.white)
-  printText("IO",222,78,44,C.green)
-  printText("MULTIPLAYER",91,127,13,C.muted)
+  local pageTitle=titles[self.screen] or titles.play
+  UI.topbar(pageTitle[1],pageTitle[2])
   if self.screen=="home" then
     printText("ESCOLHA COMO JOGAR",96,213,29,C.white)
     button("homePlay","JOGAR",true)
@@ -546,7 +468,7 @@ function Home:draw(state,detail,showWorld)
           172,554,15,C.muted,425)
         printText("Clique em CONFIGURAR para criar a partida.",172,588,14,C.amber,422)
       end
-      printText("02  ENTRAR EM OUTRA SALA",704,214,19,C.green)
+      printText("02  CONECTAR A OUTRA SALA",704,214,19,C.green)
       printText("IP, porta ou convite completo",704,256,15,C.muted)
       field("joinIP",self.invite,"192.168.1.5:8080",self.focus=="invite")
       printText("Codigo de acesso (separado ou no convite)",704,340,14,C.muted)
@@ -561,7 +483,7 @@ function Home:draw(state,detail,showWorld)
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
     elseif self.screen=="create" then
-      printText("CONFIGURAR NOVA SALA",121,155,29,C.white)
+      printText("CONFIGURAR A PARTIDA",121,158,25,C.white)
       printText("F5: atualizar mapas e mods instalados",635,172,13,C.amber,490)
       panel(100,195,482,477,C.panel,0)
       panel(613,195,564,477,C.panel,0)
@@ -584,7 +506,7 @@ function Home:draw(state,detail,showWorld)
         229,504,17,C.white,223,"center")
       button("createBotsPlus","+")
       button("createMods",self.modIds=="" and "MODS: NENHUM  -  ESCOLHER" or "MODS: PERSONALIZADOS  -  EDITAR",false)
-      printText("MAPA DA PARTIDA",635,207,18,C.green)
+      printText("MUNDO DA PARTIDA",635,207,18,C.green)
       panel(629,239,534,210,C.raised,0)
       printText(self:mapName(),650,282,23,C.white,480)
       printText("Escolha o mapa na lista ou desative mapas extras.",650,330,15,C.muted,490)
@@ -598,7 +520,7 @@ function Home:draw(state,detail,showWorld)
           636,543,14,C.red,511)
       end
     elseif self.screen=="maps" then
-      printText("ESCOLHER MAPA",140,165,30,C.white)
+      printText("MUNDOS INSTALADOS",140,165,25,C.white)
       printText("Selecione um mapa instalado ou desative os mapas personalizados.",145,213,15,C.muted)
       for row=1,6 do
         local i=self.mapPage*6+row
@@ -606,17 +528,14 @@ function Home:draw(state,detail,showWorld)
         if entry then
           local y=242+(row-1)*64
           local active=entry.id==self.mapId
-          panel(151,y,976,57,active and C.raised or C.panel,0)
-          printText((active and "[ATIVO] " or "[ ] ")..entry.name,166,y+7,18,
-            active and C.green or C.white,930)
-          printText(entry.description,168,y+34,14,C.muted,920)
+          UI.listRow(151,y,976,57,entry.name,entry.description,active,false)
         end
       end
       button("modsPrevious","ANTERIOR",false)
       button("modsNext","PROXIMOS",false)
       button("modsDone","VOLTAR PARA SALA",true)
     elseif self.screen=="mods" then
-      printText("MODS INSTALADOS",140,165,30,C.white)
+      printText("PACOTES E MODS",140,165,25,C.white)
       printText("Ative ou desative antes de criar a sala. Sem codigo Lua externo.",145,213,15,C.muted)
       if #self.modCatalog==0 then
         printText("Nenhum mod JSON valido encontrado em server-lua/mods.",169,316,20,C.muted)
@@ -627,17 +546,14 @@ function Home:draw(state,detail,showWorld)
         if mod then
           local y=242+(row-1)*64
           local on=selected:find(","..mod.id..",",1,true)~=nil
-          panel(151,y,976,57,on and C.raised or C.panel,0)
-          printText((on and "[ATIVO] " or "[ ] ")..mod.name,166,y+7,18,
-            on and C.green or C.white,930)
-          printText(mod.description,168,y+34,14,C.muted,920)
+          UI.listRow(151,y,976,57,mod.name,mod.description,on,false)
         end
       end
       button("modsPrevious","ANTERIOR",false)
       button("modsNext","PROXIMOS",false)
       button("modsDone","VOLTAR PARA SALA",true)
     elseif self.screen=="server" then
-      printText("SERVIDORES",140,165,31,C.white)
+      printText("LISTA DE SERVIDORES",140,165,25,C.white)
       printText("Endereço do servidor dedicado: IP:porta (LAN/VPN) ou HTTPS V2.",145,220,16,C.muted)
       field("serverAddress",self.serverAddress,"192.168.1.10:8080",self.focus=="serverAddress")
       button("serverRefresh","BUSCAR SALAS",true)
@@ -677,7 +593,7 @@ function Home:draw(state,detail,showWorld)
       button("serverPrev","ANTERIOR",false)
       button("serverNext","PROXIMAS",false)
     else
-      printText("CONFIGURACOES",336,190,31,C.white)
+      printText("VIDEO E CONTROLES",336,190,25,C.white)
       button("grid","GRADE DO MAPA     "..(self.showGrid and "LIGADA" or "DESLIGADA"),false)
       button("fullscreen","TELA CHEIA       "..(self.fullscreen and "LIGADA" or "DESLIGADA"),false)
       button("controls","EDITAR TECLADO E JOYSTICK",false)
