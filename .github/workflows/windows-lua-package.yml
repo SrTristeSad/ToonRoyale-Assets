@@ -67,8 +67,11 @@ jobs:
           $ErrorActionPreference='Stop'
           $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
           $importer=Join-Path $out 'scripts\import-json-pack.ps1'
-          foreach ($file in @('INSTALAR-MAPA.bat','INSTALAR-MOD.bat')) {
-            if (-not (Test-Path (Join-Path $out $file))) { throw "Importador ausente: $file" }
+          foreach ($file in @('scripts/import-json-pack.ps1','scripts/import-animation.ps1')) {
+            if (-not (Test-Path (Join-Path $out $file))) { throw "Importador PowerShell ausente: $file" }
+          }
+          if (@(Get-ChildItem -LiteralPath $out -Filter '*.bat' -File).Count -gt 0) {
+            throw 'O pacote Windows nao deve distribuir arquivos BAT'
           }
           $map=Get-Content -LiteralPath (Join-Path $out 'server-lua\mods\maps\refugio-personalizado.json') -Raw | ConvertFrom-Json
           $map.id='mapa-importado-teste'
@@ -89,8 +92,8 @@ jobs:
           $ErrorActionPreference='Stop'
           $out=Join-Path $env:RUNNER_TEMP 'Moo-IO-Windows-Lua'
           $install=Join-Path $out 'scripts\import-animation.ps1'
-          if (-not (Test-Path (Join-Path $out 'INSTALAR-ANIMACAO.bat'))) {
-            throw 'Instalador de spritesheets ausente no ZIP'
+          if (-not (Test-Path $install)) {
+            throw 'Importador PowerShell de imagens ausente no ZIP'
           }
           Add-Type -AssemblyName System.Drawing
           $image=New-Object Drawing.Bitmap(64,64)
@@ -104,8 +107,8 @@ jobs:
           if ((Get-Item $installed).Length -ne (Get-Item $path).Length) {
             throw 'Spritesheet instalada com dados alterados'
           }
-          if (-not (Test-Path (Join-Path $out 'INSTALAR-MOB-ARTE.bat'))) {
-            throw 'Instalador de sprite estatico de especie ausente'
+          if (-not (Test-Path $install)) {
+            throw 'Importador PowerShell de imagem estatica ausente'
           }
           & $install -Source $path -Kind static
           $static=Join-Path $out 'assets\custom\img\animals\mob-teste.png'
