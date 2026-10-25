@@ -46,6 +46,9 @@ function Input.handle(ctx,player,name,args)
     if #args==1 and args[1]=="build" then
       return ctx.game:buildHouse(player)
     end
+    if #args==1 and args[1]=="wall" then
+      return ctx.game:buildWall(player)
+    end
     return bad(player,name,"invalid map command")
   elseif name=="M" then
     local data=args[1]
