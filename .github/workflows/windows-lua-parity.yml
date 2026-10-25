@@ -10,6 +10,7 @@ on:
       - 'windows atualização/src/game/mooio_home.lua'
       - 'windows atualização/src/game/mooio_pause.lua'
       - 'windows atualização/src/game/reference_*.lua'
+      - 'windows atualização/src/game/mob_animations.lua'
       - 'windows atualização/src/game/config.lua'
       - 'windows atualização/server/src/moomoo/**'
       - 'windows atualização/server/src/protocol/**'
@@ -25,6 +26,7 @@ on:
       - 'windows atualização/src/game/mooio_home.lua'
       - 'windows atualização/src/game/mooio_pause.lua'
       - 'windows atualização/src/game/reference_*.lua'
+      - 'windows atualização/src/game/mob_animations.lua'
       - 'windows atualização/src/game/config.lua'
       - 'windows atualização/server/src/moomoo/**'
       - 'windows atualização/server/src/protocol/**'
@@ -82,6 +84,7 @@ jobs:
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/mod-core-session-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-profiles-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-mod-generic-smoke.lua
+          lua5.4 server-lua/tests/map-animation-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-interactables-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-mechanisms-smoke.lua
           lua5.4 server-lua/tests/custom-map-human-welcome-smoke.lua
