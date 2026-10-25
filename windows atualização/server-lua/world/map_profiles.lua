@@ -261,7 +261,15 @@ function Maps.validate(content,wanted)
  end
  map.surface=map.surface or {}
  assert(type(map.surface)=="table" and #map.surface<=400,"too many surface resources")
- for _,o in ipairs(map.surface) do checkSurface(o) end
+ for _,o in ipairs(map.surface) do
+  -- Generated surface resources are always server-placed, never coordinates.
+  if map.mode=="generated" then
+   assert(o.x==nil and o.y==nil,
+     "generated map surface resources cannot specify x/y")
+   o.placement="random"
+  end
+  checkSurface(o)
+ end
  if map.mode=="authored" then assert(#map.surface>0,"empty authored map") end
  map.animalAnimations=map.animalAnimations or {}
  checkAnimalAnimations(map.animalAnimations)
@@ -295,6 +303,19 @@ function Maps.validate(content,wanted)
  end
  map.portals=map.portals or {}
  map.interactables=map.interactables or {}
+ if map.mode=="generated" then
+  assert(map.spawn==nil,"generated map must use normal random player spawn")
+  for _,portal in ipairs(map.portals) do
+   assert(portal.x==nil and portal.y==nil,
+     "generated map entrances cannot specify x/y")
+   portal.placement="random"
+  end
+  for _,obj in ipairs(map.interactables) do
+   assert(obj.x==nil and obj.y==nil,
+     "generated map collectibles cannot specify x/y")
+   obj.placement="random"
+  end
+ end
  checkInteractables(map.interactables,Config.mapScale,Config.mapScale,nil)
  checkPortals(map.portals,nil,lookup,64)
  for _,zone in ipairs(map.spaces) do
