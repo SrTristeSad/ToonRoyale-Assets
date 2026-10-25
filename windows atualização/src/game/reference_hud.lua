@@ -8,6 +8,7 @@ local Icons=require("src.game.reference_icons")
 local Assets=require("src.game.reference_assets")
 local Upgrades=require("src.game.reference_upgrades")
 local ItemInfo=require("src.game.reference_item_info")
+local DeathMarker=require("src.game.death_marker")
 local H={}
 local fontSmall,fontMedium,fontLarge
 local function fonts()
@@ -92,8 +93,28 @@ local function minimap(world,w,h)
     love.graphics.line(mx-7,my-7,mx+7,my+7)
     love.graphics.line(mx-7,my+7,mx+7,my-7)
   end
-  mark(world.lastDeath,252/255,85/255,83/255)
+  DeathMarker.drawMini(world,x,y,size,C.mapScale)
+  if world.lastDeath and
+     not DeathMarker.sameArea(world) then
+    -- Death markers in another floor cannot be shown at misleading
+    -- surface coordinates; leave a persistent and readable hint.
+    color(1,0.51,0.46)
+    love.graphics.setFont(fontSmall)
+    love.graphics.print("MORTE: "..tostring(world.lastDeath.spaceId or "surface"),
+      x,y-18)
+  elseif world.lastDeath and world.spaceId=="surface" then
+    color(1,0.51,0.46)
+    love.graphics.setFont(fontSmall)
+    love.graphics.print("ULTIMA MORTE",x,y-18)
+  end
   mark(world.mapMarker,1,1,1)
+end
+-- Draw only the minimap during the death sequence: the ordinary HUD
+-- is intentionally hidden, but the location marker must remain visible.
+function H.drawDeathMap(world)
+  fonts()
+  local w,h=love.graphics.getDimensions()
+  minimap(world,w,h)
 end
 local function leaderboard(world,w)
   local count=math.min(10,#world.leaderboard)
