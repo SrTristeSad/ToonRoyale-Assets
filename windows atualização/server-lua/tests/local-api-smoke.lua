@@ -12,6 +12,17 @@ local function send(method,route,body,headers)
  return api:handle(method,route,headers or {},body and Json.encode(body) or "",
   "127.0.0.1")
 end
+-- Auth/password in Node's LOCAL mode uses String(password || "").
+for _,password in ipairs({false,0,""}) do
+ local status,result=send("POST","/api/auth/password",
+   {email="Tester@Example.com",password=password})
+ assert(status==400 and result.type=="invalidCredentials",
+   "empty/false/zero password must be rejected exactly as Node")
+end
+local status,nonempty=send("POST","/api/auth/password",
+ {email="Tester@Example.com",password="x"})
+assert(status==200 and type(nonempty.token)=="string",
+  "LOCAL non-V2 password compatibility must remain available")
 local code,a=send("POST","/api/auth/code",{email="Tester@Example.com"})
 assert(code==200 and #a.flow==24)
 local flow=a.flow
