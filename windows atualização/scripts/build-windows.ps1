@@ -55,6 +55,9 @@ foreach ($file in @('main.lua','conf.lua','MOO-IO.vbs','README.md','LICENSE','NO
 if (Test-Path (Join-Path $root 'licenses')) {
   Copy-Item (Join-Path $root 'licenses') (Join-Path $OutputDir 'licenses') -Recurse -Force
 }
+# Strip only staging test callbacks in the COPIED client. Headless Lua host,
+# normal menu, networking, bots, maps and V2 join are untouched.
+& (Join-Path $root 'scripts\prepare-release-main.ps1') -Path (Join-Path $OutputDir 'main.lua')
 Copy-Item (Join-Path $LoveDir '*') $OutputDir -Recurse -Force
 # Keep the required LÖVE runtime DLLs and its license, but discard the
 # stock editor/console executable and sample icons/manual from the game ZIP.
