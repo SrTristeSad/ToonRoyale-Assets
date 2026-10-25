@@ -57,8 +57,15 @@ assert(wolf.mobClip=="hurt" and Anim.frame(wolf,set).row==3)
 assert(world:apply("I",{{101,4,675,550,0,0,0,0},{}}))
 world:update(0.04)
 assert(wolf.mobClip=="death" and Anim.frame(wolf,set).row==4)
-world:update(2)
+for _=1,10 do world:update(0.2) end
 assert(Anim.frame(wolf,set).frame==7,"death must hold the last frame")
+-- The server sends a cosmetic death event only for configured clips.
+assert(world:apply("j",{"mob-death",0,0,{
+ sid=101,index=4,x=675,y=550,dir=0}}))
+assert(#world.mobDeathEffects==1)
+assert(world.mobDeathEffects[1].mobClip=="death")
+for _=1,6 do world:update(0.2) end
+assert(#world.mobDeathEffects==0,"dead mob effect was not bounded")
 local missing={sheet="missing.png",frameWidth=32,frameHeight=32,
  idle={row=0,frames=2,fps=5}}
 local aux={index=4,x=0,y=0}
