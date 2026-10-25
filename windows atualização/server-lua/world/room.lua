@@ -271,6 +271,10 @@ function Room:usePortal(player)
  return true
 end
 
+function Room:buildHouse(player)
+ return require("server-lua.world.house_build").build(self,player)
+end
+
 function Room:handleInput(player,name,args)
   local present=false
   for _,p in ipairs(self.players) do
