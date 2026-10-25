@@ -4,6 +4,7 @@
 local Json=require("server-lua.vendor.dkjson")
 local Config=require("src.game.config")
 local Types=require("server-lua.world.animal_types")
+local Creatures=require("server-lua.world.mod_creatures")
 local Mods={}
 local multipliers={
   pacifico={spawn=0.65,damage=0.5,speed=0.85,range=0.5},
@@ -40,7 +41,8 @@ local function validateManifest(content,id)
    "manifesto de mod invalido: "..id)
  for field in pairs(data) do
   assert(field=="id" or field=="schemaVersion" or field=="requiresClient"
-   or field=="name" or field=="description" or field=="changes",
+   or field=="name" or field=="description" or field=="changes"
+   or field=="animalAnimations" or field=="newAnimals",
    "campo desconhecido no mod: "..field)
  end
  assert(type(data.name)=="string" and #data.name>0 and #data.name<=70,
@@ -48,8 +50,15 @@ local function validateManifest(content,id)
  assert(data.description==nil or
    (type(data.description)=="string" and #data.description<=240),
    "descricao de mod invalida")
- assert(type(data.changes)=="table" and next(data.changes),
+ assert(data.changes==nil or type(data.changes)=="table",
+   "invalid optional rule changes")
+ assert(type(data.changes)=="table" and next(data.changes)
+   or type(data.animalAnimations)=="table" and next(data.animalAnimations)
+   or type(data.newAnimals)=="table" and next(data.newAnimals),
    "mod sem mudancas")
+ data.changes=data.changes or {}
+ Creatures.animations(data.animalAnimations or {},63)
+ Creatures.newSpecies(data.newAnimals or {})
  return data
 end
 -- Metadata API for the client mod picker and server diagnostics.
@@ -169,10 +178,35 @@ function Mods.build(level,ids,dir,map)
    end
   end
  end
+ local animations=copy(map and map.animalAnimations or {})
  local used,patches={},{}
  for _,id in ipairs(ids) do
   assert(not used["mod:"..id],"mod duplicado");used["mod:"..id]=true
   local manifest=modFile(assert(dir,"diretorio de mods obrigatorio"),id)
+  local added=Creatures.newSpecies(manifest.newAnimals or {})
+  for index,data in pairs(added) do
+   assert(types[index]==nil and not used["creature."..index],
+     "duplicate species index: "..index)
+   local entry=copy(data)
+   local desired=entry.desired or 0
+   entry.id=index
+   entry.desired=nil
+   entry.hostile=not not entry.hostile
+   entry.chargePlayer=not not entry.chargePlayer
+   entry.killScore=entry.killScore or 0
+   entry.dmg=entry.dmg or 0
+   entry.viewRange=entry.viewRange or 800
+   types[index]=entry
+   spawns[#spawns+1]={index=index,desired=desired,area="all"}
+   used["creature."..index]=true
+  end
+  for raw,set in pairs(manifest.animalAnimations or {}) do
+   local index=tonumber(raw)
+   assert(types[index] and not used["animation."..index],
+     "animation species missing or conflict: "..raw)
+   used["animation."..index]=true
+   animations[raw]=copy(set) -- rule mods override map default art
+  end
   for group,entries in pairs(manifest.changes) do
    assert(limits[group] and type(entries)=="table" and next(entries),
      "grupo de mod invalido: "..tostring(group))
@@ -217,6 +251,7 @@ function Mods.build(level,ids,dir,map)
  local total=0
  for _,row in ipairs(spawns) do total=total+row.desired end
  assert(total<=600,"limite de 600 animais por sala")
- return {config=cfg,types=types,difficulty=level,mods=ids}
+ return {config=cfg,types=types,difficulty=level,mods=ids,
+   animations=animations}
 end
 return Mods
