@@ -1,6 +1,8 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Standalone LOCAL server CLI for automated integration tests.
 -- Windows users normally use the opt-in LÖVE launcher instead.
+assert(os.getenv("MOO_IO_V2_PRIVATE_ROOM")~="1",
+  "V2 private workers are excluded: run only the LOCAL Windows server")
 local Socket=require("socket")
 local Local=require("server-lua.local_server")
 local server=Local.new({
@@ -10,6 +12,10 @@ local server=Local.new({
  mode=os.getenv("MOO_IO_NETWORK_MODE")=="vpn" and "vpn" or "lan",
  botCount=os.getenv("MOO_IO_BOT_COUNT") or "0",
  dataDir=assert(os.getenv("MOO_IO_LUA_DATA_DIR"),"MOO_IO_LUA_DATA_DIR required"),
+ protocolBuildFile=os.getenv("PROTOCOL_BUILD_FILE"),
+ rotateBuild=(os.getenv("ROTATE_BUILD")~=nil
+    and os.getenv("ROTATE_BUILD")~=""
+    and os.getenv("ROTATE_BUILD")~="0"),
  guiHost=true,log=function(message)print(message)end
 })
 local ok,err=server:start()
