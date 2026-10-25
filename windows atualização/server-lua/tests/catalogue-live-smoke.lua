@@ -8,6 +8,7 @@ local Registry=require("server-lua.world.player_registry")
 local Transport=require("server-lua.net.room_transport")
 local room=Room.new({
   nowMs=10000,
+  broadcast=function()end, -- test room always supplies the original callback
   services={ensureAnimals=function()end}
 })
 assert(room.items==Catalogue,"Game must use original complete Lua catalogue by default")
