@@ -57,9 +57,12 @@ local up=assert(spaces:destination("mina","subir-escada",20))
 assert(up.spaceId=="cabana")
 assert(spaces:destination("surface","wrong")==nil)
 
-local authored=World.new({config=Config,random=function()return 0.5 end})
-authored:loadMap(Maps.load("server-lua/maps","mapa-de-exemplo"))
-assert(#authored.objects==3 and authored.objects[1].x==1200)
+local example=Maps.load("server-lua/maps","mapa-de-exemplo")
+assert(example.mode=="generated" and #example.surface==0)
+local exampleWorld=World.new({config=Config,random=Maps.random(2468)})
+exampleWorld:loadMap(example)
+assert(#exampleWorld.objects>0,
+ "example map must use real procedural world instead of fixed resource coordinates")
 local invalid=Json.encode({schemaVersion=1,id="mapa-ruim",name="Mapa ruim",
  mode="authored",generation={},surface={{x=12,y=12,kind=7,scale=100}},
  portals={},spaces={}})
@@ -89,4 +92,4 @@ server:close()
 options.mapId="missing-map"
 options.dataDir=dataDir.."/not-created"
 assert(not pcall(Local.new,options),"missing map must abort before account or world creation")
-print("PASS custom map core: seed, authored world, house, underground, portal, isolation")
+print("PASS custom map core: seed, procedural resources, authored interiors, underground, portal, isolation")
