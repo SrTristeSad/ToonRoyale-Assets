@@ -4,6 +4,11 @@ on:
     branches: [main]
     paths:
       - 'windows atualização/server-lua/**'
+      - 'windows atualização/main.lua'
+      - 'windows atualização/src/test_*.lua'
+      - 'windows atualização/src/game/mooio_home.lua'
+      - 'windows atualização/src/game/mooio_pause.lua'
+      - 'windows atualização/src/game/reference_*.lua'
       - 'windows atualização/src/game/config.lua'
       - 'windows atualização/server/src/moomoo/**'
       - 'windows atualização/server/src/protocol/**'
@@ -13,6 +18,11 @@ on:
   pull_request:
     paths:
       - 'windows atualização/server-lua/**'
+      - 'windows atualização/main.lua'
+      - 'windows atualização/src/test_*.lua'
+      - 'windows atualização/src/game/mooio_home.lua'
+      - 'windows atualização/src/game/mooio_pause.lua'
+      - 'windows atualização/src/game/reference_*.lua'
       - 'windows atualização/src/game/config.lua'
       - 'windows atualização/server/src/moomoo/**'
       - 'windows atualização/server/src/protocol/**'
@@ -104,6 +114,29 @@ jobs:
           fi
           grep -q "E2E PASS:" "$tmp/client.log" || { cat "$tmp/client.log";exit 1; }
           cat "$tmp/client.log"
+      - name: Interface LÖVE - menus, sala, pausa, HUD e sprites sem V2
+        run: |
+          set -euo pipefail
+          export XDG_DATA_HOME="$RUNNER_TEMP/moo-ui-data"
+          mkdir -p "$XDG_DATA_HOME"
+          for mode in MOO_IO_MENU_TEST MOO_IO_ROOM_CHOICE_TEST MOO_IO_PAUSE_TEST MOO_IO_HUD_TEST MOO_IO_SPRITE_TEST; do
+            echo "TEST $mode"
+            if ! timeout 45 xvfb-run -a env "$mode=1" MOO_IO_CAPTURE_UI=1 love . > "/tmp/$mode.log" 2>&1; then
+              cat "/tmp/$mode.log"
+              exit 1
+            fi
+            cat "/tmp/$mode.log"
+          done
+          mkdir -p ci-ui-captures
+          find "$XDG_DATA_HOME" -type f -name 'ui-*.png' -exec cp {} ci-ui-captures/ \;
+          test "$(find ci-ui-captures -type f -name 'ui-*.png' | wc -l)" -eq 5
+          echo "PASS cinco telas capturadas com LÖVE real"
+      - name: Publicar capturas da interface (auditoria visual)
+        uses: actions/upload-artifact@v4
+        with:
+          name: moo-io-ui-audit
+          path: windows atualização/ci-ui-captures/ui-*.png
+          if-no-files-found: error
       - name: Alvo correto - servidor local Node usado pelo jogo Windows
         run: |
           set -euo pipefail
