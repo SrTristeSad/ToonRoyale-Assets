@@ -157,6 +157,19 @@ function love.load()
     love.event.quit(ok and 0 or 1)
     return
   end
+  if os.getenv("MOO_IO_V2_CLIENT_TEST")=="1" then
+    local ok,err=pcall(function()
+      require("src.test_tls_bridge")()
+      require("src.test_browser_auth")()
+      local invite=require("src.game.mooio_home").parseInvite(
+        "https://normal.play.example.org/abcdefgh12345678","")
+      assert(invite and invite.secure and invite.port==443,
+        "cliente nao reconhece convite publico V2")
+    end)
+    if not ok then print("MOO IO V2 JOIN FAIL: "..tostring(err)) end
+    love.event.quit(ok and 0 or 1)
+    return
+  end
   if os.getenv("MOO_IO_MENU_TEST")=="1" then
     local ok,err=pcall(function() require("src.test_mooio_menu")() end)
     if not ok then print("MOO IO MENU FAIL: "..tostring(err)) end
