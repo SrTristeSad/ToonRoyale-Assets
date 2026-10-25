@@ -170,7 +170,16 @@ jobs:
           & (Join-Path $root 'scripts\export-github-source.ps1') -OutputDir $clean
           if ($LASTEXITCODE -ne 0) { throw "Exportador falhou: $LASTEXITCODE" }
           $sourceZip=Join-Path $env:RUNNER_TEMP 'Moo-IO-GitHub-Source.zip'
-          Compress-Archive -Path (Join-Path $clean '*') -DestinationPath $sourceZip -CompressionLevel Optimal
+          # Compress-Archive can omit hidden .gitignore: use .NET ZipFile instead.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::CreateFromDirectory(
+            $clean,$sourceZip,[IO.Compression.CompressionLevel]::Optimal,$false)
+          $archive=[IO.Compression.ZipFile]::OpenRead($sourceZip)
+          try {
+            if (-not @($archive.Entries | Where-Object { $_.FullName -eq '.gitignore' }).Count) {
+              throw 'Source zip missing .gitignore'
+            }
+          } finally { $archive.Dispose() }
           $files=@(Get-ChildItem -LiteralPath $clean -Recurse -File)
           if ($files.Count -lt 100) { throw "Fonte incompleta: $($files.Count) arquivos" }
           if (@($files | Where-Object {
@@ -179,7 +188,7 @@ jobs:
           }).Count -gt 0) { throw 'Artefatos legados presentes na fonte limpa' }
           foreach ($required in @('main.lua','MOO-IO.vbs','server-lua\local_server.lua',
              'src\game\mooio_home.lua','src\net\mooio_paths.lua',
-             'server-lua\mods\novas-especies.json','MIGRAR-PARA-GITHUB.md')) {
+             'server-lua\mods\novas-especies.json','MIGRAR-PARA-GITHUB.md','.gitignore','docs\VPN-PRIVADA.md')) {
             if (-not (Test-Path -LiteralPath (Join-Path $clean $required))) {
               throw "Falta fonte essencial: $required"
             }
