@@ -261,28 +261,13 @@ function Home:click(sx,sy)
       self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
       return "mod_browse"
     end
-    for row=1,4 do
-      if inside(x,y,{629,239+(row-1)*74,534,68}) then
-        local i=self.mapPage*4+row
-        local entry=self.mapCatalog[i]
-        if entry then
-          self.mapId=entry.id
-          self:setStatus("Mapa escolhido: "..entry.name)
-          return "map_select"
-        end
-      end
-    end
-    if inside(x,y,boxes.chooseMapPrev) then
-      self.mapPage=math.max(0,self.mapPage-1);return "map_page"
-    end
-    if inside(x,y,boxes.chooseMapNext) then
-      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog)/4)-1),
-        self.mapPage+1)
-      return "map_page"
+    if inside(x,y,boxes.chooseMapPrev) or inside(x,y,boxes.chooseMapNext)
+      or inside(x,y,{629,239,534,210}) then
+      self.screen="maps";self.mapPage=0;return "map_browse"
     end
     if inside(x,y,boxes.createSubmit) then
       self.focus=nil
-      local found=false
+      local found=self.mapId==""
       for _,entry in ipairs(self.mapCatalog) do
         if entry.id==self.mapId then found=true;break end
       end
@@ -317,13 +302,13 @@ function Home:click(sx,sy)
       self.mapPage=math.max(0,self.mapPage-1);return "map_page"
     end
     if inside(x,y,boxes.modsNext) then
-      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog)/6)-1),
+      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog+1)/6)-1),
         self.mapPage+1);return "map_page"
     end
     for row=1,6 do
       local n=self.mapPage*6+row
       if inside(x,y,{151,242+(row-1)*64,976,57}) then
-        local entry=self.mapCatalog[n]
+        local entry=n==1 and {id="",name="DESATIVAR MAPA"} or self.mapCatalog[n-1]
         if entry then
           self.mapId=entry.id
           self:setStatus("Mapa selecionado: "..entry.name)
@@ -572,26 +557,11 @@ function Home:draw(state,detail,showWorld)
       button("createBotsPlus","+")
       button("createMods",self.modIds=="" and "MODS: NENHUM  -  ESCOLHER" or "MODS: PERSONALIZADOS  -  EDITAR",false)
       printText("MAPA DA PARTIDA",635,207,18,C.green)
-      local selection=self.mapId
-      for row=1,4 do
-        local n=self.mapPage*4+row
-        local entry=self.mapCatalog[n]
-        if entry then
-          local y=239+(row-1)*74
-          local active=selection==entry.id
-          panel(629,y,534,68,active and {0.29,0.41,0.29} or C.raised,0)
-          love.graphics.setColor(active and C.green or C.muted)
-          love.graphics.rectangle("fill",640,y+19,17,28)
-          printText(entry.name,673,y+9,19,C.white,474)
-          local origin=entry.source=="mod" and "MOD INSTALADO  |  " or ""
-          printText(origin..((entry.spaces or 0)>0 and
-            ("Regioes disponiveis: "..entry.spaces) or
-            "Superficie personalizada ou classica"),
-            673,y+39,14,active and C.amber or C.muted,474)
-        end
-      end
-      button("chooseMapPrev","MAPAS ANTERIORES",false)
-      button("chooseMapNext","PROXIMOS MAPAS",false)
+      panel(629,239,534,210,C.raised,0)
+      printText(self:mapName(),650,282,23,C.white,480)
+      printText("Escolha o mapa na lista ou desative mapas extras.",650,330,15,C.muted,490)
+      button("chooseMapPrev","ESCOLHER MAPA",true)
+      button("chooseMapNext","ABRIR LISTA",false)
       button("createBack","CANCELAR",false)
       button("createSubmit","CRIAR SALA NESTE MAPA",true)
       printText("SELECIONADO: "..self:mapName(),635,542,14,C.amber,510)
@@ -604,7 +574,7 @@ function Home:draw(state,detail,showWorld)
       printText("Mapas personalizados JSON: gerados ou montados manualmente.",145,213,15,C.muted)
       for row=1,6 do
         local i=self.mapPage*6+row
-        local entry=self.mapCatalog[i]
+        local entry=i==1 and {id="",name="DESATIVAR MAPA",description="Jogar sem mapa personalizado."} or self.mapCatalog[i-1]
         if entry then
           local y=242+(row-1)*64
           local active=entry.id==self.mapId
