@@ -314,55 +314,6 @@ function World:apply(name,args)
       self.mapMessage=payload.message
       self.mapMessageTimer=4
       return true
-    elseif args[1]=="remove-wall" then
-      local payload=args[4]
-      if not self.map or type(payload)~="table" or
-        not self.space or self.spaceId~=payload.spaceId or
-        type(self.space.obstacles)~="table" or
-        not number(payload.index) or payload.index%1~=0 or
-        payload.index<4 or payload.index>#self.space.obstacles or
-        self.space.obstacles[payload.index].material~="wood" then return false end
-      table.remove(self.space.obstacles,payload.index)
-      return true
-    elseif args[1]=="add-wall" then
-      local payload=args[4]
-      if not self.map or type(payload)~="table" or
-        type(payload.spaceId)~="string" or type(payload.rect)~="table" or
-        not self.space or self.spaceId~=payload.spaceId then return false end
-      local rect=payload.rect
-      if not number(rect.x) or not number(rect.y) or
-        not number(rect.width) or not number(rect.height)
-        or rect.width<30 or rect.height<30 or
-        rect.width>240 or rect.height>240
-        or rect.x<0 or rect.y<0 or
-        rect.x+rect.width>self.space.width or
-        rect.y+rect.height>self.space.height or
-        #self.space.obstacles>=300 then return false end
-      self.space.obstacles[#self.space.obstacles+1]={
-        x=rect.x,y=rect.y,width=rect.width,height=rect.height,material="wood"
-      }
-      return true
-    elseif args[1]=="add-house" then
-      local portal=args[4]
-      if not self.map or type(portal)~="table"
-        or type(portal.id)~="string" or type(portal.to)~="string"
-        or not number(portal.x) or not number(portal.y)
-        or not number(portal.targetX) or not number(portal.targetY) then
-        return false
-      end
-      for _,entry in ipairs(self.map.portals) do
-        if entry.id==portal.id then return true end
-      end
-      self.map.portals[#self.map.portals+1]=portal
-      return true
-    elseif args[1]=="build-result" then
-      local detail=args[4]
-      if not self.map or type(detail)~="table"
-        or type(detail.message)~="string"
-        or #detail.message>160 then return false end
-      self.mapMessage=detail.message
-      self.mapMessageTimer=5
-      return true
     end
     -- Authoritative zone switch from the authenticated LOCAL Lua host.
     local id,x,y,zone=args[1],args[2],args[3],args[4]
