@@ -49,6 +49,7 @@ function Loadout.choose(player,catalogue,style)
   return nil
  end
  local primary=styles[style] or styles[1]
+ local rangedFocus=(style==3 or style==6 or style==7)
  local choices={}
  for id=0,15 do
   local weapon=catalogue.weapons[id]
@@ -56,6 +57,7 @@ function Loadout.choose(player,catalogue,style)
    local pref=weapon.type==0 and primary.primary or primary.secondary
    local rank=0
    for i,v in ipairs(pref) do if v==id then rank=#pref-i+1;break end end
+   if rangedFocus and weapon.type==1 then rank=rank+20 end
    choices[#choices+1]={id=id,rank=rank,weapon=true}
   end
  end
