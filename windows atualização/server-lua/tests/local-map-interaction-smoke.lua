@@ -10,7 +10,7 @@ local events={}
 local strikes=0
 local player={
  id="test-player",sid=1,active=true,alive=true,spaceId="surface",
- x=1950,y=1950,scale=35,xVel=0,yVel=0,speed=0.8,
+ x=1950,y=1950,scale=35,xVel=0,yVel=0,speed=Config.playerSpeed,
  moveDir=nil,dir=0,powers={speed=1},shameTimer=0,
  weaponIndex=0,buildIndex=-1,reloads={[0]=300},hits=0,mouseState=0,
  regenTimer=1000,dmgOverTime={},healCol=0,pps=0,slowMult=1,
