@@ -7,6 +7,7 @@ local Animals=require("src.game.animals")
 local Shapes=require("src.game.reference_primitives")
 local Objects=require("src.game.reference_objects")
 local Assets=require("src.game.reference_assets")
+local Mob=require("src.game.mob_animations")
 local CombatText=require("src.game.reference_combat_text")
 local BossEffects=require("src.game.reference_boss_effects")
 local SecretMap=require("src.game.reference_secret_map")
@@ -179,8 +180,14 @@ local function renderAnimal(a,camera,world)
   local alpha=View.animalOpacity(a,kind)
   -- Only real supplied PNGs: an absent enemy sprite must not make
   -- a server-authoritative enemy completely invisible.
-  local rendered=Assets.draw("animals",kind.src..".png",
-    x,y,radius*2,radius*2,angle,alpha)
+  -- Map JSON may supply optional frames. No animation data or asset?
+  -- Use the SAME original PNG; no change to classic/V2 visuals.
+  local frames=Mob.definition(world and world.map,a)
+  local rendered=Mob.draw(a,frames,x,y,radius*2,angle,alpha)
+  if not rendered then
+    rendered=Assets.draw("animals",kind.src..".png",
+      x,y,radius*2,radius*2,angle,alpha)
+  end
   if not rendered then
     local candidate=Animals.fallbackArt and Animals.fallbackArt[kind.src]
     if candidate then
