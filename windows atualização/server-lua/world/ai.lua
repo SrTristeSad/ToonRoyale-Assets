@@ -143,6 +143,18 @@ function AI:update(delta)
            end
          end
        end
+        -- Wolves cooperate only in custom difficult/extreme rooms.
+        local difficulty=cfg.server and cfg.server.roomDifficulty
+        if self.index==4 and (difficulty=="dificil" or difficulty=="extremo") then
+          local allyTarget=Pack.sharedTarget(self,opts.ais)
+          if allyTarget and type(allyTarget.x)=="number"
+            and type(allyTarget.y)=="number"
+            and distance(self.x,self.y,allyTarget.x,allyTarget.y)<=self.viewRange*1.4
+            and not (allyTarget.powers and truth(allyTarget.powers.invisible))
+            and not (allyTarget.skin and truth(allyTarget.skin.bullRepel)) then
+            target=allyTarget
+          end
+        end
        if target then
          self.chargeTarget=target
          self.moveCount=randInt(opts,8000,12000)
@@ -163,7 +175,13 @@ function AI:update(delta)
      self.targetDir=dir(self.x,self.y,self.runFrom.x,self.runFrom.y)
      speed=speed*1.42
    elseif self.chargeTarget and self.chargeTarget.alive then
-     self.targetDir=dir(self.chargeTarget.x,self.chargeTarget.y,self.x,self.y)
+     local difficulty=cfg.server and cfg.server.roomDifficulty
+      if self.index==4 and (difficulty=="dificil" or difficulty=="extremo") then
+        self.targetDir=Pack.direction(self,self.chargeTarget,opts.ais,difficulty)
+          or dir(self.chargeTarget.x,self.chargeTarget.y,self.x,self.y)
+      else
+        self.targetDir=dir(self.chargeTarget.x,self.chargeTarget.y,self.x,self.y)
+      end
      speed=speed*1.75
      charging=true
    end
