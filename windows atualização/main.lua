@@ -95,6 +95,9 @@ local lastAim=nil
 local playerX,playerY=nil,nil
 local serverPackets=0
 local died=false
+local deathBackdrop=false
+local deathReturnPending=false
+local deathChoiceStatus=""
 local heartbeatClock=0
 local frameDelta=0
 local chatOpen=false
@@ -298,7 +301,7 @@ end
   -- Continuous cursor travel for controller navigation; axis callbacks only fire
 -- on changes, so relying on them makes menus nearly impossible to navigate.
 local function updateGamepadMenu(dt)
- if phase~="menu" and not pause:isOpen() then return end
+ if phase~="menu" and phase~="death_choice" and not pause:isOpen() then return end
  local joy=activeGamepad()
  if not joy then return end
  local xaxis,yaxis=joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty")
@@ -410,6 +413,9 @@ function love.update(dt)
         panels:reset()
         clans:close()
         death:reset()
+        deathBackdrop=false
+        deathReturnPending=false
+        deathChoiceStatus=""
         phase="playing"
         home:setStatus("Partida iniciada.")
         menu.status=""
@@ -447,8 +453,11 @@ function love.update(dt)
         panels:reset()
         clans:close()
         chatOpen=false;chatDraft=""
-        input.keys={};lastMove=false
+        input.keys={};input:gamepadMove(0,0);lastMove=false
+        gamepadAttack=false;gamepadAim=nil
         mouseAttack=false;spaceAttack=false;lockDir=false
+        deathBackdrop=sessionIsHost and world.lastDeath~=nil
+        deathReturnPending=false;deathChoiceStatus=""
         died=true
         phase="death"
         death:start()
@@ -461,7 +470,9 @@ function love.update(dt)
   end
   world:update(dt)
   if phase=="death" and death:update(dt) then
-    phase="menu"
+    -- Preserve the owner\u0027s familiar menu while keeping the death position.
+    -- Guests stay connected and explicitly decide to respawn or disconnect.
+    phase=sessionIsHost and "menu" or "death_choice"
     menu.status=""
   end
   -- Use the actual menu click handler, not Original:spawn(), so CI verifies
@@ -559,6 +570,11 @@ function love.draw()
     Notices.draw(world,w,h)
     return
   end
+  if phase=="death_choice" then
+    View.draw(world,camera,frameDelta,{showGrid=menu.grid})
+    death:drawChoices(w,h,deathReturnPending,deathChoiceStatus)
+    return
+  end
   if phase=="menu" then
     -- The background is the original MooMoo world scene, not a static
     -- fake screenshot or a generated entity pretending to be online.
@@ -566,7 +582,7 @@ function love.draw()
     -- screen. Rendering all procedural foliage every frame slowed the menu,
     -- particularly on software-rendered or lower-end Windows machines.
     -- Rebuild once per second or immediately on resize/grid changes.
-    if not menuPreview or previewW~=w or previewH~=h or previewAge>=1 then
+    if not deathBackdrop and (not menuPreview or previewW~=w or previewH~=h or previewAge>=1) then
       if menuPreview and (previewW~=w or previewH~=h) then
         menuPreview:release()
         menuPreview=nil
@@ -582,8 +598,12 @@ function love.draw()
       love.graphics.pop()
       previewAge=0
     end
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.draw(menuPreview,0,0)
+    if deathBackdrop and world.lastDeath and camera then
+      View.draw(world,camera,frameDelta,{showGrid=menu.grid})
+    elseif menuPreview then
+      love.graphics.setColor(1,1,1,1)
+      love.graphics.draw(menuPreview,0,0)
+    end
     local state=client and client.state or "idle"
     home:draw(state,client and (client.error or client.status) or "",true)
     if home.roomOverlay then home:drawRoomOverlay() end
@@ -732,6 +752,8 @@ end
 connectRoom=function(ip,port,inviteCode,authToken,secure)
   if client then client:close();client=nil end
   world=World.new()
+  deathBackdrop=false;deathReturnPending=false;deathChoiceStatus=""
+  death:reset()
   local ok,connection=pcall(Original.new,{
     host=ip,port=port,server="LC",inviteCode=inviteCode,autoSpawn=false,
     authToken=authToken,secure=secure==true
@@ -916,9 +938,26 @@ local function stopGameplay(owned)
   chatOpen=false;chatDraft=""
   panels:reset();clans:close();profile:close()
   phase="menu";died=false
+  deathBackdrop=false;deathReturnPending=false;deathChoiceStatus=""
+  death:reset()
   home.screen="play"
   home:setStatus(owned and "Sala encerrada. Os participantes foram desconectados."
     or "Voce saiu da partida. A sala do anfitriao continua online.")
+end
+-- Respawn via the same authenticated connection; only the server's C
+-- packet may return the guest to active play.
+local function returnAfterDeath()
+  if phase~="death_choice" or sessionIsHost or deathReturnPending then return false end
+  if not client then deathChoiceStatus="Conexao indisponivel.";return false end
+  local name=type(client.name)=="string" and client.name or home.nickname
+  local ok,err=client:spawn({name=name,skin=0})
+  if ok then
+    deathReturnPending=true
+    deathChoiceStatus=""
+  else
+    deathChoiceStatus="Nao foi possivel voltar: "..tostring(err):sub(1,75)
+  end
+  return ok
 end
 local function stopPlayerControls()
   input.keys={}
@@ -964,6 +1003,11 @@ end
 function love.gamepadpressed(joystick,button)
  if joystick~=activeGamepad() then return end
  if button=="start" then love.keypressed("escape");return end
+ if phase=="death_choice" then
+  if button=="a" then love.keypressed("return")
+  elseif button=="b" then love.keypressed("escape") end
+  return
+ end
  if button=="b" and (phase=="menu" or pause:isOpen()) then
   love.keypressed("escape");return
  end
@@ -1008,6 +1052,14 @@ function love.keypressed(key)
     return
   end
   if phase=="death" then return end
+  if phase=="death_choice" then
+    if key=="return" or key=="kpenter" or key=="r" then
+      returnAfterDeath()
+    elseif key=="escape" or key=="backspace" then
+      stopGameplay(false)
+    end
+    return
+  end
   if profile:isOpen() then
     if key=="escape" or key=="p" then closeProfile() end
     return
@@ -1175,6 +1227,15 @@ function love.mousepressed(x,y,button)
     return
   end
   if diagnostic or phase=="death" then return end
+  if phase=="death_choice" then
+    if button==1 then
+      local w,h=love.graphics.getDimensions()
+      local action=death:choiceAt(x,y,w,h)
+      if action=="back" then returnAfterDeath()
+      elseif action=="exit" then stopGameplay(false) end
+    end
+    return
+  end
   if phase=="menu" then
     if button==1 then homeAction(home:click(x,y)) end
     return
