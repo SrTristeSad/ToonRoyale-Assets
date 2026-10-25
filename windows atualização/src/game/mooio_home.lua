@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Moo IO: LAN/VPN rooms are hosted by the bundled Lua server.
--- Gameplay authority remains in the existing Node process; no bots or fake world.
+-- Gameplay authority lives in the bundled LOCAL Lua room; no client-side fake world.
 local Network=require("src.net.mooio_network")
 local Home={}
 Home.__index=Home
