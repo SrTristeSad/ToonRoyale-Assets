@@ -49,6 +49,13 @@ function Input.handle(ctx,player,name,args)
     if #args==1 and args[1]=="wall" then
       return ctx.game:buildWall(player)
     end
+    if #args==2 and args[1]=="wall" and type(args[2])=="table"
+      and args[2]~=MP.null then
+      return ctx.game:buildWall(player,args[2])
+    end
+    if #args==2 and args[1]=="remove-wall" then
+      return ctx.game:removeWall(player,args[2])
+    end
     return bad(player,name,"invalid map command")
   elseif name=="M" then
     local data=args[1]
