@@ -277,7 +277,7 @@ function AI:update(delta)
  end
  if (charging or hitting) and not self.submerged then
    for _,player in ipairs(players) do
-     if player and player.alive then
+     if player and player.alive and (player.spaceId or "surface")=="surface" then
        local d=distance(self.x,self.y,player.x,player.y)
        if truth(self.hitRange) then
          if not truth(self.hitWait) and d<=self.hitRange+player.scale then
