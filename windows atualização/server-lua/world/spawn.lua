@@ -70,7 +70,7 @@ function Spawn.spawn(player,moofoll,world,options)
   player.moveDir=nil
   Spawn.resetResources(player,moofoll,config)
   player.items={0,3,6,10}
-  player.weapons={0}
+  player.weapons={[0]=0} -- Node: this.weapons = [0], keyed by weapon type
   player.shootCount=0
   player.weaponXP={}
   player.reloads={}
