@@ -532,32 +532,54 @@ local function doorProgress(world,portal)
 end
 
 local function mapPortalMarkers(world,camera,indoor)
+ if not indoor then return end
  local area=world.space
- local portals=area and area.portals or {}
- for _,p in ipairs(portals) do
+ if not area then return end
+ local bunker=type(area.id)=="string" and area.id:match("^bunker")~=nil
+ for _,p in ipairs(area.portals or {}) do
   if type(p.x)=="number" and type(p.y)=="number" then
    local x,y=camera:worldToScreen(p.x,p.y)
    local u=camera.zoom
-   -- A physical floor-level doorway, not a golden action button.
-   if indoor then
-    love.graphics.setColor(0.08,0.09,0.08,0.68)
-    love.graphics.rectangle("fill",x-85*u,y-72*u,170*u,144*u,8*u,8*u)
-    love.graphics.setColor(0.44,0.39,0.28,1)
-    love.graphics.rectangle("line",x-84*u,y-72*u,168*u,144*u,7*u,7*u)
-    love.graphics.setColor(0.11,0.17,0.14,0.72)
-    love.graphics.rectangle("fill",x-48*u,y-34*u,96*u,68*u)
-    local opening=doorProgress(world,p)
-    -- The leaf swings from its left hinge as the avatar approaches.
-    love.graphics.push("all")
-    love.graphics.translate(x-48*u,y-34*u)
-    love.graphics.rotate(-opening*math.pi*0.48)
-    love.graphics.setColor(0.42,0.39,0.29,0.96)
-    love.graphics.rectangle("fill",0,0,94*u,66*u,3*u,3*u)
-    love.graphics.setColor(0.75,0.76,0.59,0.9)
-    love.graphics.rectangle("line",0,0,94*u,66*u,3*u,3*u)
-    love.graphics.setColor(0.9,0.76,0.40,1)
-    love.graphics.circle("fill",79*u,30*u,5*u)
-    love.graphics.pop()
+   local open=doorProgress(world,p)
+   -- A floor recess and structural rim occupy precise portal coordinates.
+   -- These are drawn BELOW the avatar; stepping on the recess triggers the
+   -- server-owned level transition, not a clickable overlay.
+   local w,h=176*u,144*u
+   love.graphics.setColor(0.07,0.08,0.08,1)
+   love.graphics.rectangle("fill",x-w/2,y-h/2,w,h,5*u,5*u)
+   if bunker then
+    love.graphics.setColor(0.48,0.55,0.56,1)
+   else
+    love.graphics.setColor(0.40,0.42,0.36,1)
+   end
+   love.graphics.setLineWidth(math.max(1,4*u))
+   love.graphics.rectangle("line",x-w/2,y-h/2,w,h,5*u,5*u)
+   love.graphics.setLineWidth(1)
+   -- Stair treads descend into a darker recess, all inside the floor.
+   for k=0,4 do
+    local sy=y-49*u+k*25*u
+    love.graphics.setColor(0.32-k*0.035,0.34-k*0.035,0.32-k*0.035,1)
+    love.graphics.rectangle("fill",x-62*u,sy,124*u,17*u)
+    love.graphics.setColor(0.53-k*0.04,0.55-k*0.04,0.49-k*0.04,1)
+    love.graphics.line(x-62*u,sy,x+62*u,sy)
+   end
+   if bunker then
+    -- Steel hatch slides into its own frame when approached.
+    love.graphics.setColor(0.36,0.42,0.44,0.95)
+    love.graphics.rectangle("fill",x-68*u-(open*105*u),y-51*u,
+      136*u*(1-open),102*u,3*u,3*u)
+    for i=0,2 do
+     love.graphics.setColor(0.54,0.6,0.6,0.8)
+     love.graphics.line(x-(56+i*20)*u-open*105*u,y-45*u,
+       x-(56+i*20)*u-open*105*u,y+43*u)
+    end
+   else
+    -- Rock staircase rim instead of a floating golden teleport icon.
+    love.graphics.setColor(0.46,0.45,0.38,1)
+    love.graphics.circle("fill",x-83*u,y-42*u,21*u)
+    love.graphics.circle("fill",x+81*u,y+49*u,25*u)
+    love.graphics.circle("fill",x+79*u,y-44*u,18*u)
+    love.graphics.circle("fill",x-80*u,y+54*u,19*u)
    end
   end
  end
@@ -632,49 +654,61 @@ local function drawIndoor(world,camera,dt,options)
  love.graphics.setColor(mine and 0.39 or 0.78,
   mine and 0.37 or 0.67,mine and 0.33 or 0.53,1)
  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
- -- The cave is natural rock, bunkers use industrial floor plating.
- -- Interior textures are stable procedural geometry, with no new PNGs.
- local bunker=area.id and area.id:match("^bunker")~=nil
+ -- Tile-aligned floors: the SAME server zone dimensions delimit the
+ -- playable ground. Collision walls below come from area.obstacles, not art.
+ local bunker=type(area.id)=="string" and area.id:match("^bunker")~=nil
  local cave=mine and not bunker
- if cave then
-  love.graphics.setColor(0.23,0.245,0.22,1)
-  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
-  for gy=0,area.height,155 do
-   for gx=0,area.width,165 do
-    local sx,sy=camera:worldToScreen(gx,gy)
-    local jitter=(gx*17+gy*13)%67
-    love.graphics.setColor(0.11,0.13,0.12,0.12+(jitter%4)*0.018)
-    love.graphics.polygon("fill",sx+13*camera.zoom,sy,
-      sx+(111+jitter%19)*camera.zoom,sy+16*camera.zoom,
-      sx+146*camera.zoom,sy+102*camera.zoom,
-      sx+37*camera.zoom,sy+138*camera.zoom)
-    love.graphics.setColor(0.48,0.49,0.44,0.2)
-    love.graphics.line(sx+17*camera.zoom,sy+28*camera.zoom,
-      sx+67*camera.zoom,sy+38*camera.zoom,
-      sx+88*camera.zoom,sy+71*camera.zoom)
+ local tile=128
+ local xmin=math.max(0,math.floor(camera:screenToWorld(0,0)/tile)-1)
+ local xmax=math.min(math.ceil(area.width/tile),
+   math.ceil(camera:screenToWorld(w,0)/tile)+1)
+ local _,wy0=camera:screenToWorld(0,0)
+ local _,wy1=camera:screenToWorld(0,h)
+ local ymin=math.max(0,math.floor(wy0/tile)-1)
+ local ymax=math.min(math.ceil(area.height/tile),math.ceil(wy1/tile)+1)
+ love.graphics.setColor(cave and 0.16 or (bunker and 0.12 or 0.48),
+   cave and 0.18 or (bunker and 0.17 or 0.39),
+   cave and 0.16 or (bunker and 0.18 or 0.27),1)
+ love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
+ for iy=ymin,ymax do
+  for ix=xmin,xmax do
+   local px,py=camera:worldToScreen(ix*tile,iy*tile)
+   local size=tile*camera.zoom
+   local hash=(ix*137+iy*97+ix*iy*17)%13
+   if cave then
+    local c=0.24+hash*0.004
+    love.graphics.setColor(c,c+0.012,c-0.016,1)
+    love.graphics.rectangle("fill",px+1,py+1,size-2,size-2)
+    love.graphics.setColor(0.42,0.43,0.38,0.35)
+    love.graphics.line(px+size*0.15,py+size*0.28,
+      px+size*0.47,py+size*0.41,
+      px+size*0.65,py+size*0.66)
+    love.graphics.setColor(0.11,0.14,0.12,0.38)
+    love.graphics.polygon("line",
+      px+size*0.23,py+size*0.08,
+      px+size*0.72,py+size*0.18,
+      px+size*0.90,py+size*0.60,
+      px+size*0.41,py+size*0.91)
+   elseif bunker then
+    local c=0.20+hash*0.003
+    love.graphics.setColor(c,c+0.055,c+0.06,1)
+    love.graphics.rectangle("fill",px+2,py+2,size-4,size-4)
+    love.graphics.setColor(0.37,0.44,0.45,0.65)
+    love.graphics.rectangle("line",px+5,py+5,size-10,size-10)
+    love.graphics.setColor(0.51,0.56,0.55,0.7)
+    for _,corner in ipairs({{11,11},{tile-11,11},{11,tile-11},
+      {tile-11,tile-11}}) do
+     love.graphics.circle("fill",px+corner[1]*camera.zoom,
+       py+corner[2]*camera.zoom,2.5*camera.zoom)
+    end
+   else
+    love.graphics.setColor(0.55+hash*0.008,0.41+hash*0.006,0.29,1)
+    love.graphics.rectangle("fill",px+1,py+1,size-2,size-2)
+    love.graphics.setColor(0.26,0.20,0.14,0.25)
+    love.graphics.line(px,py+size*0.5,px+size,py+size*0.5)
    end
   end
- elseif bunker then
-  love.graphics.setColor(0.14,0.19,0.20)
-  love.graphics.rectangle("fill",x0,y0,x1-x0,y1-y0)
-  for y=0,area.height,190 do
-   local _,sy=camera:worldToScreen(0,y)
-   love.graphics.setColor(0.32,0.39,0.4,0.5)
-   love.graphics.line(x0,sy,x1,sy)
-  end
-  for x=0,area.width,260 do
-   local sx=camera:worldToScreen(x,0)
-   love.graphics.setColor(0.35,0.42,0.42,0.35)
-   love.graphics.line(sx,y0,sx,y1)
-  end
- else
-  love.graphics.setColor(0.35,0.26,0.15,0.17)
-  for y=0,area.height,82 do
-   local _,sy=camera:worldToScreen(0,y)
-   love.graphics.line(x0,sy,x1,sy)
-  end
  end
- -- The open-world grid does not cover indoor floors and cave art.
  for _,obstacle in ipairs(area.obstacles or {}) do
   local x,y=camera:worldToScreen(obstacle.x,obstacle.y)
   local a,b=obstacle.width*camera.zoom,obstacle.height*camera.zoom
