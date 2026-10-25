@@ -161,37 +161,60 @@ function Maps.validate(content,wanted)
  end
  return map
 end
+-- Map mods are ordinary JSON manifests in a second data-only folder.
+-- Never load Lua files or silently override a bundled map with the same ID.
+local function directories(dir)
+ dir=dir or "server-lua/maps"
+ if dir=="server-lua/maps" then
+  return {dir,"server-lua/mods/maps"}
+ end
+ return {dir}
+end
 function Maps.load(dir,mapId)
  assert(id(mapId),"invalid map ID")
- local path=(dir or "server-lua/maps").."/"..mapId..".json"
  local content
- if love and love.filesystem and type(love.filesystem.read)=="function" then
-  local ok,data=pcall(love.filesystem.read,path)
-  if ok and type(data)=="string" then content=data end
+ for _,root in ipairs(directories(dir)) do
+  local path=root.."/"..mapId..".json"
+  if love and love.filesystem and type(love.filesystem.read)=="function" then
+   local ok,data=pcall(love.filesystem.read,path)
+   if ok and type(data)=="string" then content=data end
+  end
+  if not content then
+   local handle=io.open(path,"rb")
+   if handle then
+    content=handle:read(131073)
+    handle:close()
+   end
+  end
+  if content then break end
  end
- if not content then
-  local f=assert(io.open(path,"rb"),"map not installed: "..mapId)
-  content=f:read(131073)
-  f:close()
- end
+ assert(content,"map not installed: "..mapId)
  return Maps.validate(content,mapId)
 end
 function Maps.available(fs,dir)
- dir=dir or "server-lua/maps"
  if type(fs)~="table" or type(fs.getDirectoryItems)~="function"
   or type(fs.read)~="function" then return {} end
- local ok,list=pcall(fs.getDirectoryItems,dir)
- if not ok or type(list)~="table" then return {} end
- local found={}
- table.sort(list)
- for _,filename in ipairs(list) do
-  local mapId=type(filename)=="string" and filename:match("^([a-z][a-z0-9%-]+)%.json$")
-  if id(mapId) then
-   local readOK,body=pcall(fs.read,dir.."/"..filename)
-   if readOK and type(body)=="string" then
-    local good,map=pcall(Maps.validate,body,mapId)
-    if good then found[#found+1]={id=map.id,name=map.name,
-     description=map.description or "",mode=map.mode,spaces=#map.spaces} end
+ local found,seen={},{}
+ for _,root in ipairs(directories(dir)) do
+  local ok,list=pcall(fs.getDirectoryItems,root)
+  if ok and type(list)=="table" then
+   table.sort(list)
+   for _,filename in ipairs(list) do
+    local mapId=type(filename)=="string"
+      and filename:match("^([a-z][a-z0-9%-]+)%.json$")
+    if id(mapId) and not seen[mapId] then
+     local readOK,body=pcall(fs.read,root.."/"..filename)
+     if readOK and type(body)=="string" then
+      local good,map=pcall(Maps.validate,body,mapId)
+      if good then
+       seen[mapId]=true
+       found[#found+1]={id=map.id,name=map.name,
+        description=map.description or "",mode=map.mode,
+        spaces=#map.spaces,source=root=="server-lua/mods/maps"
+          and "mod" or "base"}
+      end
+     end
+    end
    end
   end
  end
