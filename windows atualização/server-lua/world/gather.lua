@@ -113,9 +113,9 @@ end
 
 function Gather.hitActor(player,target,weapon,variant,applyPoison,weapons,cfg,opts)
   local dist=distance(player.x,player.y,target.x,target.y)-target.scale*1.8
-  if dist>weapon.range then return end
+  if dist>weapon.range then return false end
   local dir=atan2(target.y-player.y,target.x-player.x)
-  if angleDist(dir,player.dir)>cfg.gatherAngle then return end
+  if angleDist(dir,player.dir)>cfg.gatherAngle then return false end
   local steal=weapon.steal
   if truthy(steal) and type(target.addResource)=="function" then
     steal=math.min(jsOr(target.points,0),steal)
@@ -184,6 +184,7 @@ function Gather.hitActor(player,target,weapon,variant,applyPoison,weapons,cfg,op
   end
   assert(type(target.changeHealth)=="function","target.changeHealth required")
   target:changeHealth(-dmg*multiplier,player,player)
+  return true
 end
 
 return Gather
