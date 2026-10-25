@@ -250,6 +250,7 @@ function Room:usePortal(player)
  end
  for _,other in ipairs(self.players) do
   if other.sentTo then other.sentTo[player.id]=nil end
+  if player.sentTo then player.sentTo[other.id]=nil end
  end
  player.attrCache={};player.visiblePlayers={};player.visibleAis={}
  local newZone=self.mapSpaces:get(destination.spaceId)
