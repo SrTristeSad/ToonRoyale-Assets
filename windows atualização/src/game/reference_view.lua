@@ -11,6 +11,7 @@ local Mob=require("src.game.mob_animations")
 local CombatText=require("src.game.reference_combat_text")
 local BossEffects=require("src.game.reference_boss_effects")
 local SecretMap=require("src.game.reference_secret_map")
+local DeathMarker=require("src.game.death_marker")
 local View={}
 local Materials=require("src.game.map_materials")
 -- client/src/index.js updateGame waterMult / waterPlus (Canvas only).
@@ -727,6 +728,7 @@ local function drawDungeonMap(world)
      oy+other.y*g.scale,3)
   end
  end
+ DeathMarker.drawFloorPlan(world,{left=left,top=top,size=size})
  love.graphics.setColor(0.26,0.98,0.37,1)
  love.graphics.circle("fill",left+g.x,top+g.y,5)
  love.graphics.setColor(0.07,0.18,0.09,1)
@@ -839,6 +841,7 @@ local function drawIndoor(world,camera,dt,options)
    drawPlayer(p,camera,dt or 0,aim)
   end
  end
+ DeathMarker.drawWorld(world,camera,w,h)
  labels(world,camera,w,h)
  drawMapHelp(world)
  if options and options.showDungeonMap~=false then
@@ -908,6 +911,7 @@ function View.draw(world,camera,dt,options)
   love.graphics.setColor(0,0,70/255,0.35)
   love.graphics.rectangle("fill",0,0,w,h)
   love.graphics.setColor(1,1,1,1)
+  DeathMarker.drawWorld(world,camera,w,h)
   labels(world,camera,w,h)
   if world.map then
     mapPortalMarkers(world,camera,false)
