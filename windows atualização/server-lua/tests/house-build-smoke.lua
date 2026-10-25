@@ -110,9 +110,10 @@ assert(#c.space.obstacles==4,
  "client did not remove same wall index as server")
 local randomUser={id="intruder",alive=true,spaceId="casa-1",
  x=550,y=450,send=function()end,account=nil}
+room.players[#room.players+1]=randomUser
 room.nowMs=213000
 assert(room:handleInput(randomUser,"j",{"remove-wall",4})==false,
- "unregistered guest was able to remove a house wall")
+ "non-owner guest was able to remove a house wall")
 local saved=assert(io.open(folder.."/houses-cabana-e-mina.json","rb"))
 local bytes=saved:read("*a");saved:close()
 assert(bytes:find("walls",1,true),"house file does not save walls")
