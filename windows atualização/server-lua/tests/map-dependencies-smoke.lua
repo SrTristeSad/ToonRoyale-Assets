@@ -54,6 +54,9 @@ local ok,reason=pcall(Local.new,{bind="127.0.0.1",roomCode="missing-creature",
  mapId="reserva-criaturas",modIds="",nowMs=function()return 100000 end})
 assert(not ok and tostring(reason):find("especie 15",1,true),
  "invalid room must be rejected with a useful reason before starting")
+-- Protocol token persistence expects an existing data directory in this
+-- standalone fixture; the production launcher creates it before starting.
+assert(os.execute('mkdir -p "'..dir..'/valid-species"'))
 local valid=Local.new({bind="127.0.0.1",roomCode="valid-creature",
  port=19124,dataDir=dir.."/valid-species",guiHost=true,botCount=0,
  mapId="reserva-criaturas",modIds="novas-especies",
