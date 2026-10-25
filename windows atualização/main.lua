@@ -24,24 +24,6 @@ if os.getenv("MOO_IO_LUA_SERVER")=="1" then
     assert(ok,why)
     print("MOOIO_LUA_SERVER_READY")
   end
-  -- Continuous cursor travel for controller navigation; axis callbacks only fire
--- on changes, so relying on them makes menus nearly impossible to navigate.
-local function updateGamepadMenu(dt)
- if phase~="menu" and not pause:isOpen() then return end
- local joy=activeGamepad()
- if not joy then return end
- local xaxis,yaxis=joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty")
- if math.abs(xaxis)<0.24 then xaxis=0 end
- if math.abs(yaxis)<0.24 then yaxis=0 end
- if xaxis==0 and yaxis==0 then return end
- local x,y=love.mouse.getPosition()
- local w,h=love.graphics.getDimensions()
- local distance=460*math.min(dt,0.08)
- local nextX=math.max(0,math.min(w-1,math.floor(x+xaxis*distance+0.5)))
- local nextY=math.max(0,math.min(h-1,math.floor(y+yaxis*distance+0.5)))
- love.mouse.setPosition(nextX,nextY)
-end
-
 function love.update(dt)
     if instance and instance:update()==false then love.event.quit(0) end
   end
@@ -311,6 +293,24 @@ angle=function(y,x)
   if y>0 then return math.pi/2 end
   if y<0 then return -math.pi/2 end
   return 0
+end
+
+  -- Continuous cursor travel for controller navigation; axis callbacks only fire
+-- on changes, so relying on them makes menus nearly impossible to navigate.
+local function updateGamepadMenu(dt)
+ if phase~="menu" and not pause:isOpen() then return end
+ local joy=activeGamepad()
+ if not joy then return end
+ local xaxis,yaxis=joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty")
+ if math.abs(xaxis)<0.24 then xaxis=0 end
+ if math.abs(yaxis)<0.24 then yaxis=0 end
+ if xaxis==0 and yaxis==0 then return end
+ local x,y=love.mouse.getPosition()
+ local w,h=love.graphics.getDimensions()
+ local distance=460*math.min(dt,0.08)
+ local nextX=math.max(0,math.min(w-1,math.floor(x+xaxis*distance+0.5)))
+ local nextY=math.max(0,math.min(h-1,math.floor(y+yaxis*distance+0.5)))
+ love.mouse.setPosition(nextX,nextY)
 end
 
 function love.update(dt)
