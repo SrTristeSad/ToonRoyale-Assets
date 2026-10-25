@@ -234,25 +234,49 @@ function World:apply(name,args)
       if not self.map or not self.space or type(update)~="table"
         or update.spaceId~=self.spaceId
         or type(update.id)~="string" then return false end
-      local item
+      local item,gate
       for _,obj in ipairs(self.space.interactables or {}) do
-       if obj.id==update.id then item=obj;break end
+       if obj.id==update.id then item=obj end
+       if obj.id==update.gateId and obj.kind=="gate" then gate=obj end
       end
-      if not item or item.kind~=update.kind or item.used then return false end
-      item.used=true
-      if item.kind=="lever" then
-       local gate
-       for _,obj in ipairs(self.space.interactables or {}) do
-        if obj.id==update.gateId and obj.kind=="gate" then gate=obj;break end
-       end
-       if not gate then return false end
-       gate.closed=false
-       for i=#self.space.obstacles,1,-1 do
-        if self.space.obstacles[i].interactiveGateId==gate.id then
-         table.remove(self.space.obstacles,i);break
+      if not item or item.kind~=update.kind
+        or type(update.version)~="number" or update.version%1~=0
+        or update.version<1 or update.version>(item.version or 0)+1000
+        or update.version<=(item.version or 0)
+        or type(update.used)~="boolean" then return false end
+      if item.kind=="node" then
+       if type(update.remaining)~="number"
+         or update.remaining%1~=0 or update.remaining<0
+         or update.remaining>item.charges
+         or update.remaining>=(item.remaining or item.charges)
+         or update.used~=(update.remaining==0) then return false end
+      elseif item.kind=="cache" or item.kind=="lever" then
+       if item.used or not update.used then return false end
+      elseif item.kind~="switch" then return false end
+      if item.kind=="lever" or item.kind=="switch" then
+       if not gate or type(update.gateClosed)~="boolean"
+         or gate.closed==update.gateClosed then return false end
+      end
+      -- Validate first, then atomically update both objects and real
+      -- collision rectangles. A reordering/retry cannot close stale doors.
+      if gate then
+       gate.closed=update.gateClosed
+       if gate.closed then
+        self.space.obstacles[#self.space.obstacles+1]={
+         x=gate.x-gate.width/2,y=gate.y-gate.height/2,
+         width=gate.width,height=gate.height,
+         material=gate.material or "metal",interactiveGateId=gate.id}
+       else
+        for i=#self.space.obstacles,1,-1 do
+         if self.space.obstacles[i].interactiveGateId==gate.id then
+          table.remove(self.space.obstacles,i);break
+         end
         end
        end
       end
+      item.version=update.version
+      item.used=update.used
+      if item.kind=="node" then item.remaining=update.remaining end
       return true
     elseif args[1]=="interact-result" then
       local payload=args[4]
