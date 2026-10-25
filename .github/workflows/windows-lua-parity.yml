@@ -83,6 +83,7 @@ jobs:
           trap 'rm -rf "$mod_data"' EXIT
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/mod-core-session-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-profiles-smoke.lua
+          lua5.4 server-lua/tests/random-map-distribution-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/map-mod-generic-smoke.lua
           lua5.4 server-lua/tests/map-animation-smoke.lua
           MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/mod-extra-mobs-smoke.lua
