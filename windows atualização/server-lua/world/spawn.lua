@@ -93,6 +93,17 @@ function Spawn.spawn(player,moofoll,world,options)
   if spawnPoint then
     player.x=spawnPoint[1]
     player.y=spawnPoint[2]
+  elseif world.mapSpawn then
+    -- Only custom map packs have a hub spawn. Original Node random spawns
+    -- and player-owned respawn points still take precedence unchanged.
+    local hub=world.mapSpawn
+    for _=1,20 do
+      player.x=math.max(player.scale,math.min(config.mapScale-player.scale,
+        hub.x+world:randomInt(-65,65)))
+      player.y=math.max(player.scale,math.min(config.mapScale-player.scale,
+        hub.y+world:randomInt(-65,65)))
+      if world:canPlace(player.x,player.y,player.scale,0.6,nil,true) then break end
+    end
   else
     -- Matches the JS do-at-most-20 placement attempts, including the last
     -- candidate being retained even if every candidate is obstructed.
