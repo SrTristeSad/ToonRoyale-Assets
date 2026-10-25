@@ -330,7 +330,10 @@ function love.update(dt)
         world.justChangedSpace=false
         if camera then camera.hasTarget=false end
         movementClock=0;lastMove=false;lastAim=nil
-        input.keys={};mouseAttack=false;spaceAttack=false
+        -- Preserve held WASD during a seamless door transition.
+        -- The server clears velocity for safety; the next movement tick
+        -- sends the current input again after the camera changes rooms.
+        mouseAttack=false;spaceAttack=false
         client:send("9",{Pack.null})
         client:send("F",{0,Pack.null})
         latestEvent="Area: "..tostring(world.spaceId)
@@ -973,12 +976,6 @@ function love.keypressed(key)
      and client.state=="spawn_confirmed" and world.map
      and not panels:isOpen() and not chatOpen then
     client:send("j",{"build"})
-    return
-  end
-  if key=="g" and phase=="playing" and client
-     and client.state=="spawn_confirmed" and world.map
-     and not panels:isOpen() and not chatOpen then
-    client:send("j",{})
     return
   end
   input:keypressed(key)
