@@ -56,6 +56,15 @@ if (Test-Path (Join-Path $root 'licenses')) {
   Copy-Item (Join-Path $root 'licenses') (Join-Path $OutputDir 'licenses') -Recurse -Force
 }
 Copy-Item (Join-Path $LoveDir '*') $OutputDir -Recurse -Force
+# Keep the required LÖVE runtime DLLs and its license, but discard the
+# stock editor/console executable and sample icons/manual from the game ZIP.
+# Windows Moo-IO is always launched by MOO-IO.vbs -> love.exe.
+foreach ($extra in @('lovec.exe','changes.txt','readme.txt','game.ico','love.ico')) {
+  $target=Join-Path $OutputDir $extra
+  if (Test-Path -LiteralPath $target -PathType Leaf) {
+    Remove-Item -LiteralPath $target -Force
+  }
+}
 # Keep production free of tests, Node differential fixtures and debug launchers.
 # Tests are retained in the staging repository for parity auditing, but they
 # must not ship to players or be published as project source.
