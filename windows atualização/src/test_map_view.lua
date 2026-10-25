@@ -50,6 +50,42 @@ local function run()
  local br,bg,bb=b:getPixel(7,7)
  assert(math.abs(ar-br)+math.abs(ag-bg)+math.abs(ab-bb)>0.05,
   "inside house must look different from outdoor world")
+ -- Render the REAL bunker and cave floors shipped with the server. This
+ -- catches a regression where both levels show the same generic/overlay
+ -- floor, instead of tiles and stairwells at collision coordinates.
+ local MapProfiles=require("server-lua.world.map_profiles")
+ local bunkerMap=MapProfiles.load("server-lua/maps","bunker-e-cavernas")
+ assert(world:apply("A",{{teams={},animals={},map={
+   id=bunkerMap.id,name=bunkerMap.name,portals=bunkerMap.portals}}}))
+ local captures={}
+ for _,test in ipairs({
+  {name="bunker",id="bunker-01",x=750,y=850},
+  {name="cavern",id="caverna-01",x=500,y=700}
+ }) do
+  local zone
+  for _,z in ipairs(bunkerMap.spaces) do
+   if z.id==test.id then zone=z;break end
+  end
+  assert(zone and world:apply("j",{test.id,test.x,test.y,zone}))
+  camera:follow(test.x,test.y)
+  local canvas=love.graphics.newCanvas(w,h)
+  love.graphics.push("all")
+  love.graphics.setCanvas(canvas)
+  love.graphics.clear(0,0,0,1)
+  View.draw(world,camera,0.016,{showGrid=true,localAim=0})
+  love.graphics.pop()
+  captures[test.name]=canvas:newImageData()
+  if os.getenv("MOO_IO_CAPTURE_UI")=="1" then
+   local name="ui-map-"..test.name..".png"
+   captures[test.name]:encode("png",name)
+   print("UI CAPTURE "..name.." -> "..love.filesystem.getSaveDirectory())
+  end
+  canvas:release()
+ end
+ local bur,b_ug,bub=captures.bunker:getPixel(400,350)
+ local cur,cug,cub=captures.cavern:getPixel(400,350)
+ assert(math.abs(bur-cur)+math.abs(b_ug-cug)+math.abs(bub-cub)>0.1,
+  "bunker floor and cave rock tiles should not look identical")
  surface:release();interior:release()
  assert(world:apply("j",{"surface",1950,1950,{
   id="surface",type="surface",width=14400,height=14400,
