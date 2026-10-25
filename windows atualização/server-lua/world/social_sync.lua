@@ -49,7 +49,8 @@ function Social.sendMinimap(game,viewer)
   if not truthy(viewer.team) and not staff then return end
   local data={}
   for _,other in ipairs(game.players) do
-    if other~=viewer and other.alive then
+    if other~=viewer and other.alive and
+       (other.spaceId or "surface")==(viewer.spaceId or "surface") then
       if staff or (truthy(viewer.team) and other.team==viewer.team) then
         extend(data,round(other.x),round(other.y))
       end
