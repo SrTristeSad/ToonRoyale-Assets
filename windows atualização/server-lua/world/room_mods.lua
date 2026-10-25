@@ -180,13 +180,17 @@ function Mods.build(level,ids,dir,map)
  end
  local animations=copy(map and map.animalAnimations or {})
  local used,patches={},{}
- for _,id in ipairs(ids) do
-  assert(not used["mod:"..id],"mod duplicado");used["mod:"..id]=true
-  local manifest=modFile(assert(dir,"diretorio de mods obrigatorio"),id)
-  local added=Creatures.newSpecies(manifest.newAnimals or {})
-  for index,data in pairs(added) do
+ local manifests={}
+ -- Resolve species across ALL selected mods before animations and gameplay
+ -- patches. A standalone animation mod may safely target a mob registered
+ -- by another mod regardless of selection order.
+ for _,modId in ipairs(ids) do
+  assert(not manifests[modId],"duplicate mod")
+  local manifest=modFile(assert(dir,"mod directory required"),modId)
+  manifests[modId]=manifest
+  for index,data in pairs(Creatures.newSpecies(manifest.newAnimals or {})) do
    assert(types[index]==nil and not used["creature."..index],
-     "duplicate species index: "..index)
+     "duplicate custom species: "..index)
    local entry=copy(data)
    local desired=entry.desired or 0
    entry.id=index
@@ -200,6 +204,10 @@ function Mods.build(level,ids,dir,map)
    spawns[#spawns+1]={index=index,desired=desired,area="all"}
    used["creature."..index]=true
   end
+ end
+ for _,id in ipairs(ids) do
+  assert(not used["mod:"..id],"mod duplicado");used["mod:"..id]=true
+  local manifest=manifests[id]
   for raw,set in pairs(manifest.animalAnimations or {}) do
    local index=tonumber(raw)
    assert(types[index] and not used["animation."..index],
