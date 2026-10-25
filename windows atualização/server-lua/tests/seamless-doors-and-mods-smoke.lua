@@ -52,7 +52,8 @@ assert(restored==baseline,
  "the authored cave mob must respawn without exceeding normal budget")
 local packets={}
 local player={
- id="walking-player",x=4200,y=4840,dir=0,moveDir=0,scale=35,
+ id="walking-player",x=room.customMap.portals[1].x,
+ y=room.customMap.portals[1].y+140,dir=0,moveDir=0,scale=35,
  spaceId="surface",alive=true,send=function(self,name,...)
   packets[#packets+1]={name=name,args={...}}
  end
@@ -60,7 +61,7 @@ local player={
 room.players[#room.players+1]=player
 room.nowMs=200000
 assert(not room:checkPortalCrossing(player),"must not teleport from too far away")
-player.y=4760
+player.y=room.customMap.portals[1].y+60
 -- Another player occupying the destination must block the passage but
 -- never permanently latch its trigger while the entrance remains occupied.
 local blocker={id="door-blocker",alive=true,spaceId="bunker-01",
@@ -88,7 +89,7 @@ assert(room:checkPortalCrossing(player) and player.spaceId=="surface",
  "return doorway must work by walking onto it")
 room.nowMs=204000
 player.moveDir=0
-player.x=4670;player.y=4780
+player.x=room.customMap.portals[2].x;player.y=room.customMap.portals[2].y+60
 assert(room:checkPortalCrossing(player) and player.spaceId=="caverna-01",
  "walking into cave entrance must cross without keypress")
 local client=ClientWorld.new()
@@ -101,8 +102,8 @@ instance:close()
 -- Map generation and explicit world mods: mod values must win.
 local profile=Mods.build("normal",{"floresta-densa"},"server-lua/mods",map)
 assert(profile.config.treesPerArea==17 and profile.config.goldOres==12)
-assert(map.generation.treesPerArea==8,
- "mod mutated the installed map")
+assert(map.generation.treesPerArea==nil,
+ "original generated map must use shared MooMoo settings by default")
 opts.port=18988
 opts.modIds="floresta-densa,mais-lobos"
 opts.dataDir=dataDir
