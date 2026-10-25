@@ -6,11 +6,12 @@ local Config=require("src.game.config")
 local Types=require("server-lua.world.animal_types")
 local Mods={}
 local multipliers={
+  pacifico={spawn=0.65,damage=0.5,speed=0.85,range=0.5},
   normal={spawn=1,damage=1,speed=1,range=1},
   dificil={spawn=1.5,damage=1.2,speed=1.1,range=1.2},
   extremo={spawn=2,damage=1.5,speed=1.2,range=1.4}
 }
-Mods.levels={"normal","dificil","extremo"}
+Mods.levels={"pacifico","normal","dificil","extremo"}
 local limits={
   spawns={desired={0,200}},
   animals={health={1,1000000},dmg={0,10000},speed={0,0.02},
@@ -69,6 +70,7 @@ function Mods.build(level,ids,dir)
  local cfg=copy(Config)
  local types=copy(Types)
  local spawns=cfg.server.animalSpawnPlan
+ cfg.server.roomDifficulty=level
  local factor=multipliers[level]
  if level~="normal" then
   for _,entry in ipairs(spawns) do
