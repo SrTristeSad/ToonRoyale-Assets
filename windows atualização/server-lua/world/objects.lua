@@ -145,18 +145,125 @@ function World:generate()
   return self.objects
 end
 
--- Optional custom map generation; classic generate() remains byte-for-byte.
+-- Custom maps still use the ORIGINAL MooMoo grid/world generator.
+-- Positions on the surface can be declarative and scattered per session.
+-- Interiors retain hand-authored local geometry and matching door endpoints.
+local function squared(x,y,a,b)
+ local dx,dy=x-a,y-b
+ return dx*dx+dy*dy
+end
+function World:scatterMapPoints(profile)
+ local cfg=self.config
+ local extent=cfg.mapScale
+ local reserved={}
+ local function reserve(x,y,spacing)
+  reserved[#reserved+1]={x=x,y=y,spacing=spacing}
+ end
+ -- Explicitly placed points remain valid for authored maps and old mods.
+ for _,portal in ipairs(profile.portals or {}) do
+  if type(portal.x)=="number" then reserve(portal.x,portal.y,350) end
+ end
+ for _,obj in ipairs(profile.interactables or {}) do
+  if type(obj.x)=="number" then reserve(obj.x,obj.y,250) end
+ end
+ for _,item in ipairs(profile.surface or {}) do
+  if type(item.x)=="number" then reserve(item.x,item.y,200) end
+ end
+ if profile.spawn then reserve(profile.spawn.x,profile.spawn.y,300) end
+ -- Spread entrances across the world rather than clustering them
+ -- around the old fixed spawn. The server picks once; each client receives
+ -- the exact same authoritative coordinates via map/zone packets.
+ local totalPortals=#(profile.portals or {})
+ local function choose(radius,spacing,ignoreWater)
+  local border=math.max(250,radius+80)
+  local candidate
+  for attempt=1,3200 do
+   local x=self:randomInt(border,extent-border)
+   local y=self:randomInt(border,extent-border)
+   local enough=true
+   local required=spacing*(attempt>2200 and 0.55 or 1)
+   for _,site in ipairs(reserved) do
+    local clearance=math.max(site.spacing or 0,required)
+    if squared(x,y,site.x,site.y)<clearance*clearance then
+     enough=false;break
+    end
+   end
+   if enough and self:canPlace(x,y,radius,0.6,nil,ignoreWater) then
+    candidate={x=x,y=y};break
+   end
+  end
+  assert(candidate,"could not scatter map feature without collision")
+  reserve(candidate.x,candidate.y,spacing)
+  return candidate.x,candidate.y
+ end
+ for _,portal in ipairs(profile.portals or {}) do
+  if portal.placement=="random" then
+   local spacing=totalPortals>1 and extent*0.23 or 900
+   portal.x,portal.y=choose(170,spacing,false)
+   -- Keep 'placement' as metadata. It remains declarative and need not
+   -- be revalidated or regenerated after the room is running.
+  end
+ end
+ -- Connect every return portal to the ACTUAL randomized surface entrance.
+ -- Indoor coordinates are stable, while the exit location can vary by room.
+ for _,zone in ipairs(profile.spaces or {}) do
+  for _,exit in ipairs(zone.portals or {}) do
+   if exit.to=="surface" then
+    local nearest,d2
+    for _,entry in ipairs(profile.portals or {}) do
+     if entry.to==zone.id then
+      local d=squared(exit.x,exit.y,entry.targetX,entry.targetY)
+      if not d2 or d<d2 then nearest,d2=entry,d end
+     end
+    end
+    if nearest then exit.targetX,exit.targetY=nearest.x,nearest.y end
+   end
+  end
+ end
+ for _,obj in ipairs(profile.interactables or {}) do
+  if obj.placement=="random" then
+   obj.x,obj.y=choose(120,420,false)
+  end
+ end
+end
+
+-- Classic generate() itself stays unchanged: identical type counts,
+-- shared/config.js grid subdivision, placement and collision rules.
 function World:loadMap(profile)
  if not profile then return self:generate() end
  self.mapSpawn=profile.spawn
  if profile.mode=="generated" then self:generate() end
+ self:scatterMapPoints(profile)
  for _,o in ipairs(profile.surface or {}) do
-  assert(self:canPlace(o.x,o.y,o.scale,0.6,nil,true),
-   "overlapping custom map object")
-  self:addObject(o.x,o.y,o.scale,o.kind)
+  if o.placement=="random" then
+   for _=1,(o.count or 1) do
+    local placed=false
+    for attempt=1,3200 do
+     local margin=math.max(240,o.scale+20)
+     local x=self:randomInt(margin,self.config.mapScale-margin)
+     local y=self:randomInt(margin,self.config.mapScale-margin)
+     if self:canPlace(x,y,o.scale,0.6,nil,false) then
+      local away=true
+      for _,portal in ipairs(profile.portals or {}) do
+       if squared(x,y,portal.x,portal.y)<(o.scale+300)^2 then
+        away=false;break
+       end
+      end
+      if away then
+       self:addObject(x,y,o.scale,o.kind)
+       placed=true;break
+      end
+     end
+    end
+    assert(placed,"could not distribute custom surface items")
+   end
+  else
+   assert(self:canPlace(o.x,o.y,o.scale,0.6,nil,true),
+     "overlapping authored map object")
+   self:addObject(o.x,o.y,o.scale,o.kind)
+  end
  end
- -- Keep the surface approach to each authored door free of spawned resources.
- -- A generated tree cannot block a portal on one machine but not another.
+ -- Keep actual passage pads clear of originally generated objects.
  local entrances={}
  for _,portal in ipairs(profile.portals or {}) do entrances[#entrances+1]=portal end
  if profile.spawn then entrances[#entrances+1]=profile.spawn end
@@ -165,9 +272,7 @@ function World:loadMap(profile)
    if obj.active then
     local dx,dy=obj.x-portal.x,obj.y-portal.y
     local clearance=(obj.scale or 0)+105
-    if dx*dx+dy*dy<clearance*clearance then
-      self:disableObject(obj)
-    end
+    if dx*dx+dy*dy<clearance*clearance then self:disableObject(obj) end
    end
   end
  end
