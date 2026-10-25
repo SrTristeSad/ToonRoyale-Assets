@@ -154,7 +154,7 @@ end
 function World.new()
   return setmetatable({
     sid=nil,spawned=false,dead=false,players={},objects={},
-    map=nil,roomSettings=nil,spaceId="surface",space=nil,justChangedSpace=false,
+    map=nil,animationCatalog=nil,roomSettings=nil,spaceId="surface",space=nil,justChangedSpace=false,
     mapMessage=nil,mapMessageTimer=0,
     objectSlots={},objectSlotBySid={},objectSlotCount=0,
     animals={},projectiles={},mobDeathEffects={},
@@ -182,6 +182,9 @@ function World:apply(name,args)
     -- permitted animal display metadata before any gameplay spawn.
     local handshake=args[1]
     if type(handshake)~="table" then return false end
+    self.animationCatalog={
+      animations=type(handshake.animations)=="table" and handshake.animations or {}
+    }
     local options=handshake.roomSettings
     if type(options)=="table" and type(options.mods)=="table"
       and type(options.difficulty)=="string" then
@@ -201,8 +204,11 @@ function World:apply(name,args)
         portals=handshake.map.portals,
         interactables=type(handshake.map.interactables)=="table"
            and handshake.map.interactables or {},
-        animations=type(handshake.map.animations)=="table"
+        animations=type(handshake.animations)=="table"
+           and handshake.animations
+           or type(handshake.map.animations)=="table"
            and handshake.map.animations or {}}
+      self.animationCatalog=self.map
       self.spaceId="surface"
       self.space={id="surface",type="surface",portals=self.map.portals,
          interactables=self.map.interactables}
@@ -238,8 +244,8 @@ function World:apply(name,args)
         or not validId(data.sid) or not validId(data.index)
         or not number(data.x) or not number(data.y)
         or not number(data.dir) then return false end
-      local set=self.map.animations
-        and self.map.animations[tostring(data.index)]
+      local set=self.animationCatalog and self.animationCatalog.animations
+        and self.animationCatalog.animations[tostring(data.index)]
       if not set or type(set.death)~="table" then return false end
       local ttl=math.min(5,set.death.frames/set.death.fps)
       if not number(ttl) or ttl<=0 then return false end
@@ -535,7 +541,7 @@ function World:apply(name,args)
         Mob.onPosition(ai,x,y)
         if number(data[i+5]) and number(ai.health)
           and data[i+5]<ai.health then
-          local set=Mob.definition(self.map,ai)
+          local set=Mob.definition(self.animationCatalog,ai)
           if data[i+5]<=0 then Mob.onDeath(ai,set)
           else Mob.onHurt(ai,set) end
         end
@@ -613,7 +619,7 @@ function World:apply(name,args)
     local ai=self.animals[args[1]]
     if ai then
       Animation.animal(ai)
-      Mob.onAttack(ai,Mob.definition(self.map,ai))
+      Mob.onAttack(ai,Mob.definition(self.animationCatalog,ai))
     end
     return true
   elseif name=="K" then
@@ -791,7 +797,7 @@ function World:update(dt)
   BossEffects.update(self.bossEffects,dt)
   for i=#self.mobDeathEffects,1,-1 do
     local ghost=self.mobDeathEffects[i]
-    Mob.update(ghost,Mob.definition(self.map,ghost),dt)
+    Mob.update(ghost,Mob.definition(self.animationCatalog,ghost),dt)
     ghost.remaining=ghost.remaining-dt
     if ghost.remaining<=0 then table.remove(self.mobDeathEffects,i) end
   end
@@ -808,7 +814,7 @@ function World:update(dt)
     for _,entity in pairs(group) do
       Animation.update(entity,dt)
       if group==self.animals then
-        Mob.update(entity,Mob.definition(self.map,entity),dt)
+        Mob.update(entity,Mob.definition(self.animationCatalog,entity),dt)
       end
       if entity.chatCountdown and entity.chatCountdown>0 then
         entity.chatCountdown=math.max(0,entity.chatCountdown-dt*1000)
