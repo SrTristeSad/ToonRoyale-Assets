@@ -140,6 +140,30 @@ return function()
     "Settings should open the keyboard and joystick editor")
   assert(home:keypressed("f2")==nil,
     "F2 is no longer a shortcut to copy invitation")
+  -- Regression for the giant black stripe circled in the Windows screenshot.
+  -- A flat, known world colour MUST stay uniform above/under the title;
+  -- otherwise the menu has accidentally drawn another full-width panel.
+  local panorama=love.graphics.newCanvas(1280,720)
+  love.graphics.push("all")
+  love.graphics.setCanvas(panorama)
+  love.graphics.clear(0.48,0.60,0.70,1)
+  home.screen="home"
+  home:draw("idle","",true)
+  love.graphics.setCanvas()
+  local pixels=panorama:newImageData()
+  local function colourDiff(ax,ay,bx,by)
+    local ar,ag,ab=pixels:getPixel(ax,ay)
+    local br,bg,bb=pixels:getPixel(bx,by)
+    return math.abs(ar-br)+math.abs(ag-bg)+math.abs(ab-bb)
+  end
+  assert(colourDiff(22,245,22,267)<0.04,
+    "Home still draws the opaque banner behind the logo")
+  assert(colourDiff(22,22,22,62)<0.04,
+    "Home still renders an extra top banner")
+  assert(colourDiff(27,652,27,675)<0.04,
+    "Home still paints a thick bottom banner")
+  love.graphics.pop()
+  panorama:release()
   -- Render each page to an offscreen canvas to catch graphical/layout crashes.
   local canvas=love.graphics.newCanvas(1280,720)
   love.graphics.setCanvas(canvas)
