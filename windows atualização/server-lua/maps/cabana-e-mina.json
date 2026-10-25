@@ -4,24 +4,17 @@
   "name": "Cabana e Mina",
   "description": "Geracao com interior de cabana e mina subterranea como zonas independentes.",
   "mode": "generated",
-  "generation": {
-    "treesPerArea": 11,
-    "bushesPerArea": 4,
-    "totalRocks": 38,
-    "goldOres": 10,
-    "seed": 14827
-  },
+  "generation": {},
   "surface": [],
   "portals": [
     {
       "id": "entrar-cabana",
-      "x": 1950,
-      "y": 1950,
       "to": "cabana",
       "targetX": 600,
       "targetY": 900,
       "label": "Cabana",
-      "style": "house"
+      "style": "house",
+      "placement": "random"
     }
   ],
   "spaces": [
@@ -135,9 +128,5 @@
         "name": "Caverna"
       }
     }
-  ],
-  "spawn": {
-    "x": 1950,
-    "y": 2040
-  }
+  ]
 }
