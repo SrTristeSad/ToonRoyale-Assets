@@ -64,14 +64,29 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
  room.mapId=map and map.id or "classico"
  room.mapSpaces=Spaces.new(map,gameConfig.mapScale)
  room.customMap=map
+ room.activeMods=rules.mods or {}
+ room.selectedDifficulty=rules.difficulty or "normal"
  room.projectile_manager.mapSpaces=room.mapSpaces
  animals.mapSpaces=room.mapSpaces
  if map and key=="LC" then
   room.houseStorePath=houseStorePath
   require("server-lua.world.house_build").load(room)
  end
- animals:ensureAnimals()
  if map and key=="LC" then
+   -- A normal game uses the original 51-animal total, not 51 outdoors
+   -- plus six additional animals below ground. Count authored mobs
+   -- toward each species' configured budget before surface spawning.
+   local byType={}
+   for _,zone in ipairs(map.spaces or {}) do
+    for _,mob in ipairs(zone.mobs or {}) do
+     byType[mob.kind]=(byType[mob.kind] or 0)+1
+    end
+   end
+   for _,entry in ipairs(room.config.server.animalSpawnPlan) do
+    if byType[entry.index] then
+     entry.desired=math.max(0,entry.desired-byType[entry.index])
+    end
+   end
    for _,zone in ipairs(map.spaces or {}) do
      for _,mob in ipairs(zone.mobs or {}) do
        animals:spawn(mob.x,mob.y,0,mob.kind,{
@@ -80,6 +95,7 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
      end
    end
  end
+ animals:ensureAnimals()
  local registry=Registry.new(room,{
   botCount=botCount,
   randomString=function(length)
@@ -114,12 +130,13 @@ function Local.new(opts)
   "separate LOCAL Lua data directory required")
  -- Validate difficulty and every enabled mod before creating accounts,
  -- directories, AI actors or the generated world.
- local profile=Mods.build(opts.difficulty or "normal",
-   Mods.ids(opts.modIds or ""),opts.modDir or "server-lua/mods")
+ local map
  if opts.mapId and opts.mapId~="" and opts.mapId~="classico" then
-  profile.map=Maps.load(opts.mapDir or "server-lua/maps",opts.mapId)
-  Maps.apply(profile.config,profile.map)
+  map=Maps.load(opts.mapDir or "server-lua/maps",opts.mapId)
  end
+ local profile=Mods.build(opts.difficulty or "normal",
+   Mods.ids(opts.modIds or ""),opts.modDir or "server-lua/mods",map)
+ profile.map=map
  local now=opts.nowMs or stamp
  local entropy=Random.bytes(4)
  local a,b,c,d=entropy:byte(1,4)
