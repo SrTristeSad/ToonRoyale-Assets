@@ -93,7 +93,14 @@ player.x=700;player.y=710
 room.nowMs=151000
 assert(not room:checkPortalCrossing(player))
 player.x=900;player.y=850
-assert(room:checkPortalCrossing(player) and player.spaceId=="mod-sala-gelo")
+local crossing=room:checkPortalCrossing(player)
+assert(crossing and player.spaceId=="mod-sala-gelo",
+ "generic door failed: state="..tostring(player.spaceId)
+ .." cooldown="..tostring(player.nextPortalAt)
+ .." armed="..tostring(player.portalInside)
+ .." at="..tostring(room.nowMs)
+ .." destination="..tostring(room.mapSpaces:destination(
+   "mod-sala-metal","porta-gelo",35)))
 assert(client:apply("j",packets[#packets].args))
 assert(client.space.visual.floor=="ice")
 server:close()
