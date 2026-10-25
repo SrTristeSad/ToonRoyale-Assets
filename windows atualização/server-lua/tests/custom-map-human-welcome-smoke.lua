@@ -11,7 +11,7 @@ local map=Maps.load("server-lua/maps","bunker-e-cavernas")
 local function joined(room)
  local peer={}
  local received
- local player={send=function(self,name,info)
+ local player={id="human-test",send=function(self,name,info)
   assert(name=="A")
   received=info
  end}
