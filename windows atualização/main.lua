@@ -722,13 +722,14 @@ homeAction=function(action)
     home:setStatus("")
   elseif action=="create" then
     -- The only path that can create a private server is an explicit click.
-    if home.screen~="play" or home.starting or home.hosting then return end
+    if home.screen~="create" or home.starting or home.hosting then return end
     if client then client:close();client=nil end
     home:setStatus("Iniciando servidor local sem terminal...")
     local ok,err=hosted:start(home.serverMode,home.vpnIP,
       home.botsEnabled and home.botCount or 0,home.difficulty,home.modIds,home.mapId)
     if ok then
       home.starting=true;home.hosting=false
+      home.screen="play"
       home.hostCode="";home.hostAddress=""
     else
       home.starting=false
