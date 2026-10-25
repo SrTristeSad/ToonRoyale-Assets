@@ -214,7 +214,17 @@ function World:apply(name,args)
     end
     return true
   elseif name=="j" then
-    if args[1]=="add-wall" then
+    if args[1]=="remove-wall" then
+      local payload=args[4]
+      if not self.map or type(payload)~="table" or
+        not self.space or self.spaceId~=payload.spaceId or
+        type(self.space.obstacles)~="table" or
+        not number(payload.index) or payload.index%1~=0 or
+        payload.index<4 or payload.index>#self.space.obstacles or
+        self.space.obstacles[payload.index].material~="wood" then return false end
+      table.remove(self.space.obstacles,payload.index)
+      return true
+    elseif args[1]=="add-wall" then
       local payload=args[4]
       if not self.map or type(payload)~="table" or
         type(payload.spaceId)~="string" or type(payload.rect)~="table" or
