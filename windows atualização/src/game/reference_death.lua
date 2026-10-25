@@ -106,7 +106,8 @@ function Death:drawChoices(width,height,waiting,message)
   gfx.setColor(1,0.78,0.55)
   gfx.printf(message,365,339,550,"center")
  end
- local mx,my=scaleToWindow(love.mouse.getPosition())
+ local px,py=love.mouse.getPosition()
+ local mx,my=scaleToWindow(px,py,width,height)
  for _,entry in ipairs({
   {id="back",label=waiting and "RETORNO SOLICITADO" or "VOLTAR A PARTIDA"},
   {id="exit",label="SAIR DA SALA"}
