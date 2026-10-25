@@ -22,7 +22,7 @@ function Structures.target(structure,players,ais)
     end
   end
   for _,player in ipairs(players) do
-    if player.alive and player~=owner
+    if player.alive and (player.spaceId or "surface")=="surface" and player~=owner
       and not (player.skin and jsTruth(player.skin.antiTurret))
       and not (owner and jsTruth(owner.team) and player.team==owner.team)
       and not (player.skin and jsTruth(player.skin.invisTimer)
