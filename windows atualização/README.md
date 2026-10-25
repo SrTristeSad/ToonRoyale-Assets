@@ -102,23 +102,37 @@ Convites públicos exigem DNS, HTTPS/WSS, certificados válidos e o gateway V2 j
 
 Selecione o nível na tela **Criar minha sala**. O nível pertence à sala, não à conta do jogador. O Normal mantém todas as regras tradicionais.
 
-## Instalar mapas e mods após extrair o jogo
+## Mapas e mods — instalação sem arquivos BAT
 
-Não é necessário recompilar. Os instaladores estão na mesma pasta de `MOO-IO.vbs`:
+O launcher do Windows é apenas **`MOO-IO.vbs`**. Não existem mais
+atalhos `.bat` de instalação nem executáveis Node para hospedar salas.
 
-1. Para instalar um **mapa personalizado JSON**, arraste o arquivo para **`INSTALAR-MAPA.bat`**.
-2. Para instalar um **mod de regras JSON** (animais, recursos, dificuldade etc.), arraste o arquivo para **`INSTALAR-MOD.bat`**.
-3. Abra **Jogar → Configurar minha sala** para atualizar os mapas. Escolha o mapa desejado e marque os mods de regras desejados separadamente.
+Para instalar conteúdo **sem recompilar**:
 
-O instalador copia apenas JSON com nome e ID válidos, respeita limites de tamanho e não substitui arquivos existentes. O motor ainda valida integralmente campos, coordenadas, materiais, colisões e alterações antes de criar a sala. Não execute scripts Lua, EXEs ou arquivos de origem desconhecida para instalar mapas. Os diretórios de instalação são `server-lua/mods/maps/` e `server-lua/mods/`.
+- **Mapa personalizado JSON**: copie para `server-lua/mods/maps/`.
+- **Mod de regras ou espécies JSON**: copie para `server-lua/mods/`.
+- **Sprite animado PNG**: copie para `assets/custom/img/animals/animations/`.
+- **Sprite estático de uma espécie PNG**: copie para `assets/custom/img/animals/`.
 
-O modo **Normal** sem modificações continua usando as regras clássicas. Os mapas personalizados e seus mods de regras são carregados somente pela sala Lua local escolhida; o servidor V2 não é alterado.
+Abra **Jogar → Configurar minha sala → F5** para recarregar a lista.
+A tela de mapas funciona como a de mods: clique para ativar, clique de
+novo para desmarcar. Só um mapa fica ativo por sala. O servidor verifica
+dependências entre mapas e mods e recusa arquivos inválidos.
+
+Para instalação com verificações adicionais, as ferramentas de desenvolvimento
+continuam disponíveis em `scripts/import-json-pack.ps1` e
+`scripts/import-animation.ps1`, executadas explicitamente no PowerShell.
+Não execute código recebido como mod. Modificações aceitas são dados JSON
+e imagens PNG.
+
+O modo Normal sem modificações preserva as regras tradicionais e não
+precisa de mapas adicionais.
 
 ## Animações opcionais para mobs (LÖVE / spritesheet)
 
 O jogo aceita spritesheets PNG para **parado, andando, atacando, ferido e morte** em qualquer mapa personalizado. Nenhum desses estados é obrigatório: um mob sem configuração, sem PNG instalado ou com clipes ausentes usa o sprite estático existente. As animações são apenas visuais; velocidade, colisões, dano, IA, recompensas e respawn continuam no servidor Lua.
 
-1. Arraste a spritesheet PNG para **`INSTALAR-ANIMACAO.bat`** na pasta extraída do jogo (ou copie para `assets/custom/img/animals/animations/`).
+1. Copie a spritesheet PNG para `assets/custom/img/animals/animations/` na pasta extraída do jogo.
 2. No manifesto `server-lua/mods/maps/ID.json`, acrescente `animalAnimations` com o ID do animal, `sheet`, `frameWidth`, `frameHeight` e apenas os clipes desejados.
 3. Crie uma nova sala com esse mapa. O cliente usará os clipes que encontrar e manterá o PNG original para os demais mobs e situações.
 
@@ -135,7 +149,7 @@ O menu **Jogar → Configurar minha sala → Mods** aceita agora dois exemplos:
 
 **Mapa de demonstração:** selecione **Reserva de Criaturas (mod)** e, na lista de mods, ative **Especies Adicionais**. A reserva usa os IDs novos 15 e 16 no seu subsolo. Sem o mod de espécies, o núcleo recusa a criação dessa sala para evitar monstros incorretos.
 
-**Para criar seus proprios monstros:** arraste o manifesto JSON com `newAnimals` e `animalAnimations` para `INSTALAR-MOD.bat`. Arraste cada PNG de animacao para `INSTALAR-ANIMACAO.bat`. Se tiver um PNG **estatico** da nova especie, use `INSTALAR-MOB-ARTE.bat` e declare seu nome (sem .png) em `newAnimals[].src`. Isso instala na pasta `assets/custom/img/animals/`. Os dados de animacao sao opcionais, independentes do mapa e podem ser combinados com mods de dificuldade/recursos. Em multiplayer, cada cliente instala os mesmos PNGs para ver as artes, sem executar codigo remoto.
+**Para criar seus próprios monstros:** copie o manifesto JSON com `newAnimals` e `animalAnimations` para `server-lua/mods/`, o PNG de animação para `assets/custom/img/animals/animations/` e, se necessário, o PNG **estático** para `assets/custom/img/animals/`. Declare o nome do sprite (sem `.png`) em `newAnimals[].src`. Os dados de animacao sao opcionais, independentes do mapa e podem ser combinados com mods de dificuldade/recursos. Em multiplayer, cada cliente instala os mesmos PNGs para ver as artes, sem executar codigo remoto.
 
 As novas especies usam IDs **15 a 63** e nao alteram os 15 tipos originais. Para colocar uma especie numa sala de mapa personalizado, declare `spaces[].mobs[].kind` com o ID e selecione o mod correspondente; sem ele, o servidor rejeita a sala em vez de converter silenciosamente o mob. O modo MB classico e os servidores V2 ficam separados.
 
