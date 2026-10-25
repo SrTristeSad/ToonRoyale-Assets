@@ -1,0 +1,15 @@
+# Generated Windows release, source export and temporary LÖVE builds.
+/dist/
+/runtime/
+/ci-ui-captures/
+/server-lua/data/
+*.log
+*.tmp
+*.bak
+*.luac
+*.love
+# ZIPs are released as GitHub Actions artifacts, not committed to source.
+*.zip
+# Editor-local state.
+.vscode/
+.idea/
