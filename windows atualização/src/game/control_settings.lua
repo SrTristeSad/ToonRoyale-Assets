@@ -170,8 +170,10 @@ end
 function Settings:isOpen()return self.open end
 function Settings:show()self.open=true;self.waiting=nil end
 function Settings:hide()self.open=false;self.waiting=nil end
+local uiFonts={}
 local function font(n)
- return love.graphics.newFont(n)
+ if not uiFonts[n] then uiFonts[n]=love.graphics.newFont(n) end
+ return uiFonts[n]
 end
 local function inRect(x,y,r)
  return x>=r[1] and x<r[1]+r[3] and y>=r[2] and y<r[2]+r[4]
@@ -273,6 +275,12 @@ function Settings:draw(joy)
  love.graphics.setColor(0.8,0.87,0.78)
  local dev=joy and (Pad.isMapped(joy) and "Gamepad SDL" or "Joystick USB generico") or "Nenhum joystick conectado"
  love.graphics.print(dev.." | Clique em um comando para remapear. ESC cancela a captura.",550,654)
+ if joy then
+  local lx,ly=self:axis(joy,"leftx"),self:axis(joy,"lefty")
+  local rx,ry=self:axis(joy,"rightx"),self:axis(joy,"righty")
+  love.graphics.setColor(0.68,0.88,0.58)
+  love.graphics.print(string.format("Teste ao vivo  Mover: %.2f / %.2f  Mirar: %.2f / %.2f",lx,ly,rx,ry),555,678)
+ end
  love.graphics.pop()
 end
 return Settings
