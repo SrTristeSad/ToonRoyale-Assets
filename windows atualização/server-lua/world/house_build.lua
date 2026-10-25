@@ -35,6 +35,7 @@ local function prefab(index,x,y)
  local id="casa-"..index
  local indoor={
   id=id,type="interior",width=1400,height=1200,
+  visual={floor="wood",wall="wood",tileSize=112,name="Casa"},
   obstacles={
    {x=100,y=100,width=1000,height=80},
    {x=100,y=100,width=80,height=1000},
