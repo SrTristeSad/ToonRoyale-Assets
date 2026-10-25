@@ -470,8 +470,13 @@ local function drawMapHelp(world)
   love.graphics.setColor(0.88,0.91,0.72,1)
   local mobTotal=(tonumber(settings.surfaceAnimals) or 0)
     +(tonumber(settings.interiorAnimals) or 0)
+  local modName=""
+  if mods>0 and type(settings.mods[1])=="string" then
+   modName=" ("..settings.mods[1]:sub(1,18)
+     ..(mods>1 and " +"..(mods-1) or "")..")"
+  end
   love.graphics.print("MODO: "..settings.difficulty:upper()..
-    "  |  MODS: "..mods.."  |  ANIMAIS: "..mobTotal,25,176)
+    "  |  MODS: "..mods..modName.."  |  ANIMAIS: "..mobTotal,25,176)
  end
  if near then
   local player=world:localPlayer()
@@ -512,6 +517,20 @@ local function drawMapHelp(world)
   love.graphics.printf(world.mapMessage,w/2-276,h-91,552,"center")
  end
 end
+-- Doorways open visually as the avatar walks into them. The server
+-- alone changes floors once it validates the crossing.
+function View.doorOpenRatio(distance)
+ if type(distance)~="number" or distance~=distance then return 0 end
+ return math.max(0,math.min(1,(185-distance)/110))
+end
+local function doorProgress(world,portal)
+ local player=world:localPlayer()
+ if not player or type(player.x)~="number"
+  or type(player.y)~="number" then return 0 end
+ local dx,dy=player.x-portal.x,player.y-portal.y
+ return View.doorOpenRatio(math.sqrt(dx*dx+dy*dy))
+end
+
 local function mapPortalMarkers(world,camera,indoor)
  local area=world.space
  local portals=area and area.portals or {}
@@ -527,8 +546,18 @@ local function mapPortalMarkers(world,camera,indoor)
     love.graphics.rectangle("line",x-84*u,y-72*u,168*u,144*u,7*u,7*u)
     love.graphics.setColor(0.11,0.17,0.14,0.72)
     love.graphics.rectangle("fill",x-48*u,y-34*u,96*u,68*u)
-    love.graphics.setColor(0.66,0.76,0.58,0.9)
-    love.graphics.rectangle("line",x-48*u,y-34*u,96*u,68*u)
+    local opening=doorProgress(world,p)
+    -- The leaf swings from its left hinge as the avatar approaches.
+    love.graphics.push("all")
+    love.graphics.translate(x-48*u,y-34*u)
+    love.graphics.rotate(-opening*math.pi*0.48)
+    love.graphics.setColor(0.42,0.39,0.29,0.96)
+    love.graphics.rectangle("fill",0,0,94*u,66*u,3*u,3*u)
+    love.graphics.setColor(0.75,0.76,0.59,0.9)
+    love.graphics.rectangle("line",0,0,94*u,66*u,3*u,3*u)
+    love.graphics.setColor(0.9,0.76,0.40,1)
+    love.graphics.circle("fill",79*u,30*u,5*u)
+    love.graphics.pop()
    end
   end
  end
@@ -556,6 +585,16 @@ local function drawHouses(world,camera)
      love.graphics.rectangle("fill",x-140*u,y-125*u,280*u,250*u)
      love.graphics.setColor(0.14,0.19,0.19)
      love.graphics.rectangle("fill",x-74*u,y-55*u,148*u,110*u)
+     love.graphics.push("all")
+     love.graphics.translate(x-74*u,y-55*u)
+     love.graphics.rotate(-doorProgress(world,portal)*math.pi*0.48)
+     love.graphics.setColor(0.34,0.42,0.44)
+     love.graphics.rectangle("fill",0,0,146*u,108*u,4*u,4*u)
+     love.graphics.setColor(0.63,0.69,0.69)
+     love.graphics.rectangle("line",4*u,4*u,138*u,100*u)
+     love.graphics.setColor(0.93,0.76,0.36)
+     love.graphics.circle("fill",120*u,54*u,8*u)
+     love.graphics.pop()
    else
    -- The roof is opaque outdoors. It is absent when the player enters,
    -- revealing the separately rendered interior on the next server packet.
