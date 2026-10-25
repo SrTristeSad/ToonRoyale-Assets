@@ -15,7 +15,6 @@ local room={
 local registry=Registry.new(room,{
  randomString=function()return "1234567890123456" end,
  anticheatFactory=function()return {} end,
- onDeath=function()end,
  clanList=function()return {} end,
  leaveTribe=function(p)events[#events+1]="leave:"..p.sid end,
  forget=function(p)events[#events+1]="forget:"..p.sid end,
