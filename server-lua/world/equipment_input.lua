@@ -45,7 +45,10 @@ function Equipment.handle(ctx,player,name,args)
      local weapon=index>=0 and ctx.items.weapons[index] or nil
      if not weapon or weapon.age~=player.upgrAge then return end
      if weapon.pre~=nil and not owns(player.weapons,weapon.pre) then return end
-     player.weapons[weapon.type]=weapon.id
+     -- JS player.weapons[weapon.type] is a ZERO-BASED array write.
+     -- Lua inventory arrays are ONE-BASED: [0] would force MessagePack
+     -- to encode a MAP instead of the array expected by the Windows HUD.
+     player.weapons[weapon.type+1]=weapon.id
      player.weaponXP[weapon.type]=0
      local activeType=player.weaponIndex<9 and 0 or 1
      if weapon.type==activeType then player.weaponIndex=weapon.id end
