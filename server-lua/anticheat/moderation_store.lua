@@ -62,10 +62,10 @@ function Moderation:banEntry(ip,accountId,did)
   local kind,key=pair[1],pair[2]
   local entry=not absent(key) and self.bans[kind][key] or nil
   if entry then
-   if not absent(entry.until) and entry.until~=0 and entry.until<=now then
+   if not absent(entry["until"]) and entry["until"]~=0 and entry["until"]<=now then
     self.bans[kind][key]=nil;changed=true
-   elseif not best or (not absent(best.until) and best.until~=0 and
-      (absent(entry.until) or entry.until==0 or entry.until>best.until)) then
+   elseif not best or (not absent(best["until"]) and best["until"]~=0 and
+      (absent(entry["until"]) or entry["until"]==0 or entry["until"]>best["until"])) then
     best=entry
    end
   end
@@ -81,7 +81,7 @@ function Moderation:ban(data,by)
  local row={name=data.name,by=by and by.name or "system",
    at=isoUtc(now)}
  if data.reason and data.reason~="" then row.reason=data.reason end
- if data.until and data.until~=0 then row.until=data.until end
+ if data["until"] and data["until"]~=0 then row["until"]=data["until"] end
  for _,item in ipairs({{"ips",data.ip},{"devices",data.did},
      {"accounts",data.accountId}}) do
   if not absent(item[2]) and item[2]~="" then

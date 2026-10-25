@@ -11,6 +11,23 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Instalar interpretador Lua e LuaSocket para validacao
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.4 lua-socket
+      - name: Compilar TODOS os arquivos Lua antes de empacotar
+        run: |
+          set -euo pipefail
+          find src server-lua -type f -name '*.lua' -print0 |
+            xargs -0 -n1 luac5.4 -p
+          ! grep -Fq 'visible=false' main.lua
+          grep -Fq 't.modules.window = false' conf.lua
+      - name: Testar servidor local LC/MB, bots, login e moderacao
+        run: |
+          set -euo pipefail
+          lua5.4 server-lua/tests/local-server-boot-smoke.lua
+          lua5.4 server-lua/tests/local-api-smoke.lua
+          lua5.4 server-lua/tests/moderation-local-smoke.lua
       - name: Baixar runtime oficial LÖVE 11.5 Win64
         run: |
           set -euo pipefail
