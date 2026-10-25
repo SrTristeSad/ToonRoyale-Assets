@@ -37,5 +37,6 @@ If Not fso.FileExists(base & "\assets\custom\img\weapons\hammer_1.png") Then
   MsgBox "Pacote de imagens incompleto. Baixe o ZIP atualizado do Moo-IO que ja inclui os PNGs reais.", 16, "Moo IO"
   WScript.Quit 1
 End If
+sh.Environment("PROCESS")("MOO_IO_PROJECT_ROOT") = base
 sh.CurrentDirectory = base
 sh.Run Chr(34) & loveExe & Chr(34) & " " & Chr(34) & base & Chr(34), 1, False
