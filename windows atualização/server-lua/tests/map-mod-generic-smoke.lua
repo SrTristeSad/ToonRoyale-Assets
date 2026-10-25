@@ -76,7 +76,8 @@ assert(room.mapSpaces:get("mod-sala-gelo").visual.floor=="ice")
 assert(server.rooms.MB.room.mapSpaces:get("mod-sala-metal")==nil)
 local packets={}
 local player={id="map-mod-player",alive=true,spaceId="surface",
- x=3520,y=3520,moveDir=0,scale=35,send=function(_,name,...)
+ x=room.customMap.portals[1].x,y=room.customMap.portals[1].y,
+ moveDir=0,scale=35,send=function(_,name,...)
   packets[#packets+1]={name=name,args={...}}
  end}
 room.players[#room.players+1]=player
