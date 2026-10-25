@@ -936,6 +936,14 @@ end
 function love.gamepadpressed(joystick,button)
  if joystick~=activeGamepad() then return end
  if button=="start" then love.keypressed("escape");return end
+ if button=="b" and (phase=="menu" or pause:isOpen()) then
+  love.keypressed("escape");return
+ end
+ if button=="a" and (phase=="menu" or pause:isOpen()) then
+  local x,y=love.mouse.getPosition()
+  love.mousepressed(x,y,1)
+  return
+ end
  if phase~="playing" or pause:isOpen() or chatOpen or died then return end
  if button=="a" then love.keypressed("f")
  elseif button=="b" then love.keypressed("b")
@@ -947,6 +955,21 @@ function love.gamepadpressed(joystick,button)
  elseif button=="dpright" then love.keypressed("2")
  elseif button=="dpdown" then love.keypressed("3")
  elseif button=="dpleft" then love.keypressed("4")
+ end
+end
+function love.gamepadaxis(joystick,axis,value)
+ -- Menu navigation uses the existing mouse hover/click controls, keeping
+ -- native keyboard and pointer support intact.
+ if joystick~=activeGamepad() or phase~="menu" then return end
+ if axis=="leftx" or axis=="lefty" then
+  local deadzone=0.55
+  if math.abs(value)<deadzone then return end
+  local x,y=love.mouse.getPosition()
+  local w,h=love.graphics.getDimensions()
+  local delta=value>0 and 35 or -35
+  if axis=="leftx" then x=math.max(0,math.min(w-1,x+delta))
+  else y=math.max(0,math.min(h-1,y+delta)) end
+  love.mouse.setPosition(x,y)
  end
 end
 function love.gamepadreleased(joystick,button)
