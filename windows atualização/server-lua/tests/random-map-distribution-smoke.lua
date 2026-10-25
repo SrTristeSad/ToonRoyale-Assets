@@ -75,8 +75,9 @@ assert(forest.portals[1].x and forest.portals[2].x)
 local older=Maps.load("server-lua/maps","mapa-de-exemplo")
 local authored=World.new({config=Base,random=Maps.random(721)})
 authored:loadMap(older)
-assert(older.surface[1].x==1200 and older.surface[1].y==1300 or
- older.mode=="authored", "authored map unexpectedly converted to generated")
+assert(older.mode=="authored"
+ and older.surface[1].x==1200 and older.surface[1].y==1800,
+ "authored map objects were incorrectly converted to generated")
 -- Prevent "random" placement from being used to smuggle fixed coordinates
 -- that could reveal all resources via a mod or bypass the collision rules.
 local function reject(map,edit)
