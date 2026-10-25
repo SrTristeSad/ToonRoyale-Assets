@@ -21,6 +21,17 @@ local function distance(x1,y1,x2,y2)
  return math.sqrt(a*a+b*b)
 end
 local function round(v) return math.floor(v+0.5) end
+-- Higher difficulties anticipate moving targets rather than follow old positions.
+-- The classic room path below never calls this function.
+function AI.predictiveDirection(actor,target,difficulty)
+ local vx=type(target.xVel)=="number" and target.xVel or 0
+ local vy=type(target.yVel)=="number" and target.yVel or 0
+ local d=distance(actor.x,actor.y,target.x,target.y)
+ local horizon=math.min(difficulty=="extremo" and 350 or 240,math.max(100,d*0.3))
+ local mx=math.max(-150,math.min(150,vx*horizon))
+ local my=math.max(-150,math.min(150,vy*horizon))
+ return Angles.atan2(target.y+my-actor.y,target.x+mx-actor.x)
+end
 local function randInt(opts,min,max)
  assert(type(opts.randInt)=="function","original UTILS.randInt source required")
  return opts.randInt(min,max)
@@ -179,6 +190,9 @@ function AI:update(delta)
       if self.index==4 and (difficulty=="dificil" or difficulty=="extremo") then
         self.targetDir=Pack.direction(self,self.chargeTarget,opts.ais,difficulty)
           or dir(self.chargeTarget.x,self.chargeTarget.y,self.x,self.y)
+      elseif self.hostile and (difficulty=="dificil" or difficulty=="extremo") then
+        self.targetDir=AI.predictiveDirection(self,self.chargeTarget,difficulty)
+
       else
         self.targetDir=dir(self.chargeTarget.x,self.chargeTarget.y,self.x,self.y)
       end
