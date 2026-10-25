@@ -119,7 +119,7 @@ function Host:start(mode,requestedIP,requestedBots,difficulty,modIds)
   -- CreateProcess. Invalid mods never leave half-initialized sessions behind.
   local valid,modError=pcall(function()
     local Mods=require("server-lua.world.room_mods")
-    Mods.build(difficulty,Mods.ids(modIds),root.."/server-lua/mods")
+    Mods.build(difficulty,Mods.ids(modIds),"server-lua/mods")
   end)
   if not valid then
     return false,"Nao foi possivel criar sala com esses mods: "..tostring(modError)
