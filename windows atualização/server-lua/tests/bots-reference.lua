@@ -69,7 +69,8 @@ local tick=makeGame()
 tick.b:tick(100);tick.b:tick(170)
 dump("TICK_270",tick)
 for _,n in ipairs({"null","", "0",0,8,9,-1,1.5,"03",true}) do
- local raw=n=="null" and nil or n
+ local raw=n
+ if n=="null" then raw=nil end
  local ok,result=pcall(Bots.parseBotCount,raw)
  print("COUNT|"..(raw==nil and "null" or tostring(raw))..
   "|"..(ok and tostring(result) or "error"))
