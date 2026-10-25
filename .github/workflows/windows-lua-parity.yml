@@ -40,6 +40,52 @@ jobs:
           set -euo pipefail
           find server-lua -type f -name '*.lua' -print0 | xargs -0 -n1 luac5.4 -p
           echo 'PASS sintaxe dos módulos servidor LOCAL Lua'
+      - name: Processo LOCAL Lua completo - HTTP, ticket, WebSocket, io-init e shutdown
+        run: |
+          set -euo pipefail
+          temp_dir="$(mktemp -d)"
+          export MOO_IO_BIND_IP=127.0.0.1 PORT=18977 MOO_IO_ROOM_CODE=testing42
+          export MOO_IO_LUA_DATA_DIR="$temp_dir" MOO_IO_BOT_COUNT=2
+          lua5.4 server-lua/run.lua > "$temp_dir/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; rm -rf "$temp_dir"' EXIT
+          ready=0
+          for i in $(seq 1 100); do
+            if python3 -c 'import urllib.request;urllib.request.urlopen("http://127.0.0.1:18977/ping",timeout=1).read()' 2>/dev/null; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then break; fi
+            sleep 0.25
+          done
+          if [ "$ready" -ne 1 ]; then cat "$temp_dir/server.log";exit 1;fi
+          if ! python3 server-lua/tests/local-server-e2e.py; then
+            cat "$temp_dir/server.log"
+            exit 1
+          fi
+          wait "$server_pid"
+      - name: Cliente LÖVE real contra servidor Lua - handshake M C D
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y love xvfb xauth
+          tmp="$(mktemp -d)"
+          export MOO_IO_BIND_IP=127.0.0.1 PORT=18979 MOO_IO_ROOM_CODE=testing42
+          export MOO_IO_LUA_DATA_DIR="$tmp" MOO_IO_BOT_COUNT=0
+          lua5.4 server-lua/run.lua > "$tmp/server.log" 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true; rm -rf "$tmp"' EXIT
+          ready=0
+          for i in $(seq 1 100); do
+            if python3 -c 'import urllib.request;urllib.request.urlopen("http://127.0.0.1:18979/ping",timeout=1).read()' 2>/dev/null; then ready=1;break;fi
+            if ! kill -0 "$pid" 2>/dev/null; then break;fi
+            sleep 0.25
+          done
+          if [ "$ready" -ne 1 ]; then cat "$tmp/server.log";exit 1;fi
+          if ! timeout 45 xvfb-run -a env MOOQUEST_INTEGRATION=guest love . > "$tmp/client.log" 2>&1; then
+            cat "$tmp/client.log";cat "$tmp/server.log";exit 1
+          fi
+          grep -q "E2E PASS:" "$tmp/client.log" || { cat "$tmp/client.log";exit 1; }
+          cat "$tmp/client.log"
       - name: Alvo correto - servidor local Node usado pelo jogo Windows
         run: |
           set -euo pipefail
@@ -479,52 +525,6 @@ jobs:
         run: |
           set -euo pipefail
           lua5.4 server-lua/tests/local-api-smoke.lua
-      - name: Processo LOCAL Lua completo - HTTP, ticket, WebSocket, io-init e shutdown
-        run: |
-          set -euo pipefail
-          temp_dir="$(mktemp -d)"
-          export MOO_IO_BIND_IP=127.0.0.1 PORT=18977 MOO_IO_ROOM_CODE=testing42
-          export MOO_IO_LUA_DATA_DIR="$temp_dir" MOO_IO_BOT_COUNT=2
-          lua5.4 server-lua/run.lua > "$temp_dir/server.log" 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true; rm -rf "$temp_dir"' EXIT
-          ready=0
-          for i in $(seq 1 100); do
-            if python3 -c 'import urllib.request;urllib.request.urlopen("http://127.0.0.1:18977/ping",timeout=1).read()' 2>/dev/null; then
-              ready=1
-              break
-            fi
-            if ! kill -0 "$server_pid" 2>/dev/null; then break; fi
-            sleep 0.25
-          done
-          if [ "$ready" -ne 1 ]; then cat "$temp_dir/server.log";exit 1;fi
-          if ! python3 server-lua/tests/local-server-e2e.py; then
-            cat "$temp_dir/server.log"
-            exit 1
-          fi
-          wait "$server_pid"
-      - name: Cliente LÖVE real contra servidor Lua - handshake M C D
-        run: |
-          set -euo pipefail
-          sudo apt-get install -y love xvfb xauth
-          tmp="$(mktemp -d)"
-          export MOO_IO_BIND_IP=127.0.0.1 PORT=18979 MOO_IO_ROOM_CODE=testing42
-          export MOO_IO_LUA_DATA_DIR="$tmp" MOO_IO_BOT_COUNT=0
-          lua5.4 server-lua/run.lua > "$tmp/server.log" 2>&1 &
-          pid=$!
-          trap 'kill "$pid" 2>/dev/null || true; rm -rf "$tmp"' EXIT
-          ready=0
-          for i in $(seq 1 100); do
-            if python3 -c 'import urllib.request;urllib.request.urlopen("http://127.0.0.1:18979/ping",timeout=1).read()' 2>/dev/null; then ready=1;break;fi
-            if ! kill -0 "$pid" 2>/dev/null; then break;fi
-            sleep 0.25
-          done
-          if [ "$ready" -ne 1 ]; then cat "$tmp/server.log";exit 1;fi
-          if ! timeout 45 xvfb-run -a env MOOQUEST_INTEGRATION=guest love . > "$tmp/client.log" 2>&1; then
-            cat "$tmp/client.log";cat "$tmp/server.log";exit 1
-          fi
-          grep -q "E2E PASS:" "$tmp/client.log" || { cat "$tmp/client.log";exit 1; }
-          cat "$tmp/client.log"
       - name: Servidor de rede LuaSocket de verdade
         run: |
           set -euo pipefail
