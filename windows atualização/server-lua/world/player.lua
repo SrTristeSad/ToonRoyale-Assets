@@ -146,6 +146,9 @@ function Player:kill(doer,source,projectile)
  })
 end
 function Player:gather()
+ if self.spaceId and self.spaceId~="surface" then
+  return require("server-lua.world.indoor_combat").melee(self)
+ end
  local items=self.room.items
  return Gather.step(self,{
    config=self.room.config,
