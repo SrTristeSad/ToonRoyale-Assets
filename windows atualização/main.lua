@@ -516,7 +516,7 @@ function love.draw()
     local state=client and client.state or "idle"
     home:draw(state,client and (client.error or client.status) or "",true)
     if home.roomOverlay then home:drawRoomOverlay() end
-    if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite()) end
+    if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world) end
     return
   end
   if client and client.state=="spawn_confirmed" and not died
@@ -544,7 +544,7 @@ function love.draw()
       love.event.quit(0)
     end
     if pause:isOpen() then
-      pause:draw(home.showGrid,home.fullscreen,home:roomInvite())
+      pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world)
       return
     end
     -- Only show missing PNG diagnostics on explicit developer opt-in.
@@ -573,7 +573,7 @@ function love.draw()
   love.graphics.printf("Carregando mundo e jogadores...",0,h/2-20,w,"center")
   love.graphics.setColor(0.68,0.75,0.73)
   love.graphics.printf(client and client.status or "Aguardando servidor...",40,h/2+26,w-80,"center")
-  if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite()) end
+  if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world) end
 end
 
 local menuAction
