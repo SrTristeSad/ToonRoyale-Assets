@@ -46,6 +46,17 @@ try {
     x:1070,y:1000,scale:20})},270],
   ["STUCK",(p)=>{p.moveDir=1},1100]
  ]){const x=makeGame(prepare);x.b.decide(x.a,elapsed);dump(name,x)}
+ // Node does not persist the temporary heading between wander decisions.
+ Math.random=()=>0.75;
+ const repeat=makeGame();
+ repeat.b.decide(repeat.a,270);
+ const first={...repeat.a.wander};
+ repeat.a.targetUntil=0;
+ repeat.b.decide(repeat.a,270);
+ console.log("WANDER_REPEAT|"+number(first.x)+"|"+number(first.y)+
+  "|"+number(repeat.a.wander.x)+"|"+number(repeat.a.wander.y)+
+  "|"+String(repeat.a.heading));
+ Math.random=()=>0.5;
  const dead=makeGame(p=>p.alive=false);
  dead.b.decide(dead.a,2200);dead.b.decide(dead.a,2200);
  dump("RESPAWN",dead);
