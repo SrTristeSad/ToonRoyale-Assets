@@ -54,6 +54,82 @@ valores repetidos por dois mods diferentes são rejeitados como conflito.
 - `floresta-densa`: mais árvores, arbustos, pedras e ouro.
 - `lobos-em-matilha`: cooperação de lobos em qualquer dificuldade.
 
+## Animações independentes e novas espécies (sem precisar criar mapas)
+
+Modificações JSON em `server-lua/mods/ID.json` podem agora conter **`animalAnimations`** e/ou **`newAnimals`** mesmo sem a seção `changes` de regras tradicionais. Assim, o mesmo mod funciona sobre o mapa clássico da **sala Lua LC**, sobre qualquer outro mapa personalizado e pode ser combinado com alterações de dificuldade/recursos. **A sala MB clássica e os servidores V2 não são alterados.**
+
+### Animações independentes
+
+Exemplo: `animacao-lobo.json`, que acrescenta animações ao lobo original (ID `4`) sem modificar sua física ou precisar de um mapa.
+
+```json
+{
+  "schemaVersion": 1,
+  "id": "animacao-lobo",
+  "name": "Animacao Independente do Lobo",
+  "requiresClient": "base",
+  "animalAnimations": {
+    "4": {
+      "sheet": "lobo_animado.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "idle": {"row": 0, "frames": 4, "fps": 6},
+      "walk": {"row": 1, "frames": 6, "fps": 10},
+      "attack": {"row": 2, "frames": 4, "fps": 12, "loop": false}
+    }
+  }
+}
+```
+
+Todos os estados são opcionais: `idle`, `walk`, `attack`, `hurt`, `death`. O PNG pode ser instalado em `assets/custom/img/animals/animations/` com `INSTALAR-ANIMACAO.bat`. Se a imagem não existir no cliente, o mob continua com a arte estática original. Mods de animação usam o mesmo carregamento de mods de regras no menu da sala.
+
+### Espécies novas
+
+Exemplo: `novas-especies.json`, que registra dois mobs **15** e **16** (sem reutilizar ou alterar o tipo de animal original). O núcleo aceita **IDs 15 a 63**, até 24 definições novas por mod e até 30 animais configurados de cada espécie no mundo inicial:
+
+```json
+{
+  "schemaVersion": 1,
+  "id": "criatura-exemplo",
+  "name": "Criatura Exemplo",
+  "requiresClient": "base",
+  "newAnimals": {
+    "15": {
+      "name": "Lobo Cinzento",
+      "src": "lobo_cinzento",
+      "health": 510,
+      "scale": 82,
+      "speed": 0.0012,
+      "turnSpeed": 0.002,
+      "weightM": 0.5,
+      "hostile": true,
+      "chargePlayer": true,
+      "dmg": 14,
+      "viewRange": 950,
+      "killScore": 650,
+      "drop": ["food", 90],
+      "desired": 3
+    }
+  },
+  "animalAnimations": {
+    "15": {
+      "sheet": "lobo_cinzento.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "idle": {"row": 0, "frames": 4, "fps": 6},
+      "walk": {"row": 1, "frames": 6, "fps": 10},
+      "attack": {"row": 2, "frames": 4, "fps": 12}
+    }
+  }
+}
+```
+
+O campo `src` identifica o PNG estático `lobo_cinzento.png` em `assets/custom/img/animals/`; `sheet` identifica uma spritesheet em `assets/custom/img/animals/animations/`. Se faltar arte personalizada, o novo mob continua visível com a imagem padrão de lobo. Esses arquivos são opcionais, mas cada jogador deve instalá-los para ver a personalização. **Nenhum PNG é transmitido automaticamente pelo servidor.**
+
+O servidor valida os atributos, os limites de dano/vida/velocidade, recompensas e quantidades, cria mobs reais usando a IA e o combate existentes, e anuncia as espécies novas no pacote de conexão dos clientes. A IA é escolhida pelos atributos declarados (hostilidade, perseguição, velocidade), **não por scripts Lua arbitrários**.
+
+Quando um mapa personalizado declara `spaces[].mobs[].kind` com ID de **15 a 63**, esse mob só aparece se a espécie tiver sido registrada em algum mod selecionado; o servidor rejeita salas com espécie desconhecida. Se dois mods tentarem registrar a mesma espécie ou animar o mesmo ID, o servidor rejeita o conflito. Não há override silencioso de conteúdo.
+
 ## Mapas de mods
 
 Um mapa de mod descreve regiões e passagens com o mesmo contrato do núcleo (pisos, paredes, dimensões, colisões, animais e tiles). Não precisa seguir nomes como `caverna`, `bunker` ou `casa`. Exemplo incluso: `server-lua/mods/maps/refugio-personalizado.json`. O catálogo do menu encontra esses mapas junto aos de `server-lua/maps/` e indica **MOD INSTALADO**. Consulte `server-lua/maps/README.md` para o formato e os limites de segurança.
