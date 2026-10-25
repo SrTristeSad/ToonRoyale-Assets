@@ -120,6 +120,26 @@
           "height": 175,
           "material": "metal",
           "label": "Portao reforcado"
+        },
+        {
+          "id": "mina-pedra",
+          "kind": "node",
+          "x": 550,
+          "y": 930,
+          "label": "Minerio renovavel",
+          "resource": "stone",
+          "amount": 8,
+          "charges": 3,
+          "cooldownMs": 1500
+        },
+        {
+          "id": "interruptor-portao",
+          "kind": "switch",
+          "x": 690,
+          "y": 880,
+          "label": "Abrir ou fechar portao",
+          "target": "portao-metal",
+          "cooldownMs": 500
         }
       ]
     },
