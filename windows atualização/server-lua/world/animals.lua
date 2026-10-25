@@ -168,6 +168,27 @@ function Animals:ensureAnimals()
      self:spawn(pos.x,pos.y,self:randomFloat(-math.pi,math.pi),entry.index,overrides)
    end
  end
+ -- Replenish authored dungeon spawns just as the original game replenishes
+ -- its surface animal plan. The key follows a living mob when it moves;
+ -- movement never creates a duplicate at the original coordinates.
+ if self.mapSpaces then
+  for zoneId,zone in pairs(self.mapSpaces.zones or {}) do
+   if zoneId~="surface" then
+    for i,mob in ipairs(zone.mobs or {}) do
+     local key=zoneId..":"..i
+     local present=false
+     for _,ai in ipairs(self.ais) do
+      if ai.active and ai.mapSpawnId==key then present=true;break end
+     end
+     if not present then
+      self:spawn(mob.x,mob.y,0,mob.kind,{
+       spaceId=zoneId,startX=mob.x,startY=mob.y,mapSpawnId=key
+      })
+     end
+    end
+   end
+  end
+ end
  return self.ais
 end
 return Animals
