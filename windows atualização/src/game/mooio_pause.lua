@@ -15,7 +15,8 @@ local rects={
   rootInvite={410,363,460,53},
   grid={410,246,460,58},
   fullscreen={410,316,460,58},
-  back={410,386,460,58},
+  back={410,454,460,52},
+  info={410,386,460,58},
   copyInvite={410,359,460,58},
   inviteBack={410,431,460,52},
   confirm={410,404,216,56},
@@ -79,7 +80,7 @@ function Pause:keypressed(key)
     if self.page=="invite" then
       self.page="root"
       return "back"
-    elseif self.page=="confirm" or self.page=="settings" then
+    elseif self.page=="confirm" or self.page=="settings" or self.page=="info" then
       self.page="root"
       self.confirmQuit=false
     else
@@ -108,7 +109,10 @@ function Pause:click(screenX,screenY)
   elseif self.page=="settings" then
     if which("grid") then return "toggle_grid" end
     if which("fullscreen") then return "toggle_fullscreen" end
+    if which("info") then self.page="info";return "info" end
     if which("back") then self.page="root";return "back" end
+  elseif self.page=="info" then
+    if which("back") then self.page="settings";return "back" end
   elseif self.page=="invite" then
     if which("copyInvite") then return "copy_invite" end
     if which("inviteBack") then self.page="root";return "back" end
@@ -122,7 +126,7 @@ function Pause:click(screenX,screenY)
   end
   return nil
 end
-function Pause:draw(grid,fullscreen,inviteText)
+function Pause:draw(grid,fullscreen,inviteText,world)
   if not self.page then return end
   local w,h=love.graphics.getDimensions()
   love.graphics.push("all")
@@ -158,6 +162,16 @@ function Pause:draw(grid,fullscreen,inviteText)
       {0.77,0.82,0.75})
     button("GRADE DO MAPA: "..(grid and "LIGADA" or "DESLIGADA"),"grid")
     button("TELA CHEIA: "..(fullscreen and "LIGADA" or "DESLIGADA"),"fullscreen")
+    button("INFORMACOES DO MAPA","info")
+    button("VOLTAR","back")
+  elseif self.page=="info" then
+    label("INFORMACOES DA PARTIDA",395,146,490,58,28)
+    local map=world and world.map
+    local settings=world and world.roomSettings
+    label("MAPA: "..(map and (map.name or map.id) or "Sem mapa personalizado"),400,231,480,40,17)
+    label("REGIAO: "..tostring(world and world.spaceId or "surface"),400,278,480,40,17)
+    label("DIFICULDADE: "..tostring(settings and settings.difficulty or "normal"),400,325,480,40,17)
+    label("MODS ATIVOS: "..tostring(settings and settings.mods and #settings.mods or 0),400,370,480,40,17)
     button("VOLTAR","back")
   elseif self.page=="invite" then
     label("CONVIDAR AMIGOS",395,146,490,58,31)
