@@ -173,13 +173,7 @@ out("MIGRATE_SOCIAL",
 local ticketNow=1792864800000
 local ticketStore=Store.open("server-lua/tests/.does-not-exist.json",{
  nowMs=function()return ticketNow end,
- randomBytes=(function()
-   local serial=0
-   return function(n)
-     serial=serial+1
-     return string.rep(string.char(97+serial%20),n)
-   end
- end)()})
+ randomBytes=function(n)return string.rep("a",n) end})
 ticketStore.data={accounts={[id]=a}}
 local trustedDid=string.rep("f",16)
 local t1=ticketStore:issueTicket({account=a,did=trustedDid,server="LC"})
@@ -234,7 +228,13 @@ out("WEEKLY_CROWNS",crowns["id-a"],crowns["id-b"],crowns["id-c"],crowns["id-d"])
 
 local authStore=Store.open("server-lua/tests/.does-not-exist.json",{
  nowMs=function()return 1792864800000 end,
- randomBytes=function(n)return string.rep("a",n) end})
+ randomBytes=(function()
+   local serial=0
+   return function(n)
+     serial=serial+1
+     return string.rep(string.char(97+serial%20),n)
+   end
+ end)()})
 authStore.data={accounts={},emails={},names={},clans={},
  social={friends={},requests={}},legacyIds={}}
 local authSaves=0
