@@ -17,6 +17,18 @@ Quando o **anfitriao morre**, o fluxo original de retorno ao menu e mantido,
 mas o fundo mostra o ultimo local da morte em vez de recentralizar o mundo.
 Sair do cliente com uma sala ainda aberta continua exigindo confirmacao.
 
+## Configuracao de controles
+
+Abra **Opcoes > Editar teclado e joystick** na tela inicial, ou
+**ESC > Configuracoes > Editar teclado e joystick** durante uma partida.
+Clique no comando e pressione uma tecla ou botao fisico para remapear.
+Analogicos genericos podem usar outros pares de eixos (1-2, 2-3, 3-4,
+4-5 ou 5-6); a tela permite escolher cada par independentemente.
+Ajuste zona morta, sensibilidade e troque os analogicos de gamepads SDL.
+As escolhas ficam salvas na pasta de dados do LÖVE e continuam na
+proxima execucao, sem afetar o servidor ou os mods. ESC cancela captura,
+Restaurar Padrao recupera o layout inicial.
+
 ## Controle USB / Bluetooth (joystick)
 
 Controles reconhecidos pelo SDL/LÖVE como gamepads (Xbox, PlayStation via
