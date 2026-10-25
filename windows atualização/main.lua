@@ -639,7 +639,7 @@ homeAction=function(action)
     if client then client:close();client=nil end
     home:setStatus("Iniciando servidor local sem terminal...")
     local ok,err=hosted:start(home.serverMode,home.vpnIP,
-      home.botsEnabled and home.botCount or 0)
+      home.botsEnabled and home.botCount or 0,home.difficulty,home.modIds)
     if ok then
       home.starting=true;home.hosting=false
       home.hostCode="";home.hostAddress=""
