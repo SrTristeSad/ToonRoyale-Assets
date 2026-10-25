@@ -77,6 +77,9 @@ jobs:
           set -euo pipefail
           lua5.4 server-lua/tests/room-mods-smoke.lua
           lua5.4 server-lua/tests/wolf-pack-smoke.lua
+          mod_data="$(mktemp -d)"
+          trap 'rm -rf "$mod_data"' EXIT
+          MOO_IO_TEST_MOD_DATA_DIR="$mod_data" lua5.4 server-lua/tests/mod-core-session-smoke.lua
       - name: Processo LOCAL Lua completo - HTTP, ticket, WebSocket, io-init e shutdown
         run: |
           set -euo pipefail
