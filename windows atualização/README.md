@@ -34,6 +34,18 @@ O instalador copia apenas JSON com nome e ID válidos, respeita limites de taman
 
 O modo **Normal** sem modificações continua usando as regras clássicas. Os mapas personalizados e seus mods de regras são carregados somente pela sala Lua local escolhida; o servidor V2 não é alterado.
 
+## Animações opcionais para mobs (LÖVE / spritesheet)
+
+O jogo aceita spritesheets PNG para **parado, andando, atacando, ferido e morte** em qualquer mapa personalizado. Nenhum desses estados é obrigatório: um mob sem configuração, sem PNG instalado ou com clipes ausentes usa o sprite estático existente. As animações são apenas visuais; velocidade, colisões, dano, IA, recompensas e respawn continuam no servidor Lua.
+
+1. Arraste a spritesheet PNG para **`INSTALAR-ANIMACAO.bat`** na pasta extraída do jogo (ou copie para `assets/custom/img/animals/animations/`).
+2. No manifesto `server-lua/mods/maps/ID.json`, acrescente `animalAnimations` com o ID do animal, `sheet`, `frameWidth`, `frameHeight` e apenas os clipes desejados.
+3. Crie uma nova sala com esse mapa. O cliente usará os clipes que encontrar e manterá o PNG original para os demais mobs e situações.
+
+O JSON é validado pelo servidor. Os clipes são selecionados usando posições recebidas, eventos de ataque e redução de vida; a morte, quando configurada, usa um efeito visual curto. **Para enxergar a animação em multiplayer, cada jogador precisa ter o mesmo PNG instalado**. A instalação do arquivo é independente da lógica do servidor.
+
+Consulte `server-lua/maps/README.md` para o exemplo JSON completo. O mundo clássico e a conexão V2 não exigem nem alteram spritesheets.
+
 ## Núcleo de mods de dados
 
 Os mods são arquivos JSON instalados em `server-lua/mods/`. Em **Jogar → Criar minha sala**, escolha primeiro **Pacífico**, **Normal**, **Difícil** ou **Extremo** e depois clique em **Escolher** para ativar os mods instalados. Também é possível informar os IDs no campo de texto.
