@@ -35,6 +35,13 @@ jobs:
         uses: actions/checkout@v4
       - name: Instalar Lua e LuaSocket
         run: sudo apt-get update -qq && sudo apt-get install -y lua5.4 lua-socket
+      - name: Verificar launcher e inclusão da réplica Lua na distribuição Windows
+        run: |
+          set -euo pipefail
+          test -f scripts/start-server-lua.ps1
+          test -f MOO-IO-Lua-Teste.vbs
+          grep -Fq "'server-lua'" scripts/build-windows.ps1
+          grep -Fq 'MOO_IO_LOCAL_SERVER_RUNTIME' src/net/mooio_paths.lua
       - name: Compilar sintaxe de todos os módulos Lua do servidor local
         run: |
           set -euo pipefail
