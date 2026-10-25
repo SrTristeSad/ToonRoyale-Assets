@@ -81,7 +81,7 @@ function Host.new()
     elapsed=0,check=0,process=nil,error=nil,progress="",lastLog="",root=nil
   },Host)
 end
-function Host:start(mode,requestedIP,requestedBots,difficulty,modIds)
+function Host:start(mode,requestedIP,requestedBots,difficulty,modIds,mapId)
   if self.state=="starting" or self.state=="ready" then return false,"Sala ja iniciada" end
   if not win then return false,"Hospedagem automatica disponivel inicialmente no Windows." end
   if ping(self.port) then return false,"Ja existe uma sala Moo IO nesta porta." end
@@ -124,7 +124,14 @@ function Host:start(mode,requestedIP,requestedBots,difficulty,modIds)
   if not valid then
     return false,"Nao foi possivel criar sala com esses mods: "..tostring(modError)
   end
-  local keys={"MOO_IO_ROOM_CODE","MOO_IO_GUI_HOST","MOO_IO_BIND_IP","MOO_IO_NETWORK_MODE","MOO_IO_BOT_COUNT","MOO_IO_DIFFICULTY","MOO_IO_MODS"}
+  mapId=mapId or ""
+  local validMap,mapError=pcall(function()
+    if mapId~="" and mapId~="classico" then
+      require("server-lua.world.map_profiles").load("server-lua/maps",mapId)
+    end
+  end)
+  if not validMap then return false,"Mapa invalido: "..tostring(mapError) end
+  local keys={"MOO_IO_ROOM_CODE","MOO_IO_GUI_HOST","MOO_IO_BIND_IP","MOO_IO_NETWORK_MODE","MOO_IO_BOT_COUNT","MOO_IO_DIFFICULTY","MOO_IO_MODS","MOO_IO_MAP_ID"}
   local originals={}
   for _,key in ipairs(keys) do originals[key]=getenv(key) end
   setenv(keys[1],self.code)
@@ -134,6 +141,7 @@ function Host:start(mode,requestedIP,requestedBots,difficulty,modIds)
   setenv(keys[5],tostring(requestedBots))
   setenv(keys[6],difficulty)
   setenv(keys[7],modIds)
+  setenv(keys[8],mapId)
   local command='powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "'..script..'"'
   local cmd=ffi.new("char[?]",#command+1,command)
   local startup=ffi.new("STARTUPINFOA[1]")
