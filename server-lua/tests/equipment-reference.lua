@@ -14,7 +14,7 @@ local cases={
  {id="upgrade-sword",n="H",args={3},upgrAge=2,weaponIndex=1},
  {id="upgrade-bow",n="H",args={9},upgrAge=6},
  {id="upgrade-pre-fail",n="H",args={2},upgrAge=8},
- {id="upgrade-pre-pass",n="H",args={2},upgrAge=8,weapons={[0]=1}},
+ {id="upgrade-pre-pass",n="H",args={2},upgrAge=8,weapons={1}},
  {id="upgrade-wall",n="H",args={20},upgrAge=3,buildIndex=3},
  {id="upgrade-mill",n="H",args={27},upgrAge=5,buildIndex=10},
  {id="upgrade-pre-item-fail",n="H",args={21},upgrAge=7},
@@ -75,7 +75,7 @@ for _,tc in ipairs(cases) do
  p.upgrAge=tc.upgrAge or 2
  p.weaponIndex=tc.weaponIndex or 0
  p.buildIndex=tc.buildIndex or -1
- p.weapons=tc.weapons or {[0]=0}
+ p.weapons=tc.weapons or {0}
  p.weaponXP={[0]=15,[1]=30}
  p.items=tc.items or {0,3,6,10}
  p.points=tc.points or 1000
@@ -97,7 +97,7 @@ for _,tc in ipairs(cases) do
      local a=select(i,...)
      if type(a)=="table" then
        if packet=="V" and select(2,...)==1 then
-         v[#v+1]=sourceArray(a)
+         v[#v+1]=itemArray(a)
        else
          v[#v+1]=itemArray(a)
        end
@@ -123,7 +123,7 @@ for _,tc in ipairs(cases) do
  Equip.handle({items=Cat,accounts=accounts},p,tc.n,tc.args)
  print(table.concat({
    "EQUIP",tc.id,p.upgrAge,p.upgradePoints,p.weaponIndex,p.buildIndex,
-   sourceArray(p.weapons),sourceArray(p.weaponXP),itemArray(p.items),
+   itemArray(p.weapons),sourceArray(p.weaponXP),itemArray(p.items),
    p.points,p.skinIndex,p.tailIndex,p.skin and p.skin.id or "~",
    p.tail and p.tail.id or "~",p.skins[57] or 0,
    p.tails[accessory.id] or 0,table.concat(events,";")
