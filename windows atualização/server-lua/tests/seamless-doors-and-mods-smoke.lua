@@ -33,7 +33,7 @@ assert(#instance.rooms.MB.room.ais==baseline,
  "MB must retain the original normal animal plan")
 local packets={}
 local player={
- id="walking-player",x=4200,y=4840,dir=0,scale=35,
+ id="walking-player",x=4200,y=4840,dir=0,moveDir=0,scale=35,
  spaceId="surface",alive=true,send=function(self,name,...)
   packets[#packets+1]={name=name,args={...}}
  end
