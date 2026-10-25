@@ -412,6 +412,12 @@ jobs:
           node server-lua/tests/object-cleanup-reference.mjs > /tmp/moo-cleanup-node.txt
           lua5.4 server-lua/tests/object-cleanup-reference.lua > /tmp/moo-cleanup-lua.txt
           diff -u /tmp/moo-cleanup-node.txt /tmp/moo-cleanup-lua.txt
+      - name: Senha LOCAL - handler Node real versus Lua
+        run: |
+          set -euo pipefail
+          node server-lua/tests/auth-password-reference.mjs > /tmp/moo-password-node.txt
+          lua5.4 server-lua/tests/auth-password-reference.lua > /tmp/moo-password-lua.txt
+          diff -u /tmp/moo-password-node.txt /tmp/moo-password-lua.txt
       - name: Reutilizacao do protocol-build.json original Node no servidor Lua
         run: |
           set -euo pipefail
