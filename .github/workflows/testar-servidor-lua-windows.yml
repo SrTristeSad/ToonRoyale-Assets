@@ -1,0 +1,86 @@
+name: Testar servidor Lua no Windows real
+on:
+  push:
+    branches: [jogo-windows-lua-completo]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lua-windows-native:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obter LÖVE 11.5 Windows x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Invoke-WebRequest -Uri "https://github.com/love2d/love/releases/download/11.5/love-11.5-win64.zip" -OutFile "$env:RUNNER_TEMP\love.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\love.zip" -DestinationPath "$env:RUNNER_TEMP\love" -Force
+          if (-not (Test-Path "$env:RUNNER_TEMP\love\love-11.5-win64\love.exe")) { throw "love.exe ausente" }
+      - name: Iniciar a hospedagem Lua no executável Windows e abrir /ping
+        shell: pwsh
+        run: |
+          $ErrorActionPreference="Stop"
+          $root=(Get-Location).Path
+          New-Item -ItemType Directory -Force -Path "$root\server-lua\data" | Out-Null
+          $env:MOO_IO_LUA_SERVER="1"
+          $env:MOO_IO_BIND_IP="127.0.0.1"
+          $env:MOO_IO_ROOM_CODE="testroom1234"
+          $env:MOO_IO_NETWORK_MODE="lan"
+          $env:MOO_IO_BOT_COUNT="2"
+          $env:MOO_IO_LUA_DATA_DIR="$root\server-lua\data"
+          $env:PORT="18391"
+          $exe="$env:RUNNER_TEMP\love\love-11.5-win64\love.exe"
+          $stdout="$env:RUNNER_TEMP\lua-win-stdout.log"
+          $stderr="$env:RUNNER_TEMP\lua-win-stderr.log"
+          $hostProcess=Start-Process -FilePath $exe -ArgumentList ('"' + $root + '"') -WorkingDirectory $root -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+          try {
+            $ok=$false
+            for ($i=0; $i -lt 160; $i++) {
+              Start-Sleep -Milliseconds 250
+              $hostProcess.Refresh()
+              if ($hostProcess.HasExited) {
+                Write-Host "ERR CODE $($hostProcess.ExitCode)"
+                if (Test-Path $stderr) { Get-Content $stderr }
+                if (Test-Path $stdout) { Get-Content $stdout }
+                throw "Servidor Lua Windows terminou inesperadamente com codigo $($hostProcess.ExitCode)"
+              }
+              try {
+                $ping=Invoke-WebRequest -Uri "http://127.0.0.1:18391/ping" -TimeoutSec 2 -UseBasicParsing
+                if ($ping.StatusCode -eq 200) {
+                  Write-Host "PING OK: $($ping.Content)"
+                  $json=$ping.Content|ConvertFrom-Json
+                  if (@($json.servers).Count -ne 2) { throw "LC/MB incorretos" }
+                  $ok=$true
+                  break
+                }
+              } catch {}
+            }
+            if (-not $ok) {
+              if (Test-Path $stderr) { Get-Content $stderr }
+              throw "Servidor Lua Windows nao respondeu /ping em 40 segundos"
+            }
+            $room=Invoke-WebRequest -Uri "http://127.0.0.1:18392/status" -TimeoutSec 2 -UseBasicParsing
+            Write-Host "CONTROL STATUS $($room.StatusCode): $($room.Content)"
+            $shutdown=Invoke-WebRequest -Uri "http://127.0.0.1:18392/shutdown" -Method POST -Headers @{"X-MooIO-Code"="testroom1234"} -TimeoutSec 2 -UseBasicParsing
+            Write-Host "SHUTDOWN $($shutdown.StatusCode)"
+            $hostProcess.WaitForExit(12000)|Out-Null
+            $hostProcess.Refresh()
+            if (-not $hostProcess.HasExited) { throw "Shutdown nao encerrou servidor Lua" }
+            if ($hostProcess.ExitCode -ne 0) { throw "Servidor saiu com codigo $($hostProcess.ExitCode)" }
+            Write-Host "NATIVE WINDOWS LUA SERVER PASS"
+          } finally {
+            if (-not $hostProcess.HasExited) { Stop-Process -Id $hostProcess.Id -Force -ErrorAction SilentlyContinue }
+            if (Test-Path $stderr) { Write-Host "==== STDERR ===="; Get-Content $stderr }
+            if (Test-Path $stdout) { Write-Host "==== STDOUT ===="; Get-Content $stdout }
+          }
+      - name: Anexar logs de execução Windows
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Real-Lua-Logs
+          path: |
+            ${{ runner.temp }}/lua-win-stdout.log
+            ${{ runner.temp }}/lua-win-stderr.log
+          if-no-files-found: warn
