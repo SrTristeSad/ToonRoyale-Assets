@@ -5,6 +5,7 @@
 -- Crab King raid boss is NOT treated as a normal animal: it requires
 -- its original dive/raid callbacks rather than an invented behavior.
 local Collision=require("server-lua.world.collision")
+local Pack=require("server-lua.world.wolf_pack")
 local Angles=require("server-lua.world.atan2")
 local DefaultConfig=require("src.game.config")
 local AI={}
