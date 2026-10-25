@@ -45,6 +45,7 @@ local Directory=require("src.net.server_directory")
 local TLS=require("src.net.tls_bridge")
 local Config=require("src.game.config")
 local Hud=require("src.game.reference_hud")
+local Pad=require("src.game.gamepad_controls")
 local Panels=require("src.game.reference_panels")
 local Clans=require("src.game.account_clans")
 local Death=require("src.game.reference_death")
@@ -109,45 +110,72 @@ local lockDir=false
 local angle
 local gamepadAim=nil
 local gamepadAttack=false
+local gamepadR2Held=false
+local gamepadSlotCursor=nil
 local currentAttackDir
 local function activeGamepad()
  if not love.joystick or not love.joystick.getJoysticks then return nil end
- for _,joy in ipairs(love.joystick.getJoysticks()) do
-  if joy:isGamepad() and joy:isConnected() then return joy end
- end
- return nil
+ return Pad.active(love.joystick.getJoysticks())
+end
+local function cycleGamepadSlot(step)
+ if phase~="playing" or died or not client
+   or client.state~="spawn_confirmed" then return false end
+ local id,isWeapon,cursor=Hud.cycleSlot(world,step,gamepadSlotCursor)
+ if id==nil then return false end
+ local ok=client:send("z",{id,isWeapon})
+ if ok then gamepadSlotCursor=cursor end
+ return ok
 end
 local function updateGamepad()
  local joy=activeGamepad()
  if not joy then
   input:gamepadMove(0,0)
   gamepadAim=nil
+  gamepadR2Held=false
   if gamepadAttack then
    gamepadAttack=false
-   if client and client.state=="spawn_confirmed" and not mouseAttack and not spaceAttack then
+   if client and client.state=="spawn_confirmed"
+     and not mouseAttack and not spaceAttack then
     client:send("F",{0,Pack.null})
    end
   end
   return
  end
- input:gamepadMove(joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty"))
- local rx,ry=joy:getGamepadAxis("rightx"),joy:getGamepadAxis("righty")
- -- Releasing the right stick returns aiming to the mouse immediately.
- gamepadAim=(rx*rx+ry*ry>=0.12) and angle(ry,rx) or nil
- local pressed=joy:getGamepadAxis("triggerright")>=0.52
+ input:gamepadMove(Pad.axis(joy,"leftx"),Pad.axis(joy,"lefty"))
+ local rx,ry=Pad.axis(joy,"rightx"),Pad.axis(joy,"righty")
+ -- The R3 analog guides both the server D direction and the visible weapon.
+ -- Holding the last angle at stick center avoids snapping back to the mouse.
+ if rx*rx+ry*ry>=0.12 then
+  gamepadAim=angle(ry,rx)
+  if lockDir then
+   if client:send("K",{0}) then lockDir=false end
+  end
+ end
+ local r2=Pad.triggerRight(joy)
+ if r2 and not gamepadR2Held then cycleGamepadSlot(1) end
+ gamepadR2Held=r2
+ -- R1 attacks. R2 is reserved for moving forward through the hotbar.
+ local attacking=Pad.button(joy,"rightshoulder")
  if phase=="playing" and client and client.state=="spawn_confirmed"
    and not died and not pause:isOpen() and not chatOpen
-   and not panels:isOpen() and not clans:isOpen() then
-  if pressed and not gamepadAttack then
+   and not panels:isOpen() and not clans:isOpen() and not profile:isOpen() then
+  if attacking and not gamepadAttack then
    gamepadAttack=true
-   if not mouseAttack and not spaceAttack then client:send("F",{1,gamepadAim or currentAttackDir()}) end
-  elseif not pressed and gamepadAttack then
+   if not mouseAttack and not spaceAttack then
+    client:send("F",{1,gamepadAim or currentAttackDir()})
+   end
+  elseif not attacking and gamepadAttack then
    gamepadAttack=false
-   if not mouseAttack and not spaceAttack then client:send("F",{0,Pack.null}) end
+   if not mouseAttack and not spaceAttack then
+    client:send("F",{0,Pack.null})
+   end
   end
  elseif gamepadAttack then
   gamepadAttack=false
-  if client and client.state=="spawn_confirmed" then client:send("F",{0,Pack.null}) end
+  if client and client.state=="spawn_confirmed"
+    and not mouseAttack and not spaceAttack then
+   client:send("F",{0,Pack.null})
+  end
  end
 end
 currentAttackDir=function()
@@ -318,7 +346,7 @@ local function updateGamepadMenu(dt)
  if phase~="menu" and phase~="death_choice" and not pause:isOpen() then return end
  local joy=activeGamepad()
  if not joy then return end
- local xaxis,yaxis=joy:getGamepadAxis("leftx"),joy:getGamepadAxis("lefty")
+ local xaxis,yaxis=Pad.axis(joy,"leftx"),Pad.axis(joy,"lefty")
  if math.abs(xaxis)<0.24 then xaxis=0 end
  if math.abs(yaxis)<0.24 then yaxis=0 end
  if xaxis==0 and yaxis==0 then return end
@@ -443,6 +471,7 @@ function love.update(dt)
         lockDir=false
         mouseAttack=false
         spaceAttack=false
+        gamepadR2Held=false;gamepadSlotCursor=nil
         died=false
       elseif packet.name=="a" and client.sid then
         -- The original server transmits [sid,x,y,dir*100] per visible player.
@@ -473,6 +502,7 @@ function love.update(dt)
         chatOpen=false;chatDraft=""
         input.keys={};input:gamepadMove(0,0);lastMove=false
         gamepadAttack=false;gamepadAim=nil
+        gamepadR2Held=false;gamepadSlotCursor=nil
         mouseAttack=false;spaceAttack=false;lockDir=false
         deathBackdrop=sessionIsHost and world.lastDeath~=nil
         deathReturnPending=false;deathChoiceStatus=""
@@ -634,7 +664,7 @@ function love.draw()
     -- immediately, while the Node remains authoritative for D/F combat.
     View.draw(world,camera,frameDelta,
       {showGrid=menu.grid,showDungeonMap=showDungeonMap,
-       localAim=View.localAim(lockDir,currentAttackDir(),lastAim)})
+       localAim=View.localAim(lockDir,gamepadAim or currentAttackDir(),lastAim)})
     Hud.draw(world,chatOpen,chatDraft,
       chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen())
     panels:draw(world)
@@ -960,7 +990,9 @@ local function stopGameplay(owned)
     home.hosting=false;home.starting=false
     home.hostAddress="";home.hostCode=""
   end
-  input.keys={};lastMove=false
+  input.keys={};input:gamepadMove(0,0);lastMove=false
+  gamepadAttack=false;gamepadR2Held=false;gamepadSlotCursor=nil
+  gamepadAim=nil
   mouseAttack=false;spaceAttack=false
   chatOpen=false;chatDraft=""
   panels:reset();clans:close();profile:close()
@@ -991,6 +1023,7 @@ local function stopPlayerControls()
   input:gamepadMove(0,0)
   gamepadAim=nil
   gamepadAttack=false
+  gamepadR2Held=false;gamepadSlotCursor=nil
   lastMove=false
   mouseAttack=false;spaceAttack=false
   chatOpen=false;chatDraft=""
@@ -1171,16 +1204,20 @@ function love.keypressed(key)
       return
     end
     if key=="q" and world.inventory.items[1]~=nil then
+      gamepadSlotCursor=nil
       client:send("z",{world.inventory.items[1],false});return
     end
     if key:match("^[1-9]$") then
+      gamepadSlotCursor=nil
       local index,isWeapon=Hud.slotForKey(world,key)
       if index~=nil then client:send("z",{index,isWeapon}) end
       return
     end
     if key=="space" and not spaceAttack then
       spaceAttack=true
-      if not mouseAttack then client:send("F",{1,currentAttackDir()}) end
+      if not mouseAttack and not gamepadAttack then
+        client:send("F",{1,gamepadAim or currentAttackDir()})
+      end
       return
     end
   end
@@ -1226,7 +1263,8 @@ function love.keyreleased(key)
   if not diagnostic then input:keyreleased(key) end
   if key=="space" and spaceAttack then
     spaceAttack=false
-    if not mouseAttack and client and client.state=="spawn_confirmed" then
+    if not mouseAttack and not gamepadAttack
+      and client and client.state=="spawn_confirmed" then
       client:send("F",{0,Pack.null})
     end
   end
@@ -1330,12 +1368,15 @@ function love.mousepressed(x,y,button)
     end
     local itemIndex,isWeapon=Hud.hitTest(world,w,h,x,y)
     if itemIndex~=nil then
+      gamepadSlotCursor=nil
       client:send("z",{itemIndex,isWeapon})
       return
     end
     if not mouseAttack then
       mouseAttack=true
-      if not spaceAttack then client:send("F",{1,currentAttackDir()}) end
+      if not spaceAttack and not gamepadAttack then
+        client:send("F",{1,gamepadAim or currentAttackDir()})
+      end
     end
   end
 end
@@ -1357,7 +1398,9 @@ function love.mousereleased(_,_,button)
   if diagnostic or not client or client.state~="spawn_confirmed" then return end
   if button==1 and mouseAttack then
     mouseAttack=false
-    if not spaceAttack then client:send("F",{0,Pack.null}) end
+    if not spaceAttack and not gamepadAttack then
+      client:send("F",{0,Pack.null})
+    end
   end
 end
 function love.quit()
