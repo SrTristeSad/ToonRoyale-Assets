@@ -65,7 +65,16 @@ local boxes={
   serverCode={773,513,326,49},serverEnter={773,573,326,51},
   serverPrev={150,633,260,42},serverNext={448,633,260,42},
   grid={355,280,570,57},fullscreen={355,364,570,57},
-  overlayCopy={478,395,322,55},overlayClose={880,177,55,43}
+  overlayCopy={478,395,322,55},overlayClose={880,177,55,43},
+  playConfigure={155,418,462,63},
+  chooseLan={122,242,212,43},chooseVpn={348,242,212,43},
+  createVpnIP={122,296,438,42},
+  easyDiff={122,349,210,40},normalDiff={348,349,212,40},
+  hardDiff={122,398,210,40},extremeDiff={348,398,212,40},
+  createBots={122,451,438,40},createBotsMinus={122,498,99,39},
+  createBotsPlus={461,498,99,39},createMods={122,554,438,45},
+  createSubmit={629,622,536,49},createBack={122,622,438,49},
+  chooseMapPrev={631,569,232,37},chooseMapNext={880,569,282,37}
 }
 local function button(id,text,primary)
   local b=boxes[id]
@@ -130,6 +139,34 @@ function Home:scale(x,y)
   local z=math.min(w/1280,h/720)
   return (x-(w-1280*z)/2)/z,(y-(h-720*z)/2)/z
 end
+function Home:mapName()
+ if self.mapId=="" or self.mapId=="classico" then return "Mundo classico" end
+ for _,m in ipairs(self.mapCatalog) do
+  if m.id==self.mapId then return m.name end
+ end
+ return "Mapa indisponivel: "..self.mapId
+end
+function Home:mapDescription()
+ if self.mapId=="" or self.mapId=="classico" then
+  return "Mundo tradicional do Moo-IO, sem regioes subterraneas."
+ end
+ for _,m in ipairs(self.mapCatalog) do
+  if m.id==self.mapId then return m.description or "" end
+ end
+ return "Arquivo nao encontrado. Confira os mapas instalados."
+end
+function Home:refreshMaps()
+ self.mapCatalog=Maps.available(love.filesystem,"server-lua/maps")
+ if self.mapId~="" and self.mapId~="classico" then
+  local found=false
+  for _,m in ipairs(self.mapCatalog) do
+   if m.id==self.mapId then found=true;break end
+  end
+  if not found then
+   self:setStatus("Mapa escolhido nao esta instalado neste pacote.",true)
+  end
+ end
+end
 function Home:roomInvite()
   if self.hostAddress=="" or self.hostCode=="" then return "" end
   return self.hostAddress.."/"..self.hostCode
@@ -141,7 +178,9 @@ end
 function Home:click(sx,sy)
   local x,y=self:scale(sx,sy)
   if self.screen~="home" and inside(x,y,boxes.back) then
-    self.screen=(self.screen=="mods" or self.screen=="maps") and "play" or "home"
+    self.screen=(self.screen=="mods" and "create"
+      or self.screen=="maps" and "create"
+      or self.screen=="create" and "play" or "home")
     self.focus=nil;return "back"
   end
   if self.screen=="home" then
@@ -153,6 +192,11 @@ function Home:click(sx,sy)
       self.screen="settings";self.focus=nil;return "settings_tab"
     end
   elseif self.screen=="play" then
+    if not self.hosting and not self.starting
+      and inside(x,y,boxes.playConfigure) then
+      self.screen="create";self.focus=nil;self:refreshMaps()
+      return "configure"
+    end
     if inside(x,y,boxes.nickname) then self.focus="nickname";return "focus" end
     if inside(x,y,boxes.joinIP) then self.focus="invite";return "focus" end
     if inside(x,y,boxes.joinCode) then self.focus="joinCode";return "focus" end
@@ -217,6 +261,76 @@ function Home:click(sx,sy)
     end
     if self.error and inside(x,y,boxes.joinRetry) then self.focus=nil;return "retry" end
     self.focus=nil
+  elseif self.screen=="create" then
+    if inside(x,y,boxes.createBack) then self.screen="play";return "back" end
+    if self.hosting or self.starting then
+      self.screen="play";return nil
+    end
+    if inside(x,y,boxes.chooseLan) then self.serverMode="lan";return "mode_lan" end
+    if inside(x,y,boxes.chooseVpn) then self.serverMode="vpn";return "mode_vpn" end
+    if self.serverMode=="vpn" and inside(x,y,boxes.createVpnIP) then
+      self.focus="vpnIP";return "focus"
+    end
+    local difficultyButtons={
+      {"easyDiff","pacifico"},{"normalDiff","normal"},
+      {"hardDiff","dificil"},{"extremeDiff","extremo"}
+    }
+    for _,item in ipairs(difficultyButtons) do
+      if inside(x,y,boxes[item[1]]) then
+        self.difficulty=item[2];self.focus=nil
+        return "difficulty"
+      end
+    end
+    if inside(x,y,boxes.createBots) then
+      self.botsEnabled=not self.botsEnabled;return "bots_toggle"
+    end
+    if inside(x,y,boxes.createBotsMinus) then
+      self.botCount=math.max(0,self.botCount-1)
+      self.botsEnabled=self.botCount>0
+      return "bots_count"
+    end
+    if inside(x,y,boxes.createBotsPlus) then
+      self.botCount=math.min(8,self.botCount+1)
+      self.botsEnabled=true
+      return "bots_count"
+    end
+    if inside(x,y,boxes.createMods) then
+      self.screen="mods";self.focus=nil;self.modPage=0
+      self.modCatalog=Mods.available(love.filesystem,"server-lua/mods")
+      return "mod_browse"
+    end
+    for row=1,4 do
+      if inside(x,y,{629,239+(row-1)*74,534,68}) then
+        local i=self.mapPage*4+row
+        local entry=i==1 and {id="",name="Mundo classico"}
+          or self.mapCatalog[i-1]
+        if entry then
+          self.mapId=entry.id
+          self:setStatus("Mapa escolhido: "..entry.name)
+          return "map_select"
+        end
+      end
+    end
+    if inside(x,y,boxes.chooseMapPrev) then
+      self.mapPage=math.max(0,self.mapPage-1);return "map_page"
+    end
+    if inside(x,y,boxes.chooseMapNext) then
+      self.mapPage=math.min(math.max(0,math.ceil((#self.mapCatalog+1)/4)-1),
+        self.mapPage+1)
+      return "map_page"
+    end
+    if inside(x,y,boxes.createSubmit) then
+      self.focus=nil
+      local found=self.mapId=="" or self.mapId=="classico"
+      for _,entry in ipairs(self.mapCatalog) do
+        if entry.id==self.mapId then found=true;break end
+      end
+      if not found then
+        self:setStatus("Mapa nao instalado. Selecione outro.",true)
+        return "map_missing"
+      end
+      return "create"
+    end
   elseif self.screen=="server" then
     if inside(x,y,boxes.serverAddress) then self.focus="serverAddress";return "focus" end
     if inside(x,y,boxes.serverCode) then self.focus="serverCode";return "focus" end
@@ -262,7 +376,7 @@ function Home:click(sx,sy)
     end
   elseif self.screen=="mods" then
     if inside(x,y,boxes.modsDone) then
-      self.screen="play";return "mods_done"
+      self.screen="create";return "mods_done"
     end
     if inside(x,y,boxes.modsPrevious) then
       self.modPage=math.max(0,self.modPage-1);return "mod_page"
@@ -303,7 +417,9 @@ local function removeLast(s)
 end
 function Home:keypressed(key)
   if key=="escape" then
-    self.screen=(self.screen=="mods" or self.screen=="maps") and "play" or "home"
+    self.screen=(self.screen=="mods" and "create"
+      or self.screen=="maps" and "create"
+      or self.screen=="create" and "play" or "home")
     self.focus=nil;return "back"
   end
   if self.focus then
@@ -444,25 +560,16 @@ function Home:draw(state,detail,showWorld)
         printText(self.botsEnabled and
           ("Bots de IA: "..self.botCount) or "Bots desativados.",155,482,15,C.muted)
       else
-        button("modeLan",self.serverMode=="lan" and "LAN ATIVA" or "LAN",self.serverMode=="lan")
-        button("modeVpn",self.serverMode=="vpn" and "VPN ATIVA" or "VPN",self.serverMode=="vpn")
-        if self.serverMode=="vpn" then
-          field("vpnIP",self.vpnIP,"IP deste PC na VPN",self.focus=="vpnIP")
-        end
-        button("botsToggle",self.botsEnabled and "BOTS DE IA: LIGADOS" or
-          "BOTS DE IA: DESLIGADOS",self.botsEnabled)
-        button("botsMinus","-")
-        printText("QUANTIDADE: "..(self.botsEnabled and self.botCount or 0).." / 8",
-          274,485,17,C.white,225,"center")
-        button("botsPlus","+")
-        local names={pacifico="PACIFICO",normal="NORMAL",
-          dificil="DIFICIL",extremo="EXTREMO"}
-        button("difficulty","DIFICULDADE: "..(names[self.difficulty] or "NORMAL"),false)
-        button("mapBrowse",self.mapId=="" and "MAPA: CLASS." or "MAPA: OUTRO",false)
-        field("modIds",self.modIds,"IDs de mods (opcional)",self.focus=="modIds")
-        button("modBrowse","ESCOLHER",false)
-        button(self.serverMode=="vpn" and "createVpn" or "createLan",
-          "CRIAR MINHA SALA",true)
+        printText("Configure mapa, dificuldade e mods",158,330,17,C.muted,449)
+        printText("MAPA SELECIONADO:",158,367,15,C.green)
+        printText(self:mapName(),158,389,21,C.white,440)
+        button("playConfigure","CONFIGURAR MINHA SALA",true)
+        panel(155,504,462,118,C.raised,0)
+        printText("DIFICULDADE  "..self.difficulty:upper(),172,520,17,C.white,412)
+        printText("BOTS: "..(self.botsEnabled and self.botCount or 0)
+          .."     |     MODS: "..(self.modIds=="" and "NENHUM" or "PERSONALIZADOS"),
+          172,554,15,C.muted,425)
+        printText("Clique em CONFIGURAR para criar a partida.",172,588,14,C.amber,422)
       end
       printText("02  ENTRAR EM OUTRA SALA",704,214,19,C.green)
       printText("IP, porta ou convite completo",704,256,15,C.muted)
@@ -477,6 +584,58 @@ function Home:draw(state,detail,showWorld)
       end
       if not self.hosting and not self.starting then
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
+      end
+    elseif self.screen=="create" then
+      printText("CONFIGURAR NOVA SALA",121,155,29,C.white)
+      panel(100,195,482,477,C.panel,0)
+      panel(613,195,564,477,C.panel,0)
+      printText("CONEXAO",122,206,17,C.green)
+      button("chooseLan",self.serverMode=="lan" and "LAN  ATIVA" or "LAN",self.serverMode=="lan")
+      button("chooseVpn",self.serverMode=="vpn" and "VPN  ATIVA" or "VPN",self.serverMode=="vpn")
+      if self.serverMode=="vpn" then
+        field("createVpnIP",self.vpnIP,"IP do seu computador na VPN",self.focus=="vpnIP")
+      else
+        printText("Amigos na mesma rede local.",122,310,16,C.muted,440)
+      end
+      printText("DIFICULDADE",122,329,16,C.green)
+      local opts={{"easyDiff","PACIFICO","pacifico"},
+        {"normalDiff","NORMAL","normal"},{"hardDiff","DIFICIL","dificil"},
+        {"extremeDiff","EXTREMO","extremo"}}
+      for _,o in ipairs(opts) do button(o[1],o[2],o[3]==self.difficulty) end
+      button("createBots",self.botsEnabled and "BOTS: ATIVADOS" or "BOTS: DESATIVADOS",self.botsEnabled)
+      button("createBotsMinus","-")
+      printText("QUANTIDADE  "..(self.botsEnabled and self.botCount or 0).."/8",
+        229,504,17,C.white,223,"center")
+      button("createBotsPlus","+")
+      button("createMods",self.modIds=="" and "MODS: NENHUM  -  ESCOLHER" or "MODS: PERSONALIZADOS  -  EDITAR",false)
+      printText("MAPA DA PARTIDA",635,207,18,C.green)
+      local selection=self.mapId
+      for row=1,4 do
+        local n=self.mapPage*4+row
+        local entry=n==1 and {id="",name="Mundo classico",
+          description="Mundo tradicional, sem cavernas.",spaces=0}
+          or self.mapCatalog[n-1]
+        if entry then
+          local y=239+(row-1)*74
+          local active=selection==entry.id
+          panel(629,y,534,68,active and {0.29,0.41,0.29} or C.raised,0)
+          love.graphics.setColor(active and C.green or C.muted)
+          love.graphics.rectangle("fill",640,y+19,17,28)
+          printText(entry.name,673,y+9,19,C.white,474)
+          printText((entry.spaces or 0)>0 and
+            ("Zonas internas e subterraneas: "..entry.spaces) or
+            "Superficie personalizada ou classica",
+            673,y+39,14,active and C.amber or C.muted,474)
+        end
+      end
+      button("chooseMapPrev","MAPAS ANTERIORES",false)
+      button("chooseMapNext","PROXIMOS MAPAS",false)
+      button("createBack","CANCELAR",false)
+      button("createSubmit","CRIAR SALA NESTE MAPA",true)
+      printText("Escolhido: "..self:mapName(),635,612,15,C.green,510)
+      if #self.mapCatalog==0 then
+        printText("Aviso: nenhum mapa adicional encontrado no pacote.",
+          636,543,14,C.red,511)
       end
     elseif self.screen=="maps" then
       printText("ESCOLHER MAPA",140,165,30,C.white)
