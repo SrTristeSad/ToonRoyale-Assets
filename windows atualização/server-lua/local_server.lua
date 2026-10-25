@@ -64,6 +64,7 @@ local function addWorld(key,capacity,botCount,accounts,moderation,clock,log,prof
  room.mapId=map and map.id or "classico"
  room.mapSpaces=Spaces.new(map,gameConfig.mapScale)
  room.customMap=map
+ room.projectile_manager.mapSpaces=room.mapSpaces
  animals:ensureAnimals()
  local registry=Registry.new(room,{
   botCount=botCount,
