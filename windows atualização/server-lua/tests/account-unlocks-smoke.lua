@@ -33,5 +33,7 @@ Unlocks.record(game,player)
 assert(#events==0)
 player.account=account
 game.accounts=nil
-assert(not pcall(function()Unlocks.record(game,player)end))
+-- The original Node Game.recordUnlocks returns early when accounts is absent.
+assert(pcall(function()Unlocks.record(game,player)end))
+assert(#events==0,"missing account store must not emit unlocks")
 print("PASS Game.recordUnlocks: catalogo pago, armas zero-based e variante membro")
