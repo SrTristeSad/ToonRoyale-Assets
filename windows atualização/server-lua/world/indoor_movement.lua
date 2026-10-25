@@ -22,12 +22,24 @@ function Indoor.step(player,delta,room)
  player.noMovTimer=(player.noMovTimer or 0)+dt
  if dx~=0 or dy~=0 then player.noMovTimer=0 end
  local count=math.max(1,math.min(12,math.ceil(math.sqrt(dx*dx+dy*dy)/16)))
+ local function clearOfPlayers(x,y)
+  for _,other in ipairs(room.players or {}) do
+   if other~=player and other.alive and other.spaceId==player.spaceId then
+    local dx,dy=x-other.x,y-other.y
+    local combined=radius+other.scale
+    if dx*dx+dy*dy<combined*combined then return false end
+   end
+  end
+  return true
+ end
  local x,y=player.x,player.y
  for _=1,count do
   local xx=clamp(x+dx/count,radius,area.width-radius)
-  if room.mapSpaces:canOccupy(player.spaceId,xx,y,radius) then x=xx end
+  if room.mapSpaces:canOccupy(player.spaceId,xx,y,radius)
+     and clearOfPlayers(xx,y) then x=xx end
   local yy=clamp(y+dy/count,radius,area.height-radius)
-  if room.mapSpaces:canOccupy(player.spaceId,x,yy,radius) then y=yy end
+  if room.mapSpaces:canOccupy(player.spaceId,x,yy,radius)
+     and clearOfPlayers(x,yy) then y=yy end
  end
  player.x=x;player.y=y;player.zIndex=0
  return true
