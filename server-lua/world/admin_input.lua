@@ -85,7 +85,7 @@ function Admin.handle(ctx,admin,args)
   end
   local variant=(index and variants[index+1]) or variants[1]
   if not target or not weapon then return end
-  target.weapons[weapon.type]=weapon.id
+  target.weapons[weapon.type+1]=weapon.id
   target.weaponXP[weapon.id]=variant.xp
   target.weaponIndex=weapon.id
   target.buildIndex=-1
