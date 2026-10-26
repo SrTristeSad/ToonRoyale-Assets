@@ -727,10 +727,32 @@ homeAction=function(action)
   elseif action=="join" then
     local target,why=Home.parseInvite(home.invite,home.joinCode)
     if not target then home:setStatus(why,true);return end
-    connectRoom(target.host,target.port,target.code,nil,target.secure)
+    -- Respawn on the EXISTING socket, retaining server-owned purchases,
+    -- structures and equipment, rather than creating a new player.
+    local sameRoom=world.dead and client and
+      client.state=="spawn_confirmed" and
+      client.host==target.host and client.port==target.port and
+      client.inviteCode==target.code
+    if sameRoom then
+      local ok,err=client:spawn({name=home.nickname,skin=0})
+      if ok then home:setStatus("Renascendo na sala. Seus itens permanecem.")
+      else home:setStatus("Erro ao renascer: "..tostring(err),true) end
+    else
+      connectRoom(target.host,target.port,target.code,nil,target.secure)
+    end
   elseif action=="play_local" then
     if hosted.state=="ready" then
-      connectRoom(hosted.hostIP,hosted.port,hosted.code)
+      local sameRoom=sessionIsHost and world.dead and client
+        and client.state=="spawn_confirmed"
+        and client.host==hosted.hostIP and client.port==hosted.port
+        and client.inviteCode==hosted.code
+      if sameRoom then
+        local ok,err=client:spawn({name=home.nickname,skin=0})
+        if ok then home:setStatus("Renascendo na mesma sala. Itens preservados.")
+        else home:setStatus("Erro ao renascer: "..tostring(err),true) end
+      else
+        connectRoom(hosted.hostIP,hosted.port,hosted.code)
+      end
     else home:setStatus("A sala ainda nao esta pronta.",true) end
   elseif action=="stop" then
     if isAndroid then
