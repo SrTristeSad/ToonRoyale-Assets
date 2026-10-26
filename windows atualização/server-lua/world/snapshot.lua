@@ -119,9 +119,13 @@ function Sync.syncObjects(game,viewer,cfg)
     if obj.active and not obj.sentTo[viewer.id]
        and Sync.objectVisible(obj,viewer) and Sync.canSee(viewer,obj,cfg) then
       obj.sentTo[viewer.id]=true
+      -- Built structures frequently have no resource "type" (only an item
+      -- "id"). Preserve the eighth-field wire format using MessagePack nil:
+      -- a raw Lua nil removes that slot when append() flattens the record,
+      -- misaligning the entire H batch and hiding structures on the client.
       append(fresh,{
         obj.sid,fix(obj.x,1),fix(obj.y,1),obj.dir,obj.scale,
-        obj.type,nullable(obj.id),obj.owner and obj.owner.sid or -1
+        nullable(obj.type),nullable(obj.id),obj.owner and obj.owner.sid or -1
       })
     end
   end
