@@ -64,7 +64,7 @@ function P:isOpen()
 end
 function P:position(w,h)
   local pw=460
-  local ph=math.min(h-104,420)
+  local ph=math.min(h-104,530)
   return math.floor((w-pw)/2),math.floor((h-ph)/2),pw,ph
 end
 function P:buttons(w)
@@ -74,7 +74,7 @@ function P:buttons(w)
 end
 -- Rows must fit fully inside the scissor region; a fifth store row used to be half hidden.
 function P:visibleRows(h)
-  local ph=math.min((h or 720)-104,420)
+  local ph=math.min((h or 720)-104,530)
   if self.opened=="tribe" then return math.max(1,math.floor((ph-171)/48)) end
   return math.max(1,math.floor((ph-178)/52))
 end
@@ -305,7 +305,6 @@ local function button(label,x,y,w,h,active,enabled)
 end
 local function hudButton(label,x,y,w,h,active)
   local g=love.graphics
-  local mx,my=g.getDimensions()
   local hoverX,hoverY=love.mouse.getPosition()
   local hover=inside(hoverX,hoverY,x,y,w,h)
   local base=active and {0.36,0.70,0.25}
