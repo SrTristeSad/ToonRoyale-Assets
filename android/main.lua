@@ -10,6 +10,7 @@ local Pause=require("src.game.mooio_pause")
 local Host=require("src.net.mooio_host")
 local Auth=require("src.net.local_auth")
 local BrowserAuth=require("src.net.browser_auth")
+local Directory=require("src.net.server_directory")
 local TLS=require("src.net.tls_bridge")
 local Config=require("src.game.config")
 local Hud=require("src.game.reference_hud")
@@ -683,10 +684,29 @@ homeAction=function(action)
   elseif action=="server_to_play" then
     home.screen="play"
     home:setStatus("Use convite privado ou https://sala.dominio/CODIGO.")
-  elseif action=="provider_lite" then
-    home:setStatus("V2 Lite: requer um servidor dedicado e compatibilidade de protocolo.")
-  elseif action=="provider_firebase" then
-    home:setStatus("Firebase: login e busca de salas dependem da configuracao do projeto.")
+  elseif action=="server_browse" then
+    local directory,why=Directory.fetch(home.serverAddress)
+    if not directory then
+      home.serverDirectory=nil;home.serverRooms={}
+      home.serverSelected=1;home.serverPage=0
+      home:setStatus(why or "Nao foi possivel consultar o servidor.",true)
+    else
+      home.serverDirectory=directory
+      home.serverRooms=directory.rooms
+      home.serverSelected=1;home.serverPage=0
+      home:setStatus(#directory.rooms.." salas V2 encontradas.")
+    end
+  elseif action=="server_join" then
+    local selected=home.serverRooms[home.serverSelected]
+    if not selected then home:setStatus("Selecione uma sala.",true);return end
+    if not selected.online then home:setStatus("Esta sala esta offline.",true);return end
+    local target,why=Directory.target(home.serverDirectory,selected,home.serverCode)
+    if not target then home:setStatus(why,true);return end
+    home.invite=target.invite;home.joinCode="";home.screen="play"
+    -- Use the same verified browser authentication as the Windows V2 client.
+    homeAction("v2_login")
+  elseif action=="server_select" or action=="server_page" then
+    home:setStatus("Selecione a sala e toque em ENTRAR NA SALA.")
   elseif action=="back" then
     home:setStatus("")
   elseif action=="create" then
@@ -1070,7 +1090,19 @@ function love.mousepressed(x,y,button)
   end
   if diagnostic or phase=="death" then return end
   if phase=="menu" then
-    if button==1 then homeAction(home:click(x,y)) end
+    if button==1 then
+      local action=home:click(x,y)
+      homeAction(action)
+      if mobile and love.keyboard and love.keyboard.setTextInput then
+        local w,h=love.graphics.getDimensions()
+        if action=="focus" then
+          love.keyboard.setTextInput(true,math.floor(w*.18),math.floor(h*.22),
+            math.floor(w*.64),math.floor(h*.11))
+        else
+          love.keyboard.setTextInput(false)
+        end
+      end
+    end
     return
   end
   if not client or client.state~="spawn_confirmed" or died then return end
