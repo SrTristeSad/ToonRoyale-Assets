@@ -8,8 +8,8 @@ local Icons=require("src.game.reference_icons")
 local Assets=require("src.game.reference_assets")
 local Upgrades=require("src.game.reference_upgrades")
 local ItemInfo=require("src.game.reference_item_info")
+local DeathMarker=require("src.game.death_marker")
 local H={}
-local mobile=love.system and love.system.getOS and love.system.getOS()=="Android" or os.getenv("MOO_IO_FORCE_ANDROID_E2E")=="1"
 local fontSmall,fontMedium,fontLarge
 local function fonts()
   if not fontSmall then
@@ -58,7 +58,6 @@ local function resource(name,icon,value,x,y,left,gain)
   end
 end
 local function minimap(world,w,h)
-  if love.system and love.system.getOS and love.system.getOS()=="Android" then return end
   -- client/src/index.js renderMinimap: 130x130, bottom 20, left 20.
   local x,y=20,h-150
   local size=130
@@ -94,8 +93,28 @@ local function minimap(world,w,h)
     love.graphics.line(mx-7,my-7,mx+7,my+7)
     love.graphics.line(mx-7,my+7,mx+7,my-7)
   end
-  mark(world.lastDeath,252/255,85/255,83/255)
   mark(world.mapMarker,1,1,1)
+  DeathMarker.drawMini(world,x,y,size,C.mapScale)
+  if world.lastDeath and
+     not DeathMarker.sameArea(world) then
+    -- Death markers in another floor cannot be shown at misleading
+    -- surface coordinates; leave a persistent and readable hint.
+    color(1,0.51,0.46)
+    love.graphics.setFont(fontSmall)
+    love.graphics.print("MORTE: "..tostring(world.lastDeath.spaceId or "surface"),
+      x,y-18)
+  elseif world.lastDeath and world.spaceId=="surface" then
+    color(1,0.51,0.46)
+    love.graphics.setFont(fontSmall)
+    love.graphics.print("ULTIMA MORTE",x,y-18)
+  end
+end
+-- Draw only the minimap during the death sequence: the ordinary HUD
+-- is intentionally hidden, but the location marker must remain visible.
+function H.drawDeathMap(world)
+  fonts()
+  local w,h=love.graphics.getDimensions()
+  minimap(world,w,h)
 end
 local function leaderboard(world,w)
   local count=math.min(10,#world.leaderboard)
@@ -193,14 +212,37 @@ function H.slotForKey(world,key)
   if not entry then return nil end
   return entry.id,entry.kind=="weapon"
 end
+-- Controller shoulder/trigger navigation follows the identical visible
+-- hotbar order used by click and digit hotkeys, including weapons and items.
+-- Selection remains server-authoritative; callers store only a browse cursor.
+function H.cycleSlot(world,step,cursor)
+  if step~=1 and step~=-1 then return nil end
+  local entries=actionBarEntries(world)
+  local n=#entries
+  if n==0 then return nil end
+  if type(cursor)~="number" or cursor<1 or cursor>n then
+    cursor=nil
+    for i,entry in ipairs(entries) do
+      if H.isSelected(world,entry) then cursor=i;break end
+    end
+  end
+  local index
+  if cursor then
+    index=((cursor-1+step)%n)+1
+  else
+    index=step==1 and 1 or n
+  end
+  local entry=entries[index]
+  return entry.id,entry.kind=="weapon",index
+end
 local function actionBar(world,w,h)
   local entries=actionBarEntries(world)
   local count=#entries
   if count==0 then return end
-  local slot,space=mobile and 48 or 66,mobile and 6 or 10
+  local slot,space=66,10
   local width=count*(slot+space)-space
   local origin=(w-width)/2
-  local y=mobile and h-63 or h-83
+  local y=h-83
   for i,entry in ipairs(entries) do
     local x=origin+(i-1)*(slot+space)
     box(x,y,slot,slot)
@@ -245,13 +287,12 @@ end
 -- Native LÖVE click target maps to original actionBarItem onclick/selectToBuild.
 -- CSS: 66 x 66, 5px margins on each side, bottom 17px.
 function H.hitTest(world,w,h,x,y)
-  if mobile then return nil end -- Four tactical slots and backpack replace hidden desktop bar
   if type(x)~="number" or type(y)~="number" then return nil end
   local entries=actionBarEntries(world)
   if #entries==0 then return nil end
-  local slot,space=mobile and 48 or 66,mobile and 6 or 10
+  local slot,space=66,10
   local origin=(w-(#entries*(slot+space)-space))/2
-  local top=mobile and h-63 or h-83
+  local top=h-83
   if y<top or y>=top+slot then return nil end
   for i,entry in ipairs(entries) do
     local left=origin+(i-1)*(slot+space)
@@ -284,60 +325,9 @@ function H.hoveredItem(world,w,h,x,y)
   end
   return nil
 end
-local function mobileStats(world,w,h)
-  local g=love.graphics
-  local p=world:localPlayer()
-  local values=world.resources or {}
-  local unit=math.max(.55,math.min(w/1280,h/720,1.8))
-  -- Horizontal top status bar: keep the minimap, ping and chat unobstructed.
-  -- All numbers come from the authoritative world snapshots (not mock HUD data).
-  local x=269*unit
-  local y=13*unit
-  local width=math.max(380*unit,math.min(675*unit,w-x-360*unit))
-  local height=64*unit
-  local health=math.max(0,tonumber(p and p.health) or 0)
-  local maximum=math.max(1,tonumber(p and p.maxHealth) or 100)
-  local name=(p and p.name or "Moo IO"):sub(1,16)
-  g.push("all")
-  g.setColor(.03,.085,.071,.88)
-  g.rectangle("fill",x,y,width,height,8*unit,8*unit)
-  g.setLineWidth(1.6*unit)
-  g.setColor(.40,.64,.49,.75)
-  g.rectangle("line",x,y,width,height,8*unit,8*unit)
-  g.setFont(fontSmall)
-  g.setColor(.95,.96,.88,1)
-  g.print(name,x+10*unit,y+7*unit)
-  local lifeX=x+145*unit
-  local lifeW=math.max(75*unit,math.min(160*unit,width*.31))
-  local lifeY=y+8*unit
-  g.setColor(.19,.22,.19,1)
-  g.rectangle("fill",lifeX,lifeY,lifeW,17*unit,4*unit,4*unit)
-  g.setColor(.77,.24,.22,1)
-  g.rectangle("fill",lifeX,lifeY,lifeW*math.min(1,health/maximum),17*unit,4*unit,4*unit)
-  g.setColor(.97,.97,.93,1)
-  g.printf("VIDA "..math.floor(health).."/"..math.floor(maximum),
-    lifeX,lifeY+2*unit,lifeW,"center")
-  g.setColor(.98,.84,.46,1)
-  g.print("OURO "..math.floor(values.points or 0),lifeX+lifeW+12*unit,y+8*unit)
-  g.setColor(.93,.95,.91,1)
-  local food="COMIDA "..math.floor(values.food or 0)
-  local wood="MADEIRA "..math.floor(values.wood or 0)
-  local stone="PEDRA "..math.floor(values.stone or 0)
-  local kills="ABATES "..math.floor(values.kills or 0)
-  g.print(food,x+10*unit,y+38*unit)
-  g.print(wood,x+145*unit,y+38*unit)
-  g.print(stone,x+285*unit,y+38*unit)
-  g.print(kills,x+width-110*unit,y+38*unit)
-  g.pop()
-end
 function H.draw(world,chatActive,chatText,suppressItemInfo)
   fonts()
   local w,h=love.graphics.getDimensions()
-  if mobile then
-    mobileStats(world,w,h)
-    Upgrades.draw(world,w)
-    return
-  end
   leaderboard(world,w)
   kills(world,w)
   resource("food","food",world.resources.food,w-20,h-175,

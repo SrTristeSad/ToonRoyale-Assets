@@ -64,17 +64,17 @@ function P:isOpen()
 end
 function P:position(w,h)
   local pw=460
-  local ph=math.min(h-104,420)
+  local ph=math.min(h-104,530)
   return math.floor((w-pw)/2),math.floor((h-ph)/2),pw,ph
 end
 function P:buttons(w)
-  -- Positioned near the original #storeButton right:330,
-  -- #allianceButton right:270 (CSS gameButton top 20).
-  return w-395,w-328,22,58
+  -- Keep both buttons aligned immediately before the scoreboard,
+  -- with a safe gap, larger click targets and matching visual treatment.
+  return w-416,w-336,22,69
 end
 -- Rows must fit fully inside the scissor region; a fifth store row used to be half hidden.
 function P:visibleRows(h)
-  local ph=math.min((h or 720)-104,420)
+  local ph=math.min((h or 720)-104,530)
   if self.opened=="tribe" then return math.max(1,math.floor((ph-171)/48)) end
   return math.max(1,math.floor((ph-178)/52))
 end
@@ -204,12 +204,14 @@ function P:click(world,x,y,w,h)
     end
     local list=self:storeEntries()
     local rows=self:visibleRows(h)
-    if inside(x,y,px+310,py+ph-72,55,29) then
-      self:scrollBy(-rows,world,h)
-      return {consumed=true}
-    end
-    if inside(x,y,px+374,py+ph-72,62,29) then
-      self:scrollBy(rows,world,h)
+    -- Drag/click the vertical scrollbar, or scroll with the wheel.
+    -- No page-navigation buttons remain in the store.
+    local railX,railY,railH=px+pw-20,py+105,rows*52
+    if inside(x,y,railX,railY,12,railH) then
+      local max=self:scrollLimit(world,h)
+      local fraction=math.max(0,math.min(1,(y-railY)/railH))
+      self.scroll=math.floor(fraction*max+0.5)
+      self.hoverItem=nil
       return {consumed=true}
     end
     local topY=py+107
@@ -301,6 +303,21 @@ local function button(label,x,y,w,h,active,enabled)
   center(label,x,y+math.floor((h-16)/2),w,16,
     enabled and 1 or 0.6,enabled and 1 or 0.6,enabled and 1 or 0.6)
 end
+local function hudButton(label,x,y,w,h,active)
+  local g=love.graphics
+  local hoverX,hoverY=love.mouse.getPosition()
+  local hover=inside(hoverX,hoverY,x,y,w,h)
+  local base=active and {0.36,0.70,0.25}
+    or hover and {0.30,0.39,0.33} or {0.20,0.25,0.22}
+  rect(x+2,y+3,w,h,0.035,0.06,0.04,0.6)
+  rect(x,y,w,h,base[1],base[2],base[3],0.96)
+  g.setColor(active and 0.65 or 0.5,
+    active and 0.94 or 0.65,active and 0.45 or 0.53,
+    hover and 0.95 or 0.65)
+  g.setLineWidth(active and 2.5 or 1.3)
+  g.rectangle("line",x+1,y+1,w-2,h-2,5,5)
+  center(label,x,y+(h-18)/2,w,17,1,1,1)
+end
 local function preview(entry,accessory,x,y)
   local filename=accessory and ("access_"..entry.id..".png") or
     ("hat_"..entry.id..(entry.topSprite and "_p" or "")..".png")
@@ -310,8 +327,8 @@ end
 function P:draw(world)
   local w,h=love.graphics.getDimensions()
   local storeX,tribeX,top,size=self:buttons(w)
-  button("Shop",storeX,top,size,size,self.opened=="store",true)
-  button("Tribe",tribeX,top,size,size,self.opened=="tribe",true)
+  hudButton("Shop",storeX,top,size,size,self.opened=="store")
+  hudButton("Tribe",tribeX,top,size,size,self.opened=="tribe")
   if world.tribeOwner and #world.joinRequests>0 then
     local first=world.joinRequests[1]
     rect(w-440,88,190,49,0,0,0,0.64)
@@ -392,9 +409,17 @@ function P:draw(world)
     local last=math.min(total,self.scroll+self:visibleRows(h))
     text("Items "..first.."-"..last.." / "..total,
       px+24,py+ph-62,14,0.75,0.77,0.75)
-    button("Prev",px+310,py+ph-72,55,29,false,self.scroll>0)
-    button("Next",px+374,py+ph-72,62,29,false,
-      self.scroll<self:scrollLimit(world,h))
+    text("Roda do mouse ou barra lateral para rolar",
+      px+208,py+ph-62,11,0.75,0.79,0.74)
+    local max=self:scrollLimit(world,h)
+    if max>0 then
+      local railX,railY=px+pw-20,py+105
+      local railH=self:visibleRows(h)*52
+      local thumbH=math.max(24,railH*self:visibleRows(h)/total)
+      local thumbY=railY+(railH-thumbH)*(self.scroll/max)
+      rect(railX,railY,12,railH,0.19,0.24,0.22,0.96)
+      rect(railX+1,thumbY,10,thumbH,0.59,0.73,0.56,0.98)
+    end
     if self.hoverItem and self.hoverItem.desc then
       font(12);love.graphics.setColor(0.81,0.86,0.80)
       love.graphics.printf(self.hoverItem.desc,px+24,py+ph-39,pw-42)

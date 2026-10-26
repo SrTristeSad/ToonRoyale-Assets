@@ -2,6 +2,9 @@
 -- shared/config.js @ 06f7c1ca965a7628671676c8d9a7efd3997bb5e7
 -- These are the authoritative reference values for world generation.
 local C = {
+  -- RENDER from shared/config.js; required for authoritative visibility.
+  maxScreenWidth = 1920,
+  maxScreenHeight = 1080,
   mapScale = 14400,
   -- Moo-Quest bundled Node shared/config.js uses the normal gathering economy.
   -- These flags must follow OUR running server, not the archived sandbox demo.
@@ -10,7 +13,22 @@ local C = {
   unlimitedAmount = 1000000,
   maxPlayers = 40,
   maxPlayersHard = 50,
+  maxNameLength = 15, -- shared/config.js, original Player.setUserData
+  -- Exact shared/config.js [Co] weapon variants; Lua indices are 1-based.
+  weaponVariants = {
+    {id=0,src="",xp=0,val=1},
+    {id=1,src="_g",xp=3000,val=1.1},
+    {id=2,src="_d",xp=7000,val=1.18},
+    {id=3,src="_r",poison=true,xp=12000,val=1.18},
+    {id=4,src="_e",poison=true,lifesteal=0.15,membersOnly=true,xp=30000,val=1.18}
+  },
+
+  skinColors = {"#bf8f54","#cbb091","#896c4b","#fadadc","#ececec",
+    "#c37373","#4c4c4c","#ecaff7","#738cc3","#8bc373"},
   gatherAngle = math.pi/2.6,
+  hitReturnRatio = 0.25, -- shared/config.js [Ad]
+  hitAngle = math.pi/2, -- shared/config.js [Od]
+  shieldAngle = math.pi/3, -- shared/config.js [qd], original shield arc
   colGrid = 10,
   areaCount = 7,
   treesPerArea = 9,
@@ -45,11 +63,15 @@ local C = {
     "Murdoch", "Theo", "Jared", "July", "Sonia", "Mel",
     "Dexter", "Quinn", "Milky"
   },
+  maxAge = 100, -- shared/config.js PLAYER maxAge
   playerScale = 35,
   playerSpeed = 0.0016,
   playerDecel = 0.993,
   collisionDepth = 6,
   serverUpdateRate = 9,
+  minimapRate = 3000, -- shared/config.js, authoritative Game.tick interval
+  mapPingTime = 2200, -- shared/config.js, tactical ping cooldown
+  chatCooldown = 500, -- shared/config.js [Md], original game chat delay
   clientSendRate = 5,
   resourceTypes = {"wood","food","stone","points"},
   secretPool = {

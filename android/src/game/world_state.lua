@@ -2,7 +2,9 @@
 -- Packet layouts: al007ex/moomoo-clone/server/src/moomoo/server.js (pinned baseline).
 local Catalog=require("src.game.catalog")
 local C=require("src.game.config")
+local DeathMarker=require("src.game.death_marker")
 local Animation=require("src.game.reference_animation")
+local Mob=require("src.game.mob_animations")
 local CombatText=require("src.game.reference_combat_text")
 local BossEffects=require("src.game.reference_boss_effects")
 local Animals=require("src.game.animals")
@@ -119,6 +121,26 @@ end
 local function number(v) return type(v)=="number" and v==v and v~=math.huge and v~=-math.huge end
 local function validId(v) return number(v) and v%1==0 and v>=0 end
 local function array(v) return type(v)=="table" and v or {} end
+local function inventoryList(raw)
+  -- The Node inventory is a zero-indexed JavaScript array. Lua MessagePack
+  -- decoding may expose the original indices (0,1,...) as map keys.
+  -- Convert only for client-side display; never alter the server packet IDs.
+  if type(raw)~="table" then return {} end
+  local result={}
+  if raw[0]~=nil then
+    local i=0
+    while raw[i]~=nil do
+      if type(raw[i])=="number" then result[#result+1]=raw[i] end
+      i=i+1
+    end
+  else
+    for _,id in ipairs(raw) do
+      if type(id)=="number" then result[#result+1]=id end
+    end
+  end
+  return result
+end
+
 -- Snapshot smoothing follows the 170ms transition used in the JS updateGame().
 local function receivePosition(entity,x,y,dir)
   entity.fromX=entity.visualX or entity.x or x
@@ -133,16 +155,18 @@ end
 function World.new()
   return setmetatable({
     sid=nil,spawned=false,dead=false,players={},objects={},
+    map=nil,animationCatalog=nil,roomSettings=nil,spaceId="surface",space=nil,justChangedSpace=false,
+    mapMessage=nil,mapMessageTimer=0,
     objectSlots={},objectSlotBySid={},objectSlotCount=0,
-    animals={},projectiles={},
+    animals={},projectiles={},mobDeathEffects={},
     entityPaintOrder={players={},animals={}},
     entityPaintTracked={players={},animals={}},
-    resources={},resourceGain={},itemCounts={},inventory={weapons={},items={}},leaderboard={},categoryRankings={},
+    resources={},resourceGain={},itemCounts={},inventory={weapons={},items={}},leaderboard={},
     combatText={},bossEffects={},
     updateSeconds=nil,restartSeconds=nil,pongCount=0,
     profiles={},lifeStats={},
     xp=0,maxXP=0,age=1,upgradePoints=0,upgradeAge=0,
-    minimapData={},mapPings={},mapMarker=nil,lastDeath=nil,
+    minimapData={},mapPings={},mapMarker=nil,lastDeath=nil,lastKnownPosition=nil,
     serverAnimals={},teams={},tribe=nil,tribeOwner=false,tribeMembers={},joinRequests={},
     store=freeStore(),
     packets=0,lastPacket=nil
@@ -159,6 +183,39 @@ function World:apply(name,args)
     -- permitted animal display metadata before any gameplay spawn.
     local handshake=args[1]
     if type(handshake)~="table" then return false end
+    self.animationCatalog={
+      animations=type(handshake.animations)=="table" and handshake.animations or {}
+    }
+    local options=handshake.roomSettings
+    if type(options)=="table" and type(options.mods)=="table"
+      and type(options.difficulty)=="string" then
+      self.roomSettings={
+        difficulty=options.difficulty,
+        mods=options.mods,
+        surfaceAnimals=options.surfaceAnimals,
+        interiorAnimals=options.interiorAnimals}
+    else self.roomSettings=nil end
+    -- The local Lua host advertises this only when LC runs a custom map.
+    -- V2 and classic servers omit it and retain their original rendering.
+    if type(handshake.map)=="table" and type(handshake.map.id)=="string"
+       and type(handshake.map.portals)=="table" then
+      self.map={id=handshake.map.id,
+        name=type(handshake.map.name)=="string"
+          and handshake.map.name:sub(1,70) or handshake.map.id,
+        portals=handshake.map.portals,
+        interactables=type(handshake.map.interactables)=="table"
+           and handshake.map.interactables or {},
+        animations=type(handshake.animations)=="table"
+           and handshake.animations
+           or type(handshake.map.animations)=="table"
+           and handshake.map.animations or {}}
+      self.animationCatalog=self.map
+      self.spaceId="surface"
+      self.space={id="surface",type="surface",portals=self.map.portals,
+         interactables=self.map.interactables}
+    else
+      self.map=nil;self.spaceId="surface";self.space=nil
+    end
     local kinds=handshake.animals
     if type(kinds)=="table" then
       local received={}
@@ -179,6 +236,110 @@ function World:apply(name,args)
           self.teams[#self.teams+1]={sid=team.sid,owner=team.owner,clan=team.clan==true}
         end
       end
+    end
+    return true
+  elseif name=="j" then
+    if args[1]=="mob-death" then
+      local data=args[4]
+      if not self.animationCatalog or type(data)~="table"
+        or not validId(data.sid) or not validId(data.index)
+        or not number(data.x) or not number(data.y)
+        or not number(data.dir) then return false end
+      local set=self.animationCatalog and self.animationCatalog.animations
+        and self.animationCatalog.animations[tostring(data.index)]
+      if not set or type(set.death)~="table" then return false end
+      local ttl=math.min(5,set.death.frames/set.death.fps)
+      if not number(ttl) or ttl<=0 then return false end
+      if #self.mobDeathEffects>=32 then table.remove(self.mobDeathEffects,1) end
+      local ghost={sid=data.sid,index=data.index,x=data.x,y=data.y,
+        visualX=data.x,visualY=data.y,dir=data.dir,
+        remaining=ttl}
+      Mob.onDeath(ghost,set)
+      Mob.update(ghost,set,0.001)
+      self.mobDeathEffects[#self.mobDeathEffects+1]=ghost
+      return true
+    elseif args[1]=="interaction-update" then
+      local update=args[4]
+      if not self.map or not self.space or type(update)~="table"
+        or update.spaceId~=self.spaceId
+        or type(update.id)~="string" then return false end
+      local item,gate
+      for _,obj in ipairs(self.space.interactables or {}) do
+       if obj.id==update.id then item=obj end
+       if obj.id==update.gateId and obj.kind=="gate" then gate=obj end
+      end
+      if not item or item.kind~=update.kind
+        or type(update.version)~="number" or update.version%1~=0
+        or update.version<1 or update.version>(item.version or 0)+1000
+        or update.version<=(item.version or 0)
+        or type(update.used)~="boolean" then return false end
+      if item.kind=="node" then
+       if type(update.remaining)~="number"
+         or update.remaining%1~=0 or update.remaining<0
+         or update.remaining>item.charges
+         or update.remaining>=(item.remaining or item.charges)
+         or update.used~=(update.remaining==0) then return false end
+      elseif item.kind=="cache" or item.kind=="lever" then
+       if item.used or not update.used then return false end
+      elseif item.kind~="switch" then return false end
+      if item.kind=="lever" or item.kind=="switch" then
+       if not gate or type(update.gateClosed)~="boolean"
+         or gate.closed==update.gateClosed then return false end
+      end
+      -- Validate first, then atomically update both objects and real
+      -- collision rectangles. A reordering/retry cannot close stale doors.
+      if gate then
+       gate.closed=update.gateClosed
+       if gate.closed then
+        self.space.obstacles[#self.space.obstacles+1]={
+         x=gate.x-gate.width/2,y=gate.y-gate.height/2,
+         width=gate.width,height=gate.height,
+         material=gate.material or "metal",interactiveGateId=gate.id}
+       else
+        for i=#self.space.obstacles,1,-1 do
+         if self.space.obstacles[i].interactiveGateId==gate.id then
+          table.remove(self.space.obstacles,i);break
+         end
+        end
+       end
+      end
+      item.version=update.version
+      item.used=update.used
+      if item.kind=="node" then item.remaining=update.remaining end
+      return true
+    elseif args[1]=="interact-result" then
+      local payload=args[4]
+      if not self.map or type(payload)~="table"
+        or type(payload.message)~="string"
+        or #payload.message>120 then return false end
+      self.mapMessage=payload.message
+      self.mapMessageTimer=4
+      return true
+    end
+    -- Authoritative zone switch from the authenticated LOCAL Lua host.
+    local id,x,y,zone=args[1],args[2],args[3],args[4]
+    if not self.map or type(id)~="string" or type(zone)~="table"
+      or zone.id~=id or not number(x) or not number(y)
+      or type(zone.portals)~="table" or type(zone.obstacles)~="table"
+      or not number(zone.width) or not number(zone.height)
+      or zone.width<=0 or zone.height<=0 or zone.width>14400
+      or zone.height>14400 or x<0 or y<0
+      or x>zone.width or y>zone.height then return false end
+    local own=self.players[self.sid]
+    self.spaceId=id;self.space=zone;self.justChangedSpace=true
+    -- The authenticated server gave the exact arrival position with the
+    -- new floor; this becomes the reliable fallback for a quick death.
+    self.lastKnownPosition={x=x,y=y,spaceId=id}
+    self.players={};self.animals={};self.objects={};self.projectiles={}
+    self.objectSlots={};self.objectSlotBySid={};self.objectSlotCount=0
+    self.entityPaintOrder={players={},animals={}}
+    self.entityPaintTracked={players={},animals={}}
+    self.bossEffects={};self.combatText={}
+    if own then
+      own.x=x;own.y=y;own.fromX=x;own.fromY=y
+      own.toX=x;own.toY=y;own.visualX=x;own.visualY=y;own.interp=1
+      self.players[self.sid]=own
+      trackPaintOrder(self,"players",self.sid)
     end
     return true
   elseif name=="g" then
@@ -238,9 +399,13 @@ function World:apply(name,args)
   elseif name=="C" then
     if not validId(args[1]) then return false end
     self.sid=args[1];self.spawned=true;self.dead=false
+    self.spaceId="surface";self.justChangedSpace=false
+    self.space=self.map and {id="surface",type="surface",
+      portals=self.map.portals,interactables=self.map.interactables} or nil
     -- The Node sends a fresh D after every C. Do not render the previous
     -- life's position while waiting for its new authoritative D snapshot.
     self.players[self.sid]=nil
+    self.lastKnownPosition=nil
     -- server/src/moomoo/modules/player.js::spawn initializes this in Node;
     -- the JavaScript client's Player.spawn() mirrors it locally.
     -- The server does not send V on each new spawn, only when inventory changes.
@@ -252,6 +417,7 @@ function World:apply(name,args)
     self.itemCounts={}
     self.combatText={}
     self.bossEffects={}
+    self.mobDeathEffects={}
     -- Stats/profiles belong to server SIDs from this session, never a
     -- local estimate inferred from kills, damage text, or resource totals.
     self.profiles={};self.lifeStats={}
@@ -273,6 +439,9 @@ function World:apply(name,args)
     p.dive=(validId(d[15]) and d[15]<=3) and d[15] or 0
     p.invisible=d[16];p.disguised=d[17]
     self.players[id]=p
+    if id==self.sid then
+      self.lastKnownPosition={x=p.x,y=p.y,spaceId=self.spaceId or "surface"}
+    end
     trackPaintOrder(self,"players",id)
     return true
   elseif name=="a" then
@@ -284,6 +453,9 @@ function World:apply(name,args)
         local p=self.players[sid] or {sid=sid,scale=35,health=100,maxHealth=100}
         receivePosition(p,x,y,dir/100)
         self.players[sid]=p
+        if sid==self.sid then
+          self.lastKnownPosition={x=x,y=y,spaceId=self.spaceId or "surface"}
+        end
         trackPaintOrder(self,"players",sid)
       end
     end
@@ -314,7 +486,9 @@ function World:apply(name,args)
       local sid,x,y=data[i],data[i+1],data[i+2]
       if validId(sid) and number(x) and number(y) then
         insertObject(self,sid,{sid=sid,x=x,y=y,dir=data[i+3],scale=data[i+4],
-          type=data[i+5],
+          -- MessagePack null is the correct wire placeholder for items with
+          -- no natural-resource type. Keep it out of the Lua object model.
+          type=type(data[i+5])=="number" and data[i+5] or nil,
           id=type(data[i+6])=="number" and data[i+6] or nil,
           owner=data[i+7]})
       end
@@ -328,6 +502,13 @@ function World:apply(name,args)
       if validId(sid) and number(x) and number(y) then
         local ai=self.animals[sid] or {sid=sid}
         ai.index=data[i+1]
+        Mob.onPosition(ai,x,y)
+        if number(data[i+5]) and number(ai.health)
+          and data[i+5]<ai.health then
+          local set=Mob.definition(self.animationCatalog,ai)
+          if data[i+5]<=0 then Mob.onDeath(ai,set)
+          else Mob.onHurt(ai,set) end
+        end
         receivePosition(ai,x,y,number(data[i+4]) and data[i+4]/100 or 0)
         ai.health=data[i+5];ai.nameIndex=data[i+6];ai.state=data[i+7]
         self.animals[sid]=ai
@@ -400,7 +581,10 @@ function World:apply(name,args)
   elseif name=="J" then
     -- The JavaScript client invokes findAIBySID(sid):startAnim().
     local ai=self.animals[args[1]]
-    if ai then Animation.animal(ai) end
+    if ai then
+      Animation.animal(ai)
+      Mob.onAttack(ai,Mob.definition(self.animationCatalog,ai))
+    end
     return true
   elseif name=="K" then
     -- sid, didHit, weaponIndex, optional skin attack-speed multiplier.
@@ -470,8 +654,13 @@ function World:apply(name,args)
     return true
   elseif name=="P" then
     local player=self:localPlayer()
-    if player and number(player.x) and number(player.y) then
-      self.lastDeath={x=player.x,y=player.y}
+    local position=player and number(player.x) and number(player.y)
+      and {x=player.x,y=player.y} or self.lastKnownPosition
+    if position then
+      -- Only server-confirmed positions are eligible. Preserve the layer
+      -- where the player actually died; never map cave X/Y onto the surface.
+      self.lastDeath=DeathMarker.make(position.x,position.y,
+        position.spaceId or self.spaceId)
     end
     self.dead=true;self.spawned=false
     -- The reference stops rendering the defeated player immediately.
@@ -492,7 +681,7 @@ function World:apply(name,args)
     end
     return true
   elseif name=="V" then
-    local data=array(args[1])
+    local data=inventoryList(args[1])
     if args[2]==1 then self.inventory.weapons=data
     elseif args[2]==0 then self.inventory.items=data end
     return true
@@ -551,22 +740,6 @@ function World:apply(name,args)
     -- Guest account IDs are privileged data; do not expose on the card.
     self.lifeStats[sid]=stats
     return true
-  elseif name=="n" then
-    -- Optional Android ranking response: category and up to ten [sid,name,value] tuples.
-    -- UI never constructs public rankings from hidden or untrusted client data.
-    local category,data=args[1],args[2]
-    local allowed={gold=true,health=true,food=true,wood=true,stone=true,kills=true,points=true}
-    if type(category)~="string" or not allowed[category] or type(data)~="table"
-      or #data>30 or #data%3~=0 then return false end
-    local entries={}
-    for i=1,#data,3 do
-      local sid,name,value=data[i],data[i+1],data[i+2]
-      if not validId(sid) or type(name)~="string" or #name>80
-        or not number(value) or value<0 then return false end
-      entries[#entries+1]={sid=sid,name=name,score=value}
-    end
-    self.categoryRankings[category]=entries
-    return true
   elseif name=="G" then
     local list=array(args[1]);self.leaderboard={}
     for i=1,#list-2,3 do
@@ -577,6 +750,9 @@ function World:apply(name,args)
   return false
 end
 function World:update(dt)
+  if self.mapMessageTimer and self.mapMessageTimer>0 then
+    self.mapMessageTimer=math.max(0,self.mapMessageTimer-dt)
+  end
   if type(dt)~="number" or dt<=0 then return end
   -- Advance the server-issued countdowns only. Stage 0 on r is a
   -- semantic "after this life" message, so it remains at zero.
@@ -588,6 +764,12 @@ function World:update(dt)
   end
   CombatText.update(self.combatText,dt)
   BossEffects.update(self.bossEffects,dt)
+  for i=#self.mobDeathEffects,1,-1 do
+    local ghost=self.mobDeathEffects[i]
+    Mob.update(ghost,Mob.definition(self.animationCatalog,ghost),dt)
+    ghost.remaining=ghost.remaining-dt
+    if ghost.remaining<=0 then table.remove(self.mobDeathEffects,i) end
+  end
   for key,gain in pairs(self.resourceGain) do
     gain.remaining=gain.remaining-dt
     if gain.remaining<=0 then self.resourceGain[key]=nil end
@@ -600,6 +782,9 @@ function World:update(dt)
   for _,group in ipairs({self.players,self.animals}) do
     for _,entity in pairs(group) do
       Animation.update(entity,dt)
+      if group==self.animals then
+        Mob.update(entity,Mob.definition(self.animationCatalog,entity),dt)
+      end
       if entity.chatCountdown and entity.chatCountdown>0 then
         entity.chatCountdown=math.max(0,entity.chatCountdown-dt*1000)
       end
