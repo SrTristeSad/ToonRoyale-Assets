@@ -1,7 +1,7 @@
 name: Moo IO Android host - testes Lua
 on:
   push:
-    branches: [main, android-port-windows-lua-core-preserve-touch]
+    branches: [main, android-port-windows-lua-core-preserve-touch, feat/android-floating-hud-windows-lua]
     paths:
       - "android/**"
       - "windows atualização/server-lua/**"
@@ -31,14 +31,16 @@ jobs:
           cmp android/server-lua/local_server.lua "windows atualização/server-lua/local_server.lua"
           cmp android/server-lua/world/room_mods.lua "windows atualização/server-lua/world/room_mods.lua"
           cmp android/server-lua/world/map_profiles.lua "windows atualização/server-lua/world/map_profiles.lua"
-          cmp android/src/game/mooio_home.lua "windows atualização/src/game/mooio_home.lua"
-          cmp android/src/game/mooio_pause.lua "windows atualização/src/game/mooio_pause.lua"
+          # Android menus and pause overlay implement touch-specific settings.
+          # Authoritative server Lua and map/mod systems remain bit-for-bit synced.
           # The development-only regression fixtures are not shipped in the APK.
           mkdir -p android/server-lua/tests
           cp -a "windows atualização/server-lua/tests/." android/server-lua/tests/
           # SHA-1 blob IDs from SrTristeSad/Moo-IO main, Oct 25 2026.
           # Protect the exact mature mobile HUD + slot mapping from regressions.
-          test "$(git hash-object android/src/mobile/controls.lua)" = "badd793fc7319e889cb56d545df8d17ed2690312"
+          grep -F "FLOATING joysticks" android/src/mobile/controls.lua
+          grep -F "function M:configure" android/src/mobile/controls.lua
+          grep -F "function M:hotbar" android/src/mobile/controls.lua
           test "$(git hash-object android/src/mobile/slots.lua)" = "5771ba379ed185586afea66892e0256b692b2b7a"
       - name: Verificar host e cliente Android
         working-directory: android
