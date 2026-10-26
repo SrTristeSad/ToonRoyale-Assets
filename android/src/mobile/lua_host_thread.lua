@@ -5,6 +5,10 @@ local commands=love.thread.getChannel(commandsName)
 local server
 local ok,reason=xpcall(function()
   require("love.filesystem")
+  -- LÖVE threads start in a fresh LuaJIT state. Unlike the Windows main.lua
+  -- headless entrypoint, this thread did not initialize global utf8; the
+  -- player name sanitizer then crashed on the first real spawn packet M.
+  if not utf8 then utf8=require("utf8") end
   local Socket=require("socket")
   local Local=require("server-lua.local_server")
   server=Local.new({

@@ -54,4 +54,37 @@ jobs:
           lua tests/touch_controls_test.lua
           lua tests/performance_test.lua
           lua tests/windows_core_port_test.lua
+          lua tests/websocket_close_reason_test.lua
           lua -e 'require("src.test_server_directory")()'
+      - name: Android Lua client vs real authoritative Lua WebSocket (M -> C/D)
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          export MOO_IO_BIND_IP=127.0.0.1
+          export MOO_IO_ROOM_CODE=testing42
+          export MOO_IO_NETWORK_MODE=lan
+          export MOO_IO_E2E_PORT=18978
+          export PORT=18978
+          export MOO_IO_LUA_DATA_DIR="$RUNNER_TEMP/android-real-lua-server"
+          mkdir -p "$MOO_IO_LUA_DATA_DIR"
+          # Standalone Lua 5.4 has the same utf8 library used by the Android
+          # LÖVE worker. The client is LuaJIT, matching the phone runtime.
+          lua server-lua/run.lua >"$RUNNER_TEMP/android-real-lua-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 80); do
+            if curl -fsS --max-time 1 "http://127.0.0.1:18978/ping" >/dev/null 2>&1; then break; fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat "$RUNNER_TEMP/android-real-lua-server.log"
+              exit 1
+            fi
+            sleep 0.1
+          done
+          curl -fsS --max-time 2 http://127.0.0.1:18978/ping >/dev/null
+          if ! luajit tests/local_lua_real_client_e2e.lua; then
+            echo 'SERVER LOG (secrets and tickets must not be logged):'
+            tail -80 "$RUNNER_TEMP/android-real-lua-server.log"
+            exit 1
+          fi
+
