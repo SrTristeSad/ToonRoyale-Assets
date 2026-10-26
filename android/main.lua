@@ -970,8 +970,27 @@ local function stopPlayerControls()
 end
 local function pauseAction(action)
   if action=="edit_controls" then
-    if mobile then mobile:stopForOverlay() end
-    home:setStatus("Controles touchscreen Android permanecem ativos.")
+    if mobile then mobile:stopForOverlay();pause.page="hud" end
+  elseif action=="hud_smaller" or action=="hud_bigger"
+    or action=="opacity_less" or action=="opacity_more"
+    or action=="move_less" or action=="move_more"
+    or action=="fire_less" or action=="fire_more"
+    or action=="dead_less" or action=="dead_more" or action=="hud_reset" then
+    local data={
+      hud_smaller={"hudScale",-.10,.85,1.55},hud_bigger={"hudScale",.10,.85,1.55},
+      opacity_less={"hudOpacity",-.10,.50,1},opacity_more={"hudOpacity",.10,.50,1},
+      move_less={"moveScale",-.10,.75,1.50},move_more={"moveScale",.10,.75,1.50},
+      fire_less={"fireScale",-.10,.75,1.50},fire_more={"fireScale",.10,.75,1.50},
+      dead_less={"deadzone",-.025,.05,.30},dead_more={"deadzone",.025,.05,.30}
+    }
+    if action=="hud_reset" then
+      home.hudScale=1.20;home.hudOpacity=.90;home.moveScale=1
+      home.fireScale=1;home.deadzone=.15
+    else
+      local d=data[action]
+      home[d[1]]=math.floor(math.max(d[3],math.min(d[4],home[d[1]]+d[2]))*1000+.5)/1000
+    end
+    saveHudSettings()
   elseif action=="toggle_grid" then
     home.showGrid=not home.showGrid
     menu.grid=home.showGrid
@@ -1348,7 +1367,23 @@ local function mobileSelect(kind,slot)
   end
 end
 local function mobileAction(action,payload)
+  if action=="top_toggle" or action=="bar_hold"
+    or action=="bar_scroll" or action=="bar_release" then return end
   if action=="pause" then love.keypressed("escape");return end
+  if action=="shop_open" or action=="clan_open" or action=="tribe_open" then
+    mobileStop()
+    if client and client.state=="spawn_confirmed" then
+      chatOpen=false;chatDraft="";input.keys={}
+      if action=="shop_open" then
+        clans:close();panels:toggle("store")
+      elseif action=="tribe_open" then
+        clans:close();panels:toggle("tribe")
+      else
+        panels:close();clans:toggle(client.authToken)
+      end
+    end
+    return
+  end
   if action=="map_open" or action=="chat_open" or action=="rank_open" then
     mobileStop()
     if mobile.auto and client and client.state=="spawn_confirmed" then
@@ -1375,6 +1410,18 @@ local function mobileAction(action,payload)
     client:send("Y",{payload})
   elseif action=="ping_here" then
     client:send("S",{1}) -- Same real team ping as keyboard R on Windows
+  elseif action=="lock_aim" then
+    if not lockDir then
+      local dir=currentAttackDir()
+      local sent,err=client:send("D",{dir})
+      if not sent then latestEvent="Mira: "..tostring(err);return end
+      lastAim=dir
+    end
+    local ok,err=client:send("K",{0})
+    if ok then
+      lockDir=not lockDir
+      mobile:setDirectionLock(lockDir)
+    else latestEvent="Trava de mira indisponivel: "..tostring(err) end
   elseif action=="server_auto" then
     local ok,err=client:send("K",{1}) -- Same toggle as E on Windows
     if not ok then
@@ -1441,7 +1488,7 @@ function love.touchpressed(id,x,y)
     return
   end
   local w,h=love.graphics.getDimensions()
-  -- Keep the original Moo-IO controls and their pointer ownership 1:1.
+  -- Two floating joysticks + current HUD preserved; authoritative Lua world.
   -- The most recent Windows map added [F] for nearby switches, chests and
   -- nodes. Android can tap its existing contextual prompt with another
   -- finger while both joysticks remain captured and moving/attacking.
@@ -1465,14 +1512,13 @@ end
 function love.touchmoved(id,x,y)
   if not mobile or phase~="playing" or pause:isOpen() then return end
   local w,h=love.graphics.getDimensions()
-  local action=mobile:moved(id,x,y,w,h)
-  -- The attack thumb IS the aim control. Send real Node direction packets
-  -- promptly during a drag (max 25 Hz). The normal 70-ms tick remains a
-  -- fallback when Android coalesces touch events.
-  if action=="aim" and mobile:attacking() and not chatOpen and client
+  local action,attackChanged=mobile:moved(id,x,y,w,h)
+  -- Inner right drag aims; moving outward activates manual attack.
+  -- Send D even while aiming only; transition sends F only when needed.
+  if action=="aim" and not chatOpen and client
     and client.state=="spawn_confirmed" then
     local now=love.timer.getTime()
-    if now-mobileAimSentAt>=.04 then
+    if not lockDir and (attackChanged or now-mobileAimSentAt>=.04) then
       local dir=currentAttackDir()
       if not lastAim or math.abs(dir-lastAim)>.02 then
         local ok=client:send("D",{dir})
@@ -1480,6 +1526,7 @@ function love.touchmoved(id,x,y)
       end
       mobileAimSentAt=now
     end
+    if attackChanged then mobileAction("attack") end
   end
 end
 function love.touchreleased(id)
