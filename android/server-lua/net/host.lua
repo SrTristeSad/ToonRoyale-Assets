@@ -134,6 +134,13 @@ function Host:drop(peer)
     if self.onClose then pcall(self.onClose,peer,peer.roomKey) end
   end
 end
+-- A malformed request or failing player callback must not terminate the
+-- entire authoritative room thread. Keep a bounded diagnostic, never a ticket.
+function Host:rejectPeer(peer,stage,reason)
+  self.peerFailures=(self.peerFailures or 0)+1
+  self.lastPeerFailure=tostring(stage)..": "..tostring(reason):sub(1,240)
+  self:drop(peer)
+end
 function Host:close()
   if self.controller then self.controller:close();self.controller=nil end
   if self.listener then self.listener:close();self.listener=nil end
@@ -206,7 +213,7 @@ function Host:request(peer,req)
     end
     addOutput(peer,WS.encode(peer.session:handshakeFrame(),2))
     local ok,err=pcall(self.onConnect,peer,t,key)
-    if not ok then self:drop(peer);error("Lua onConnect: "..tostring(err)) end
+    if not ok then self:rejectPeer(peer,"onConnect",err) end
     return
   end
   if self.api and path:sub(1,5)=="/api/" then
@@ -215,7 +222,12 @@ function Host:request(peer,req)
       ip=peer.tcp:getpeername()
     end
     ip=ip or peer.ip or "unknown"
-    local status,payload=self.api:handle(req.method,req.target,h,req.body,ip)
+    local ok,status,payload=pcall(
+      self.api.handle,self.api,req.method,req.target,h,req.body,ip)
+    if not ok then
+      self:rejectPeer(peer,"api",status)
+      return
+    end
     if status then
       local body= status==204 and "" or assert(Json.encode(payload))
       addOutput(peer,reply(status,body))
@@ -296,16 +308,18 @@ function Host:processPeer(peer)
         local msg,reason=peer.session:decode(frame.payload)
         if not msg then
           local ac=peer.player and peer.player.anticheat
-          if ac then
-            assert(type(ac.onTransportError)=="function",
-              "original anticheat.onTransportError required")
-            ac:onTransportError(reason)
+          if ac and type(ac.onTransportError)=="function" then
+            -- Even a broken anticheat callback cannot crash everybody's room.
+            pcall(ac.onTransportError,ac,reason)
           end
-          self:drop(peer)
+          self:rejectPeer(peer,"packetDecode",reason)
           return
         end
         local ok,e=pcall(self.onPacket,peer,msg.name,msg.args,peer.roomKey)
-        if not ok then self:drop(peer);error("Lua onPacket: "..tostring(e)) end
+        if not ok then
+          self:rejectPeer(peer,"onPacket",e)
+          return
+        end
       end
     end
   end
@@ -328,7 +342,8 @@ function Host:update()
   end
   local alive={}
   for _,p in ipairs(self.peers) do
-    self:processPeer(p)
+    local ok,err=pcall(self.processPeer,self,p)
+    if not ok then self:rejectPeer(p,"network",err) end
     if not p.closed then alive[#alive+1]=p end
   end
   self.peers=alive
