@@ -221,14 +221,12 @@ function Home:click(sx,sy)
       self.focus=nil
       return nil
     end
+    -- While the Lua server is starting, the visitor connection form is hidden
+    -- and its old hitboxes must NOT remain clickable.
+    if self.starting then self.focus=nil;return nil end
     if inside(x,y,boxes.nickname) then self.focus="nickname";return "focus" end
     if inside(x,y,boxes.joinIP) then self.focus="invite";return "focus" end
     if inside(x,y,boxes.joinCode) then self.focus="joinCode";return "focus" end
-    if self.hosting then
-      if inside(x,y,boxes.roomCopy) then self.focus=nil;return "copy" end
-      if inside(x,y,boxes.roomEnter) then self.focus=nil;return "play_local" end
-      if inside(x,y,boxes.roomStop) then self.focus=nil;return "stop" end
-    end
     if inside(x,y,boxes.join) then self.focus=nil;return "join" end
     if not self.hosting and not self.starting and inside(x,y,boxes.v2Login) then
       self.focus=nil;return "v2_login"
@@ -393,6 +391,7 @@ function Home:navTargets()
   ids={"homePlay","homeServers","homeSettings","homeQuit"}
  elseif self.screen=="play" then
   ids=self.hosting and {"nickname","roomCopy","roomEnter","roomStop","back"}
+    or self.starting and {"back"}
     or {"nickname","playConfigure","joinIP","joinCode","join","v2Login","back"}
  elseif self.screen=="create" then
   ids={"chooseLan","chooseVpn","easyDiff","normalDiff",
@@ -566,6 +565,13 @@ function Home:draw(state,detail,showWorld)
     return
   end
   local pageTitle=titles[self.screen] or titles.play
+  if self.screen=="play" then
+    if self.hosting then
+      pageTitle={"MINHA SALA","Servidor ativo. Jogue ou compartilhe o convite."}
+    elseif self.starting then
+      pageTitle={"CRIANDO SALA","Inicializando o servidor Lua local."}
+    end
+  end
   UI.topbar(pageTitle[1],pageTitle[2])
   if self.screen=="home" then
     printText("ESCOLHA COMO JOGAR",96,213,29,C.white)
@@ -599,29 +605,22 @@ function Home:draw(state,detail,showWorld)
         button("roomStop","ENCERRAR SALA",false,true)
         printText("Se morrer, JOGAR AGORA renasce nesta mesma sala.",
           404,542,14,C.muted,473,"center")
+      elseif self.starting then
+        -- Do not render visitor fields while the room is booting. Only the
+        -- creation status is shown, even if startup takes several seconds.
+        panel(397,173,486,415,C.panel)
+        printText("PREPARANDO SUA SALA",425,190,24,C.green,430,"center")
+        printText("Inicializando o servidor Lua local...",425,266,18,C.white,430,"center")
+        printText("Carregando mundo, bots, mapas e mods.",425,313,16,C.muted,430,"center")
+        printText("Nao precisa conectar ao proprio servidor.",425,360,16,C.muted,430,"center")
+        printText("O convite aparecera quando a sala estiver pronta.",
+          425,415,15,C.muted,430,"center")
       else
       panel(130,174,505,493,C.panel,0)
       panel(672,174,477,402,C.panel,0)
       printText("01  CRIAR MINHA SALA",155,184,19,C.green)
       field("nickname",self.nickname,"Seu apelido",self.focus=="nickname")
-      if self.hosting then
-        printText(self.botsEnabled and self.botCount>0 and
-          ("Sala criada - "..self.botCount.." bots ativos.")
-          or "Sala criada - amigos podem entrar.",155,296,17,C.green)
-        panel(155,331,462,51,C.raised,9)
-        local invite=self:roomInvite()
-        printText(invite,170,345,16,C.white,432,"center")
-        button("roomCopy","COPIAR CONVITE",false)
-        button("roomEnter","JOGAR AGORA",true)
-        button("roomStop","ENCERRAR",false)
-      elseif self.starting then
-        printText("Preparando sua sala...",155,311,18,C.green)
-        printText("Voce escolheu criar esta sala.",155,363,16,C.muted)
-        printText("Ninguem precisa abrir um terminal.",155,397,16,C.muted)
-        printText(self.botsEnabled and
-          ("Bots de IA: "..self.botCount) or "Bots desativados.",155,462,15,C.muted)
-      else
-        printText("Configure mapa, dificuldade e mods",158,310,17,C.muted,449)
+      printText("Configure mapa, dificuldade e mods",158,310,17,C.muted,449)
         printText("MAPA SELECIONADO:",158,347,15,C.green)
         printText(self:mapName(),158,369,21,C.white,440)
         button("playConfigure","CONFIGURAR MINHA SALA",true)
@@ -631,7 +630,6 @@ function Home:draw(state,detail,showWorld)
           .."     |     MODS: "..(self.modIds=="" and "NENHUM" or "PERSONALIZADOS"),
           172,534,15,C.muted,425)
         printText("Clique em CONFIGURAR para criar a partida.",172,568,14,C.amber,422)
-      end
       printText("02  CONECTAR A OUTRA SALA",704,194,19,C.green)
       printText("IP, porta ou convite completo",704,236,15,C.muted)
       field("joinIP",self.invite,"192.168.1.5:8080",self.focus=="invite")
@@ -643,9 +641,7 @@ function Home:draw(state,detail,showWorld)
       else
         printText("Convite LAN/VPN ou HTTPS V2 com certificado valido.",706,497,15,C.muted)
       end
-      if not self.hosting and not self.starting then
-        button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
-      end
+      button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
     elseif self.screen=="create" then
       printText("F5: atualizar mapas e mods",367,160,13,C.amber,543,"center")
