@@ -30,7 +30,7 @@ local function mock(id,decode,recv)
 end
 local bad=mock("bad")
 local good=mock("good")
-room.listener={accept=function()return nil end}
+room.listener={accept=function()return nil end,close=function()end}
 room.active=2
 room.activeByIp["127.0.0.1"]=2
 room.activeByRoom.LC=2
