@@ -31,14 +31,18 @@ public final class MooIOServerService extends android.app.Service {
         if(android.os.Build.VERSION.SDK_INT>=29) {
             startForeground(4201,n,android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
         } else startForeground(4201,n);
-        synchronized (MooIOServerService.class) {
-            if (started) return;
-            started=true;
-        }
-        new Thread(this::runServer, "MooIO-Node").start();
+        // Start the Node process in onStartCommand after reading room options.
+        // Launching it here loses the Intent extras supplied by the Lua host.
     }
     @Override public int onStartCommand(android.content.Intent intent,int flags,int startId) {
-        return START_NOT_STICKY; // Do not resurrect a room after Android kills its app.
+        synchronized (MooIOServerService.class) {
+            if (started) return START_NOT_STICKY;
+            started=true;
+        }
+        int count=intent==null ? 0 : intent.getIntExtra("mooio_bot_count",0);
+        final int bots=Math.max(0,Math.min(8,count));
+        new Thread(() -> runServer(bots), "MooIO-Node").start();
+        return START_NOT_STICKY; // Never resurrect the room after Android kills its app.
     }
     @Override public android.os.IBinder onBind(android.content.Intent intent) {
         return null;
@@ -58,7 +62,7 @@ public final class MooIOServerService extends android.app.Service {
         Log.i("MooIO-Host", "Offline room stopped; releasing native Node process");
         android.os.Process.killProcess(android.os.Process.myPid());
     }
-    private void runServer() {
+    private void runServer(int bots) {
         try {
             File root=new File(getFilesDir(),"mooio-host");
             File data=new File(getFilesDir(),"mooio-data");
@@ -85,7 +89,7 @@ public final class MooIOServerService extends android.app.Service {
             String[] args={"node",(bootstrap.isFile()?bootstrap:entry).getAbsolutePath()};
             String[] vars={"HOST="+ip,"PORT=8080","MOO_IO_ROOM_CODE="+code,
                 "MOO_IO_NETWORK_MODE=lan","MOO_IO_GUI_HOST=1",
-                "MOO_IO_BOT_COUNT=0","DATA_DIR="+data.getAbsolutePath(),
+                "MOO_IO_BOT_COUNT="+bots,"DATA_DIR="+data.getAbsolutePath(),
                 "PROTOCOL_BUILD_FILE="+new File(data,"protocol-build.json").getAbsolutePath()};
             int exit=MooIONodeBridge.start(args,vars,root.getAbsolutePath());
             Log.i("MooIO-Host","Embedded Node exited: "+exit);
