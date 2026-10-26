@@ -3,9 +3,11 @@ local Host=require("src.net.mooio_host")
 local address,code=nil,nil
 local active=false
 local starts,stops=0,0
-local function native(action)
+local lastRequestedBots=-1
+local function native(action,options)
   if action=="start" then
     starts=starts+1
+    lastRequestedBots=options and options.bots or -1
     active=true
     return true
   end
@@ -25,6 +27,7 @@ assert(h.state=="idle" and not active and starts==0,
   "opening the app or entering menus must never run the Node server")
 local ok=h:start("lan",nil,0)
 assert(ok and active and starts==1 and h.state=="starting")
+assert(lastRequestedBots==0,"default room must create no bots")
 for _=1,12 do h:update(.7) end
 assert(h.state=="starting","must not report ready before Node controller responds")
 address="192.168.1.12"
@@ -42,10 +45,14 @@ assert(h.state=="idle" and stops==1 and not active,
   "leaving room must actually stop native service and free resources")
 h:stop()
 assert(stops==1,"stopping an already-closed room must not restart service")
-assert(h:start("lan") and active and starts==2,
+assert(h:start("lan",nil,3) and active and starts==2,
   "must be able to start a new room after the previous native service exited")
+assert(lastRequestedBots==3,"native Node must receive chosen number of bots")
 h:stop()
 assert(stops==2 and not active)
+local invalid=h:start("lan",nil,9)
+assert(not invalid and starts==2 and h.state=="idle",
+  "invalid room options must not start the native service")
 local failedCalls=0
 local blocked=Host.new({readStatus=function()return nil end,
   readSessionCode=function()return nil end,
