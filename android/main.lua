@@ -26,8 +26,10 @@ local Camera=require("src.camera")
 local Input=require("src.input")
 local Pack=require("src.protocol.msgpack")
 local Mobile=require("src.mobile.controls")
+local Performance=require("src.mobile.performance")
 local isAndroid=love.system and love.system.getOS and love.system.getOS()=="Android" or os.getenv("MOO_IO_FORCE_ANDROID_E2E")=="1"
 local mobile=isAndroid and Mobile.new() or nil
+local framePacer=isAndroid and Performance.new() or nil
 local mobileAttackSent=false
 local mobileAimSentAt=-math.huge
 local mobileForwardMouse=false
@@ -63,6 +65,7 @@ local profile=Profile.new()
 local clans=Clans.new()
 local death=Death.new()
 local phase="menu"
+local appFocused=true
 local diagnostic=nil
 local reconnectSeconds=0
 local latestEvent="Nenhum io-init recebido."
@@ -208,8 +211,14 @@ function love.update(dt)
   -- The menu backdrop reuses the original top-down world preview even
   -- before connecting to a Node server.
   if phase=="menu" then
-    menu.world:update(dt)
+    -- Menu world is drawn from a cached canvas: advance it only when the
+    -- backdrop is about to be refreshed, rather than on every CPU tick.
     previewAge=previewAge+dt
+    if previewAge>=4 then menu.world:update(math.min(previewAge,0.1)) end
+  elseif menuPreview then
+    -- Release menu-only GPU memory immediately after entering gameplay.
+    menuPreview:release()
+    menuPreview=nil
   end
   hosted:update(dt)
   if home.starting or hosted.state=="failed" then home.serverLog=hosted.lastLog end
@@ -423,6 +432,9 @@ local function line(y,text,color)
 end
 
 function love.draw()
+  -- Mobile only: cap pacing BEFORE expensive GPU draws. Server ticks and
+  -- touch input still flow through the ordinary LÖVE event/update loop.
+  if framePacer then framePacer:pace(phase,appFocused) end
   love.graphics.clear(0.075,0.11,0.10)
   if integration then
     love.graphics.print("Real Node integration: "..integration.mode,30,30)
@@ -1065,6 +1077,8 @@ function love.keyreleased(key)
   end
 end
 function love.focus(focused)
+  appFocused=focused
+  if framePacer then framePacer:reset() end
   if not focused and client and client.state=="spawn_confirmed" then
     if mobile then mobile:reset();mobileAttackSent=false end
     client:send("e",{})
@@ -1359,6 +1373,7 @@ end
 
 function love.resize(w,h)
   previewAge=2
+  if framePacer then framePacer:reset() end
   if camera then camera:resize(w,h) end
   if menuCamera then menuCamera:resize(w,h) end
 end
