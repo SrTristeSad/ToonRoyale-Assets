@@ -1,3 +1,27 @@
+## Windows x64: compilação com executável direto
+
+Para gerar o jogo para teste **sem o inicializador MOO-IO.vbs**, use
+`scripts/build-windows-exe.ps1` no Windows. O resultado contém **`Moo-IO.exe`**,
+um executável *fused* do LÖVE 11.5 que carrega `main.lua` e os recursos
+diretamente, sem WebView nem instalação separada do LÖVE.
+
+Exemplo em PowerShell (com LÖVE 11.5 x64 e Node 22 x64 disponíveis):
+
+```powershell
+.\scripts\build-windows-exe.ps1 -LoveDir "C:\LOVE-11.5-win64" -TlsNodeExe "C:\node22\node.exe"
+```
+
+Extraia/copie **a pasta inteira** da distribuição e execute `Moo-IO.exe` com
+duplo clique. As DLLs, `assets/`, `src/`, `server-lua/`, `scripts/` e
+`runtime/` devem permanecer juntas. O executável auxiliar `love.exe`
+continua necessário **somente para executar o servidor Lua local oculto**
+quando o anfitrião cria uma sala; não é mais o lançador do cliente.
+
+O servidor V2 não é instalado: `runtime/node/node.exe` continua somente como
+ponte TLS de saída do cliente. O executável x64 pode ser examinado
+estruturalmente em Linux, mas a experiência visual e o servidor local precisam
+ser validados no Windows.
+
 # Moo-IO — Windows (servidor local Lua)
 
 ## Menu inicial e tela de morte
