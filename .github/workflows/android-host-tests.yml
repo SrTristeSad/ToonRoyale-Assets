@@ -36,7 +36,10 @@ jobs:
           # The development-only regression fixtures are not shipped in the APK.
           mkdir -p android/server-lua/tests
           cp -a "windows atualização/server-lua/tests/." android/server-lua/tests/
-          cmp android/src/mobile/controls.lua android/src/mobile/controls.lua
+          # SHA-1 blob IDs from SrTristeSad/Moo-IO main, Oct 25 2026.
+          # Protect the exact mature mobile HUD + slot mapping from regressions.
+          test "$(git hash-object android/src/mobile/controls.lua)" = "badd793fc7319e889cb56d545df8d17ed2690312"
+          test "$(git hash-object android/src/mobile/slots.lua)" = "5771ba379ed185586afea66892e0256b692b2b7a"
       - name: Verificar host e cliente Android
         working-directory: android
         run: |
@@ -52,6 +55,8 @@ jobs:
           MOO_IO_TEST_MOD_DATA_DIR="$RUNNER_TEMP/android-mod-data" lua server-lua/tests/mod-extra-mobs-smoke.lua
           lua server-lua/tests/life-persistence-smoke.lua
           lua tests/touch_controls_test.lua
+          lua tests/latest_world_touch_test.lua
+          luajit tests/latest_world_touch_test.lua
           lua tests/performance_test.lua
           lua tests/windows_core_port_test.lua
           lua tests/websocket_close_reason_test.lua
