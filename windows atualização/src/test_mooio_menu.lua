@@ -106,9 +106,23 @@ return function()
   home.screen="play"
   home.hosting=true;home.hostAddress="192.168.1.7:8080";home.hostCode="abcd1234567890"
   assert(home:roomInvite()=="192.168.1.7:8080/abcd1234567890")
-  assert(home:click(175,440)=="copy","host must have invitation sharing")
-  assert(home:click(180,505)=="play_local","host must be able to play")
-  assert(home:click(409,505)=="stop","host must be able to close the room")
+  assert(home:click(540,440)=="copy","host must have invitation sharing")
+  assert(home:click(530,505)=="play_local","host must be able to play")
+  assert(home:click(751,505)=="stop","host must be able to close the room")
+  -- Host-only room must not leave a second guest-join form visible.
+  assert(home:click(721,452)==nil,"host cannot use guest-join UI")
+  local render=love.graphics.newCanvas(1280,720)
+  love.graphics.push("all")
+  love.graphics.setCanvas(render)
+  love.graphics.clear(0.25,0.30,0.24,1)
+  home:draw("ready","",true)
+  love.graphics.setCanvas()
+  local img=render:newImageData()
+  local rr,gg=img:getPixel(1015,430)
+  assert(math.abs(rr-0.25)<0.06 and math.abs(gg-0.30)<0.06,
+    "host menu still renders the old guest connection panel")
+  render:release()
+  love.graphics.pop()
   home.hosting=false
   assert(home:click(716,306)=="focus")
   home:textinput("100.80.12.34:8080")
