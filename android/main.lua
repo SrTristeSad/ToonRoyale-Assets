@@ -53,6 +53,37 @@ local previewAge=2
 local menu=Menu.new()
 local home=Home.new()
 local hosted=Host.new()
+local function saveHudSettings()
+  if mobile then mobile:configure(home.hudScale,home.hudOpacity,
+    home.moveScale,home.fireScale,home.deadzone) end
+  if mobile and love.filesystem then
+    love.filesystem.write("mooio-hud-v1.cfg",
+      string.format("%.3f %.3f %.3f %.3f %.3f",
+        home.hudScale,home.hudOpacity,home.moveScale,home.fireScale,home.deadzone))
+  end
+end
+local function loadHudSettings()
+  if love.filesystem then
+    local content=love.filesystem.read("mooio-hud-v1.cfg")
+    if type(content)=="string" then
+      local values={}
+      for number in content:gmatch("%d+%.?%d*") do
+        values[#values+1]=tonumber(number)
+      end
+      if #values>=2 then
+        home.hudScale=math.max(.85,math.min(1.55,values[1]))
+        home.hudOpacity=math.max(.50,math.min(1,values[2]))
+      end
+      if #values>=5 then
+        home.moveScale=math.max(.75,math.min(1.50,values[3]))
+        home.fireScale=math.max(.75,math.min(1.50,values[4]))
+        home.deadzone=math.max(.05,math.min(.30,values[5]))
+      end
+    end
+  end
+  if mobile then mobile:configure(home.hudScale,home.hudOpacity,
+    home.moveScale,home.fireScale,home.deadzone) end
+end
 local pause=Pause.new()
 local sessionIsHost=false
 local allowQuit=false
@@ -118,6 +149,7 @@ local function backspaceUtf8(text)
 end
 
 function love.load()
+  if mobile then loadHudSettings() end
   love.graphics.setDefaultFilter("linear","linear")
   camera=Camera.new()
   menuCamera=Camera.new()
@@ -524,7 +556,8 @@ function love.draw()
     local state=client and client.state or "idle"
     home:draw(state,client and (client.error or client.status) or "",true)
     if home.roomOverlay then home:drawRoomOverlay() end
-    if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world) end
+    if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world,
+      mobile and home or nil) end
     return
   end
   if client and client.state=="spawn_confirmed" and not died
@@ -535,8 +568,8 @@ function love.draw()
       {showGrid=menu.grid,showDungeonMap=showDungeonMap,
        localAim=View.localAim(lockDir,currentAttackDir(),lastAim)})
     Hud.draw(world,chatOpen,chatDraft,
-      chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen())
-    panels:draw(world)
+      chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen(),mobile~=nil)
+    panels:draw(world,not mobile)
     if mobile and not pause:isOpen() and not panels:isOpen()
       and not clans:isOpen() and not profile:isOpen() then
       if chatOpen then
@@ -556,7 +589,8 @@ function love.draw()
       love.event.quit(0)
     end
     if pause:isOpen() then
-      pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world)
+      pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world,
+        mobile and home or nil)
       return
     end
     -- Only show missing PNG diagnostics on explicit developer opt-in.
@@ -708,9 +742,10 @@ end
 
 homeAction=function(action)
   if action=="edit_controls" then
-    -- Deliberately keep the dedicated touch control surface. Do not
-    -- substitute desktop keyboard/gamepad bindings on Android.
-    home:setStatus("Controles Android preservados: joystick, ataque e atalhos.")
+    if mobile then home.screen="hud" end
+    return
+  elseif action=="hud_changed" then
+    saveHudSettings()
     return
   elseif action=="quit_game" then
     if hosted.state=="ready" or hosted.state=="starting" then
