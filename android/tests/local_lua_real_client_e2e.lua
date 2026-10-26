@@ -5,10 +5,12 @@
 package.path="./?.lua;./?/init.lua;"..package.path
 local Socket=require("socket")
 local Sha256=require("server-lua.protocol.sha256")
+local Sha1=require("server-lua.net.sha1")
 local Pack=require("src.protocol.msgpack")
 love={data={hash=function(algorithm,data)
-  assert(algorithm=="sha256")
-  return Sha256.digest(data)
+  if algorithm=="sha256" then return Sha256.digest(data) end
+  if algorithm=="sha1" then return Sha1.digest(data) end
+  error("Unexpected digest algorithm: "..tostring(algorithm))
 end}}
 local Original=require("src.net.original_client")
 local port=tonumber(os.getenv("MOO_IO_E2E_PORT")) or 18978
