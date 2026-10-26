@@ -1,3 +1,26 @@
+## Atualizacao Android baseada no Windows (ToonRoyale-Assets, 26/10/2026)
+
+Esta pasta deriva de `Moo-IO/android` (256 arquivos copiados) e recebe os modulos de
+jogabilidade, renderizacao, mapa, inventario e protocolo atualizados de
+`../windows atualização`. O joystick e o HUD de toque, assim como a
+Activity, o servico Node Android e o ciclo de vida do app, continuam nativos.
+
+- Tela SERVIDORES: catalogo V2 real por endereco LAN/VPN ou gateway HTTPS,
+  selecao de sala, codigo privado e autorizacao no navegador.
+- Salas criadas no Android: bots opcionais (0 a 8), realmente enviados ao Node.
+- Morte: o botao de jogar renasce pelo socket existente quando estiver na mesma
+  sala; nao deve descartar itens e construcoes por causa de um novo cliente.
+- Imagens, areas internas, transicoes e animacoes usam o nucleo recente Windows.
+- O workflow `android-host-apk.yml` empacota o servidor Node atual de
+  `windows atualização/server`, nao um snapshot antigo de Moo-IO.
+- **Limite atual:** o host Android ainda usa Node.js Mobile. Os modos de
+  dificuldade, mapas e mods locais do servidor **Lua** Windows ainda nao
+  estao conectados ao host do Android. Nao anunciar essas opcoes como funcionais.
+- Validacao: testes Lua no GitHub Actions; o APK e o multiplayer requerem
+  verificacao separada no emulador ou dispositivo fisico.
+
+---
+
 # Moo-IO Android — cliente e servidor local integrados
 
 ## Acesso público direto com HTTPS/WSS verificados

@@ -29,3 +29,4 @@ jobs:
           find . -type f -name '*.lua' -print0 | xargs -0 -n1 luac -p
           lua tests/android_host_test.lua
           lua tests/touch_controls_test.lua
+          lua -e 'require("src.test_server_directory")()'
