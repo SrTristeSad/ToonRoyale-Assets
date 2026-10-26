@@ -50,6 +50,12 @@ local boxes={
   serverPrev={150,633,260,42},serverNext={448,633,260,42},
   grid={355,280,570,57},fullscreen={355,364,570,57},
   controls={355,447,570,57},
+  hudSizeLess={430,231,87,47},hudSizeMore={765,231,87,47},
+  hudOpacityLess={430,298,87,47},hudOpacityMore={765,298,87,47},
+  hudMoveLess={430,365,87,47},hudMoveMore={765,365,87,47},
+  hudFireLess={430,432,87,47},hudFireMore={765,432,87,47},
+  hudDeadLess={430,499,87,47},hudDeadMore={765,499,87,47},
+  hudReset={430,574,422,49},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43},
   playConfigure={155,398,462,63},
   -- One compact, centred setup panel. No giant map preview.
@@ -102,7 +108,8 @@ function Home.new()
     status="",statusScreen=nil,error=false,hosting=false,starting=false,
     hostAddress="",hostCode="",connectionState="idle",serverLog="",
     showGrid=true,fullscreen=false,sessionTitle="",
-    roomOverlay=false,botsEnabled=false,botCount=2
+    roomOverlay=false,botsEnabled=false,botCount=2,
+    hudScale=1.20,hudOpacity=.90,moveScale=1,fireScale=1,deadzone=.15
   },Home)
 end
 function Home:scale(x,y)
@@ -184,7 +191,8 @@ end
 function Home:click(sx,sy)
   local x,y=self:scale(sx,sy)
   if self.screen~="home" and inside(x,y,boxes.back) then
-    self.screen=(self.screen=="mods" and "create"
+    self.screen=(self.screen=="hud" and "settings"
+      or self.screen=="mods" and "create"
       or self.screen=="maps" and "create"
       or self.screen=="create" and "play" or "home")
     self.focus=nil;return "back"
@@ -375,6 +383,25 @@ function Home:click(sx,sy)
     if inside(x,y,boxes.grid) then self.showGrid=not self.showGrid;return "grid" end
     if inside(x,y,boxes.fullscreen) then self.fullscreen=not self.fullscreen;return "fullscreen" end
     if inside(x,y,boxes.controls) then return "edit_controls" end
+  elseif self.screen=="hud" then
+    local steps={
+      {"hudSizeLess","hudScale",-.10,.85,1.55},{"hudSizeMore","hudScale",.10,.85,1.55},
+      {"hudOpacityLess","hudOpacity",-.10,.50,1},{"hudOpacityMore","hudOpacity",.10,.50,1},
+      {"hudMoveLess","moveScale",-.10,.75,1.50},{"hudMoveMore","moveScale",.10,.75,1.50},
+      {"hudFireLess","fireScale",-.10,.75,1.50},{"hudFireMore","fireScale",.10,.75,1.50},
+      {"hudDeadLess","deadzone",-.025,.05,.30},{"hudDeadMore","deadzone",.025,.05,.30}
+    }
+    for _,step in ipairs(steps) do
+      if inside(x,y,boxes[step[1]]) then
+        self[step[2]]=math.floor(math.max(step[4],math.min(step[5],self[step[2]]+step[3]))*1000+.5)/1000
+        return "hud_changed"
+      end
+    end
+    if inside(x,y,boxes.hudReset) then
+      self.hudScale=1.20;self.hudOpacity=.90;self.moveScale=1
+      self.fireScale=1;self.deadzone=.15
+      return "hud_changed"
+    end
   end
   return nil
 end
