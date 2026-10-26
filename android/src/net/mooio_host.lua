@@ -28,7 +28,7 @@ end
 -- The loopback lifecycle port belongs to the Android LÖVE Activity, not Node.
 -- It is only called from the explicit create/stop actions; never in the main
 -- render loop. Fail closed rather than displaying a fake ready/hosting state.
-local function controlServer(action)
+local function controlServer(action,options)
   if action~="start" and action~="stop" then return false end
   local f=io.open("/data/user/0/io.srtristesad.mooio.beta/files/mooio-control-token.txt","rb")
   if not f then return false end
@@ -40,8 +40,16 @@ local function controlServer(action)
   if not ok then return false end
   local previous=http.TIMEOUT
   http.TIMEOUT=.75
-  local call,body,status=pcall(http.request,
-    "http://127.0.0.1:8082/"..action.."/"..token)
+  local path="http://127.0.0.1:8082/"..action.."/"..token
+  if action=="start" then
+    local bots=options and options.bots or 0
+    if type(bots)~="number" or bots%1~=0 or bots<0 or bots>8 then
+      http.TIMEOUT=previous
+      return false
+    end
+    path=path.."?bots="..tostring(bots)
+  end
+  local call,body,status=pcall(http.request,path)
   http.TIMEOUT=previous
   return call and status==200 and
     type(body)=="string" and
@@ -56,15 +64,20 @@ function Host.new(options)
     hostIP="",mode="lan",elapsed=0,check=0,error=nil,progress="",lastLog=""},Host)
 end
 function Host:start(mode,requestedIP,requestedBots)
+  local bots=requestedBots or 0
+  if type(bots)~="number" or bots%1~=0 or bots<0 or bots>8 then
+    return false,"Quantidade de bots invalida (0 a 8)."
+  end
   if self.state=="starting" or self.state=="ready" then
     return false,"Sala local ja aberta."
   end
-  if not self.controlServer("start") then
+  if not self.controlServer("start",{bots=bots}) then
     self.state="failed"
     self.error="Nao foi possivel ligar o servidor Android. Verifique o aplicativo."
     return false,self.error
   end
   self.state="starting"
+  self.botCount=bots
   self.error=nil;self.elapsed=0;self.check=0
   self.progress="Ligando o servidor Node.js no celular..."
   return true
