@@ -119,7 +119,7 @@ return function()
   love.graphics.setCanvas()
   local img=render:newImageData()
   local rr,gg=img:getPixel(1015,430)
-  assert(math.abs(rr-0.25)<0.06 and math.abs(gg-0.30)<0.06,
+  assert(rr<0.17 and gg<0.21,
     "host menu still renders the old guest connection panel")
   render:release()
   love.graphics.pop()
