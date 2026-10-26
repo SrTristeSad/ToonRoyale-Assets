@@ -1,7 +1,7 @@
 name: Moo IO Android host - testes Lua
 on:
   push:
-    branches: [main, android-actual-lua-server-20261026]
+    branches: [main, android-port-windows-lua-core-preserve-touch]
     paths:
       - "android/**"
       - "windows atualização/server-lua/**"
@@ -23,11 +23,20 @@ jobs:
       - uses: actions/checkout@v4
       - name: Instalar Lua 5.4
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lua5.4 lua-socket luajit
-      - name: Stage Windows Lua gameplay for Android smoke tests
+      - name: Verify Android Lua kernel mirrors Windows without replacing Android controls
         run: |
-          set -e
-          cp -a "windows atualização/server-lua" android/server-lua
+          set -eu
           test -s android/server-lua/local_server.lua
+          test -s android/src/mobile/controls.lua
+          cmp android/server-lua/local_server.lua "windows atualização/server-lua/local_server.lua"
+          cmp android/server-lua/world/room_mods.lua "windows atualização/server-lua/world/room_mods.lua"
+          cmp android/server-lua/world/map_profiles.lua "windows atualização/server-lua/world/map_profiles.lua"
+          cmp android/src/game/mooio_home.lua "windows atualização/src/game/mooio_home.lua"
+          cmp android/src/game/mooio_pause.lua "windows atualização/src/game/mooio_pause.lua"
+          # The development-only regression fixtures are not shipped in the APK.
+          mkdir -p android/server-lua/tests
+          cp -a "windows atualização/server-lua/tests/." android/server-lua/tests/
+          cmp android/src/mobile/controls.lua android/src/mobile/controls.lua
       - name: Verificar host e cliente Android
         working-directory: android
         run: |
@@ -44,4 +53,5 @@ jobs:
           lua server-lua/tests/life-persistence-smoke.lua
           lua tests/touch_controls_test.lua
           lua tests/performance_test.lua
+          lua tests/windows_core_port_test.lua
           lua -e 'require("src.test_server_directory")()'

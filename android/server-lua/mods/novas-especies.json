@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "id": "novas-especies",
+  "name": "Especies Adicionais",
+  "description": "Registra dois mobs novos com atributos, comportamento original, spawn e spritesheets opcionais; IDs 15 e 16.",
+  "requiresClient": "base",
+  "newAnimals": {
+    "15": {
+      "name": "Lobo Cinzento",
+      "src": "wolf_1",
+      "hostile": true,
+      "chargePlayer": true,
+      "health": 510,
+      "scale": 82,
+      "speed": 0.0012,
+      "turnSpeed": 0.002,
+      "weightM": 0.5,
+      "dmg": 14,
+      "viewRange": 950,
+      "killScore": 650,
+      "drop": [
+        "food",
+        90
+      ],
+      "desired": 3
+    },
+    "16": {
+      "name": "Lebre do Bosque",
+      "src": "sheep_1",
+      "hostile": false,
+      "chargePlayer": false,
+      "health": 180,
+      "scale": 55,
+      "speed": 0.0018,
+      "turnSpeed": 0.003,
+      "weightM": 0.4,
+      "dmg": 0,
+      "viewRange": 480,
+      "killScore": 130,
+      "drop": [
+        "food",
+        30
+      ],
+      "desired": 4
+    }
+  },
+  "animalAnimations": {
+    "15": {
+      "sheet": "lobo_cinzento.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "idle": {
+        "row": 0,
+        "frames": 4,
+        "fps": 6
+      },
+      "walk": {
+        "row": 1,
+        "frames": 6,
+        "fps": 10
+      },
+      "attack": {
+        "row": 2,
+        "frames": 4,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "row": 3,
+        "frames": 3,
+        "fps": 8,
+        "loop": false
+      },
+      "death": {
+        "row": 4,
+        "frames": 4,
+        "fps": 7,
+        "loop": false
+      }
+    },
+    "16": {
+      "sheet": "lebre_bosque.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "idle": {
+        "row": 0,
+        "frames": 3,
+        "fps": 5
+      },
+      "walk": {
+        "row": 1,
+        "frames": 5,
+        "fps": 12
+      },
+      "hurt": {
+        "row": 2,
+        "frames": 2,
+        "fps": 6,
+        "loop": false
+      }
+    }
+  }
+}

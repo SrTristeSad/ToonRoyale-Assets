@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "fauna-hostil",
+  "name": "Fauna Hostil",
+  "description": "Torna touros e javalis mais perigosos.",
+  "requiresClient": "base",
+  "changes": {
+    "animals": {
+      "2": {
+        "dmg": 30,
+        "viewRange": 1100
+      },
+      "9": {
+        "dmg": 22,
+        "viewRange": 980
+      }
+    }
+  }
+}

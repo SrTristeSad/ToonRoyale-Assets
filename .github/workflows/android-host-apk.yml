@@ -1,18 +1,17 @@
 name: ToonRoyale Moo-IO Android - APK servidor Lua
 on:
   push:
-    branches: [main, android-actual-lua-server-20261026]
+    branches: [main, android-port-windows-lua-core-preserve-touch]
     paths:
       - "android/**"
       - "windows atualização/server-lua/**"
       - "windows atualização/src/**"
-      - "windows atualização/server-lua/**"
       - ".github/workflows/android-host-apk.yml"
   pull_request:
     paths:
       - "android/**"
-      - "windows atualização/server/**"
-      - "windows atualização/shared/**"
+      - "windows atualização/server-lua/**"
+      - "windows atualização/src/**"
       - ".github/workflows/android-host-apk.yml"
   workflow_dispatch:
 concurrency:
@@ -40,15 +39,24 @@ jobs:
           sed -i '/^app.name_byte_array=/d' "$engine/gradle.properties"
           sed -i 's/^#app.name=.*/app.name=Moo IO Beta/' "$engine/gradle.properties"
           sed -i 's/^app.application_id=.*/app.application_id=io.srtristesad.mooio.beta/' "$engine/gradle.properties"
-          sed -i 's/^app.version_code=.*/app.version_code=4/' "$engine/gradle.properties"
-          sed -i 's/^app.version_name=.*/app.version_name=0.4.0-lua-beta/' "$engine/gradle.properties"
+          sed -i 's/^app.version_code=.*/app.version_code=5/' "$engine/gradle.properties"
+          sed -i 's/^app.version_name=.*/app.version_name=0.5.0-lua-core/' "$engine/gradle.properties"
           sed -i 's/^app.orientation=.*/app.orientation=landscape/' "$engine/gradle.properties"
           game="$engine/app/src/embed/assets"
           mkdir -p "$game"
           cp android/main.lua android/conf.lua "$game/"
           cp -a android/src android/assets "$game/"
-          cp -a "windows atualização/server-lua" "$game/server-lua"
+          # Android now owns a versioned copy of the Windows Lua core.
+          # Never substitute a hidden Node or staging server at build time.
+          cp -a android/server-lua "$game/server-lua"
           rm -rf "$game/server-lua/tests"
+          test -s android/src/mobile/controls.lua
+          test -s "$game/src/mobile/controls.lua"
+          test -s "$game/src/game/mooio_home.lua"
+          test -s "$game/src/game/pc_menu_style.lua"
+          test -s "$game/server-lua/world/map_dependencies.lua"
+          test -s "$game/server-lua/world/mod_creatures.lua"
+          test -s "$game/server-lua/world/life_persistence.lua"
           test -s "$game/server-lua/local_server.lua"
           test -s "$game/server-lua/world/room_mods.lua"
           sed -i 's/org.love2d.android.GameActivity/org.love2d.android.MooIOActivity/' "$engine/app/src/main/AndroidManifest.xml"
@@ -118,6 +126,12 @@ jobs:
           grep -F 'assets/server-lua/world/map_profiles.lua' "$RUNNER_TEMP/apk-files.txt"
           grep -F 'assets/server-lua/maps/bunker-e-cavernas.json' "$RUNNER_TEMP/apk-files.txt"
           grep -F 'assets/server-lua/mods/lobos-em-matilha.json' "$RUNNER_TEMP/apk-files.txt"
+          grep -F 'assets/server-lua/mods/novas-especies.json' "$RUNNER_TEMP/apk-files.txt"
+          grep -F 'assets/server-lua/maps/cabana-e-mina.json' "$RUNNER_TEMP/apk-files.txt"
+          grep -F 'assets/src/game/pc_menu_style.lua' "$RUNNER_TEMP/apk-files.txt"
+          grep -F 'assets/src/mobile/controls.lua' "$RUNNER_TEMP/apk-files.txt"
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:attackJoystick'
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:pressed'
           ! grep -Eq 'assets/mooio-server.zip|libnode.so|libmooiohost.so' "$RUNNER_TEMP/apk-files.txt"
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/lua_host_thread.lua | grep -F 'require("server-lua.local_server")'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/net/mooio_host.lua | grep -F 'love.thread.newThread'

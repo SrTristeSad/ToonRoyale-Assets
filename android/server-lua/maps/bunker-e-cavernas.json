@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 1,
+  "id": "bunker-e-cavernas",
+  "name": "Bunker e Cavernas",
+  "description": "Bunker de dois niveis, cavernas profundas conectadas e criaturas do mundo original.",
+  "mode": "generated",
+  "generation": {},
+  "surface": [],
+  "portals": [
+    {
+      "id": "entrada-bunker",
+      "to": "bunker-01",
+      "targetX": 750,
+      "targetY": 850,
+      "style": "bunker",
+      "label": "Bunker",
+      "placement": "random"
+    },
+    {
+      "id": "entrada-caverna",
+      "to": "caverna-01",
+      "targetX": 500,
+      "targetY": 700,
+      "style": "cave",
+      "label": "Caverna",
+      "placement": "random"
+    }
+  ],
+  "spaces": [
+    {
+      "id": "bunker-01",
+      "type": "interior",
+      "width": 1600,
+      "height": 1400,
+      "obstacles": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 1024,
+          "y": 0,
+          "width": 576,
+          "height": 70
+        },
+        {
+          "x": 0,
+          "y": 1330,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 1024,
+          "y": 1330,
+          "width": 576,
+          "height": 70
+        },
+        {
+          "x": 0,
+          "y": 70,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 0,
+          "y": 1094,
+          "width": 70,
+          "height": 236
+        },
+        {
+          "x": 1530,
+          "y": 70,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 1530,
+          "y": 1094,
+          "width": 70,
+          "height": 236
+        },
+        {
+          "x": 100,
+          "y": 100,
+          "width": 950,
+          "height": 80
+        },
+        {
+          "x": 1250,
+          "y": 250,
+          "width": 90,
+          "height": 900
+        }
+      ],
+      "portals": [
+        {
+          "id": "sair-bunker",
+          "x": 750,
+          "y": 850,
+          "to": "surface",
+          "targetX": 4200,
+          "targetY": 4700,
+          "style": "hatch",
+          "label": "Superficie"
+        },
+        {
+          "id": "descer-bunker",
+          "x": 1100,
+          "y": 1000,
+          "to": "bunker-02",
+          "targetX": 600,
+          "targetY": 700,
+          "style": "hatch",
+          "label": "bunker-02"
+        }
+      ],
+      "mobs": [],
+      "visual": {
+        "floor": "metal",
+        "wall": "metal",
+        "tileSize": 96,
+        "name": "Bunker"
+      }
+    },
+    {
+      "id": "bunker-02",
+      "type": "underground",
+      "width": 2000,
+      "height": 1600,
+      "obstacles": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 1024,
+          "y": 0,
+          "width": 976,
+          "height": 70
+        },
+        {
+          "x": 0,
+          "y": 1530,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 1024,
+          "y": 1530,
+          "width": 976,
+          "height": 70
+        },
+        {
+          "x": 0,
+          "y": 70,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 0,
+          "y": 1094,
+          "width": 70,
+          "height": 436
+        },
+        {
+          "x": 1930,
+          "y": 70,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 1930,
+          "y": 1094,
+          "width": 70,
+          "height": 436
+        },
+        {
+          "x": 900,
+          "y": 200,
+          "width": 80,
+          "height": 850
+        },
+        {
+          "x": 1400,
+          "y": 1100,
+          "width": 450,
+          "height": 80
+        }
+      ],
+      "portals": [
+        {
+          "id": "subir-bunker",
+          "x": 600,
+          "y": 700,
+          "to": "bunker-01",
+          "targetX": 1100,
+          "targetY": 1000,
+          "style": "hatch",
+          "label": "bunker-01"
+        },
+        {
+          "id": "tunel-da-gruta",
+          "x": 1600,
+          "y": 700,
+          "to": "caverna-01",
+          "targetX": 2100,
+          "targetY": 1200,
+          "style": "tunnel",
+          "label": "caverna-01"
+        }
+      ],
+      "mobs": [
+        {
+          "kind": 4,
+          "x": 1300,
+          "y": 400
+        }
+      ],
+      "visual": {
+        "floor": "metal",
+        "wall": "metal",
+        "tileSize": 96,
+        "name": "Bunker"
+      }
+    },
+    {
+      "id": "caverna-01",
+      "type": "underground",
+      "width": 2600,
+      "height": 1800,
+      "obstacles": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 1024,
+          "y": 0,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 2048,
+          "y": 0,
+          "width": 552,
+          "height": 70
+        },
+        {
+          "x": 0,
+          "y": 1730,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 1024,
+          "y": 1730,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 2048,
+          "y": 1730,
+          "width": 552,
+          "height": 70
+        },
+        {
+          "x": 0,
+          "y": 70,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 0,
+          "y": 1094,
+          "width": 70,
+          "height": 636
+        },
+        {
+          "x": 2530,
+          "y": 70,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 2530,
+          "y": 1094,
+          "width": 70,
+          "height": 636
+        },
+        {
+          "x": 1100,
+          "y": 300,
+          "width": 100,
+          "height": 850
+        },
+        {
+          "x": 1800,
+          "y": 1450,
+          "width": 650,
+          "height": 90
+        }
+      ],
+      "portals": [
+        {
+          "id": "subir-gruta",
+          "x": 500,
+          "y": 700,
+          "to": "surface",
+          "targetX": 4670,
+          "targetY": 4700,
+          "style": "stairs",
+          "label": "Superficie"
+        },
+        {
+          "id": "voltar-bunker",
+          "x": 2100,
+          "y": 1200,
+          "to": "bunker-02",
+          "targetX": 1600,
+          "targetY": 700,
+          "style": "stairs",
+          "label": "bunker-02"
+        },
+        {
+          "id": "descer-caverna",
+          "x": 2300,
+          "y": 550,
+          "to": "caverna-02",
+          "targetX": 500,
+          "targetY": 700,
+          "style": "stairs",
+          "label": "caverna-02"
+        }
+      ],
+      "mobs": [
+        {
+          "kind": 4,
+          "x": 850,
+          "y": 1300
+        },
+        {
+          "kind": 0,
+          "x": 1650,
+          "y": 850
+        }
+      ],
+      "visual": {
+        "floor": "rock",
+        "wall": "stone",
+        "tileSize": 128,
+        "name": "Caverna"
+      }
+    },
+    {
+      "id": "caverna-02",
+      "type": "underground",
+      "width": 2800,
+      "height": 2200,
+      "obstacles": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 1024,
+          "y": 0,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 2048,
+          "y": 0,
+          "width": 752,
+          "height": 70
+        },
+        {
+          "x": 0,
+          "y": 2130,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 1024,
+          "y": 2130,
+          "width": 1024,
+          "height": 70
+        },
+        {
+          "x": 2048,
+          "y": 2130,
+          "width": 752,
+          "height": 70
+        },
+        {
+          "x": 0,
+          "y": 70,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 0,
+          "y": 1094,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 0,
+          "y": 2118,
+          "width": 70,
+          "height": 12
+        },
+        {
+          "x": 2730,
+          "y": 70,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 2730,
+          "y": 1094,
+          "width": 70,
+          "height": 1024
+        },
+        {
+          "x": 2730,
+          "y": 2118,
+          "width": 70,
+          "height": 12
+        },
+        {
+          "x": 1000,
+          "y": 500,
+          "width": 100,
+          "height": 900
+        },
+        {
+          "x": 1500,
+          "y": 1400,
+          "width": 850,
+          "height": 100
+        }
+      ],
+      "portals": [
+        {
+          "id": "subir-caverna",
+          "x": 500,
+          "y": 700,
+          "to": "caverna-01",
+          "targetX": 2300,
+          "targetY": 550,
+          "style": "stairs",
+          "label": "caverna-01"
+        }
+      ],
+      "mobs": [
+        {
+          "kind": 4,
+          "x": 1850,
+          "y": 800
+        },
+        {
+          "kind": 4,
+          "x": 2300,
+          "y": 1050
+        },
+        {
+          "kind": 0,
+          "x": 750,
+          "y": 1700
+        }
+      ],
+      "visual": {
+        "floor": "rock",
+        "wall": "stone",
+        "tileSize": 128,
+        "name": "Caverna"
+      }
+    }
+  ]
+}
