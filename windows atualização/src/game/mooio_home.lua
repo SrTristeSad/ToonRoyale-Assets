@@ -24,6 +24,10 @@ end
 local function inside(x,y,b)
   return x>=b[1] and y>=b[2] and x<b[1]+b[3] and y<b[2]+b[4]
 end
+local hostedBoxes={
+  nickname={425,249,430,51},roomCopy={425,409,430,54},
+  roomEnter={425,482,210,55},roomStop={645,482,210,55}
+}
 local boxes={
   back={1041,93,171,45},
   homePlay={360,278,560,64},homeServers={360,354,560,64},
@@ -59,8 +63,8 @@ local boxes={
   chooseMapNext={367,589,543,43},
   createBack={367,644,191,34},createSubmit={569,644,341,34}
 }
-local function button(id,text,primary)
- local box=boxes[id]
+local function button(id,text,primary,hosted)
+ local box=hosted and hostedBoxes[id] or boxes[id]
  local mx,my=love.mouse.getPosition()
  local w,h=love.graphics.getDimensions()
  local z=math.min(w/1280,h/720)
@@ -68,8 +72,8 @@ local function button(id,text,primary)
  my=(my-(h-720*z)/2)/z
  UI.button(box[1],box[2],box[3],box[4],text,false,primary,inside(mx,my,box))
 end
-local function field(id,value,placeholder,focused)
- local b=boxes[id]
+local function field(id,value,placeholder,focused,hosted)
+ local b=hosted and hostedBoxes[id] or boxes[id]
  UI.field(b[1],b[2],b[3],b[4],value,placeholder,focused)
 end
 function Home.parseInvite(value,code)
@@ -200,6 +204,22 @@ function Home:click(sx,sy)
       and inside(x,y,boxes.playConfigure) then
       self.screen="create";self.focus=nil;self:refreshMaps()
       return "configure"
+    end
+    if self.hosting then
+      if inside(x,y,hostedBoxes.nickname) then
+        self.focus="nickname";return "focus"
+      end
+      if inside(x,y,hostedBoxes.roomCopy) then
+        self.focus=nil;return "copy"
+      end
+      if inside(x,y,hostedBoxes.roomEnter) then
+        self.focus=nil;return "play_local"
+      end
+      if inside(x,y,hostedBoxes.roomStop) then
+        self.focus=nil;return "stop"
+      end
+      self.focus=nil
+      return nil
     end
     if inside(x,y,boxes.nickname) then self.focus="nickname";return "focus" end
     if inside(x,y,boxes.joinIP) then self.focus="invite";return "focus" end
@@ -372,7 +392,7 @@ function Home:navTargets()
  if self.screen=="home" then
   ids={"homePlay","homeServers","homeSettings","homeQuit"}
  elseif self.screen=="play" then
-  ids=self.hosting and {"nickname","roomCopy","roomEnter","roomStop","joinIP","joinCode","join","back"}
+  ids=self.hosting and {"nickname","roomCopy","roomEnter","roomStop","back"}
     or {"nickname","playConfigure","joinIP","joinCode","join","v2Login","back"}
  elseif self.screen=="create" then
   ids={"chooseLan","chooseVpn","easyDiff","normalDiff",
@@ -404,6 +424,8 @@ function Home:navTargets()
  local rects={}
  for _,id in ipairs(ids) do
   if type(id)=="table" then rects[#rects+1]=id
+  elseif self.hosting and self.screen=="play" and hostedBoxes[id] then
+    rects[#rects+1]=hostedBoxes[id]
   elseif boxes[id] then rects[#rects+1]=boxes[id] end
  end
  return rects
@@ -558,6 +580,26 @@ function Home:draw(state,detail,showWorld)
   else
     button("back","< VOLTAR",false)
     if self.screen=="play" then
+      if self.hosting then
+        -- Host view is distinct from Join view. No connection form appears
+        -- after room creation, including when the host returns after death.
+        panel(397,193,486,415,C.panel)
+        printText("SUA SALA ESTA ATIVA",425,210,24,C.green,430,"center")
+        field("nickname",self.nickname,"Seu apelido",
+          self.focus=="nickname",true)
+        printText(self.botsEnabled and self.botCount>0
+            and (self.botCount.." bots ativos; convide seus amigos.")
+            or "Sua sala continua aberta para seus amigos.",
+            425,318,16,C.muted,430,"center")
+        printText("CONVITE DA SALA",425,354,14,C.green,430,"center")
+        printText(UI.oneLine(self:roomInvite(),418,16),
+          425,380,16,C.white,430,"center")
+        button("roomCopy","COPIAR CONVITE",false,true)
+        button("roomEnter","JOGAR AGORA",true,true)
+        button("roomStop","ENCERRAR SALA",false,true)
+        printText("Se morrer, JOGAR AGORA renasce nesta mesma sala.",
+          404,562,14,C.muted,473,"center")
+      else
       panel(130,194,505,493,C.panel,0)
       panel(672,194,477,402,C.panel,0)
       printText("01  CRIAR MINHA SALA",155,204,19,C.green)
@@ -603,6 +645,7 @@ function Home:draw(state,detail,showWorld)
       end
       if not self.hosting and not self.starting then
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
+      end
       end
     elseif self.screen=="create" then
       printText("F5: atualizar mapas e mods",367,176,13,C.amber,543,"center")
