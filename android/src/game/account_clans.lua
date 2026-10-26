@@ -400,7 +400,8 @@ local function tabTitle(id)
 end
 function C:draw(showGameplayButton)
   local w,h=love.graphics.getDimensions()
-  if showGameplayButton then
+  -- The Clan access point on Android is exclusively on the touch HUD.
+  if showGameplayButton and not require("src.mobile.runtime").active() then
     local bx,by,bw,bh=self:buttonRect(w)
     button("Clan",bx,by,bw,bh,self.opened)
   end
