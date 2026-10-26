@@ -67,7 +67,9 @@ jobs:
           export PORT=18978
           export MOO_IO_LUA_DATA_DIR="$RUNNER_TEMP/android-real-lua-server"
           mkdir -p "$MOO_IO_LUA_DATA_DIR"
-          luajit server-lua/run.lua >"$RUNNER_TEMP/android-real-lua-server.log" 2>&1 &
+          # Standalone Lua 5.4 has the same utf8 library used by the Android
+          # LÖVE worker. The client is LuaJIT, matching the phone runtime.
+          lua server-lua/run.lua >"$RUNNER_TEMP/android-real-lua-server.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 80); do
