@@ -77,6 +77,10 @@ local lastAim=nil
 local playerX,playerY=nil,nil
 local serverPackets=0
 local died=false
+local deathBackdrop=false
+local deathReturnPending=false
+local deathChoiceStatus=""
+local showDungeonMap=true
 local heartbeatClock=0
 local frameDelta=0
 local chatOpen=false
@@ -320,6 +324,7 @@ function love.update(dt)
         mouseAttack=false
         spaceAttack=false
         died=false
+        deathBackdrop=false;deathReturnPending=false;deathChoiceStatus=""
       elseif packet.name=="a" and client.sid then
         -- The original server transmits [sid,x,y,dir*100] per visible player.
         local positions=packet.args[1]
@@ -349,6 +354,8 @@ function love.update(dt)
         chatOpen=false;chatDraft=""
         input.keys={};lastMove=false
         mouseAttack=false;spaceAttack=false;lockDir=false
+        deathBackdrop=sessionIsHost and world.lastDeath~=nil
+        deathReturnPending=false;deathChoiceStatus=""
         died=true
         phase="death"
         death:start()
@@ -362,7 +369,7 @@ function love.update(dt)
   end
   world:update(dt)
   if phase=="death" and death:update(dt) then
-    phase="menu"
+    phase=sessionIsHost and "menu" or "death_choice"
     menu.status=""
   end
   -- Use the actual menu click handler, not Original:spawn(), so CI verifies
@@ -465,7 +472,15 @@ function love.draw()
     -- instead of instantly replacing it with the game entry card.
     View.draw(world,camera,frameDelta,{showGrid=menu.grid})
     death:draw(w,h)
+    Hud.drawDeathMap(world)
     Notices.draw(world,w,h)
+    return
+  end
+  if phase=="death_choice" then
+    View.draw(world,camera,frameDelta,
+      {showGrid=menu.grid,showDungeonMap=showDungeonMap})
+    death:drawChoices(w,h,deathReturnPending,deathChoiceStatus)
+    Hud.drawDeathMap(world)
     return
   end
   if phase=="menu" then
@@ -475,7 +490,8 @@ function love.draw()
     -- screen. Rendering all procedural foliage every frame slowed the menu,
     -- particularly on software-rendered or lower-end Windows machines.
     -- Rebuild once per second or immediately on resize/grid changes.
-    if not menuPreview or previewW~=w or previewH~=h or previewAge>=(mobile and 4 or 1) then
+    if not deathBackdrop and (not menuPreview or previewW~=w or
+      previewH~=h or previewAge>=(mobile and 4 or 1)) then
       if menuPreview and (previewW~=w or previewH~=h) then
         menuPreview:release()
         menuPreview=nil
@@ -494,12 +510,17 @@ function love.draw()
       love.graphics.pop()
       previewAge=0
     end
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.draw(menuPreview,0,0,0,w/menuPreview:getWidth(),h/menuPreview:getHeight())
+    if deathBackdrop and world.lastDeath and camera then
+      View.draw(world,camera,frameDelta,{showGrid=menu.grid})
+    elseif menuPreview then
+      love.graphics.setColor(1,1,1,1)
+      love.graphics.draw(menuPreview,0,0,0,
+        w/menuPreview:getWidth(),h/menuPreview:getHeight())
+    end
     local state=client and client.state or "idle"
     home:draw(state,client and (client.error or client.status) or "",true)
     if home.roomOverlay then home:drawRoomOverlay() end
-    if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite()) end
+    if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world) end
     return
   end
   if client and client.state=="spawn_confirmed" and not died
@@ -507,7 +528,7 @@ function love.draw()
     -- Match browser renderPlayers(): the local avatar aims at the cursor
     -- immediately, while the Node remains authoritative for D/F combat.
     View.draw(world,camera,frameDelta,
-      {showGrid=menu.grid,
+      {showGrid=menu.grid,showDungeonMap=showDungeonMap,
        localAim=View.localAim(lockDir,currentAttackDir(),lastAim)})
     Hud.draw(world,chatOpen,chatDraft,
       chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen())
@@ -531,7 +552,7 @@ function love.draw()
       love.event.quit(0)
     end
     if pause:isOpen() then
-      pause:draw(home.showGrid,home.fullscreen,home:roomInvite())
+      pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world)
       return
     end
     -- Only show missing PNG diagnostics on explicit developer opt-in.
@@ -560,7 +581,7 @@ function love.draw()
   love.graphics.printf("Carregando mundo e jogadores...",0,h/2-20,w,"center")
   love.graphics.setColor(0.68,0.75,0.73)
   love.graphics.printf(client and client.status or "Aguardando servidor...",40,h/2+26,w-80,"center")
-  if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite()) end
+  if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world) end
 end
 
 local menuAction
@@ -682,7 +703,19 @@ connectRoom=function(ip,port,inviteCode,authToken,secure)
 end
 
 homeAction=function(action)
-  if action=="play_tab" then
+  if action=="edit_controls" then
+    -- Deliberately keep the dedicated touch control surface. Do not
+    -- substitute desktop keyboard/gamepad bindings on Android.
+    home:setStatus("Controles Android preservados: joystick, ataque e atalhos.")
+    return
+  elseif action=="quit_game" then
+    if hosted.state=="ready" or hosted.state=="starting" then
+      pause:confirm(true,true)
+    else
+      allowQuit=true;love.event.quit()
+    end
+    return
+  elseif action=="play_tab" then
     -- Navigating to JOGAR cannot launch a server or join a room.
     -- Both operations require their own explicit button.
     home.screen="play"
@@ -723,13 +756,14 @@ homeAction=function(action)
     home:setStatus("")
   elseif action=="create" then
     -- The only path that can create a private server is an explicit click.
-    if home.screen~="play" or home.starting or home.hosting then return end
+    if home.screen~="create" or home.starting or home.hosting then return end
     if client then client:close();client=nil end
     home:setStatus("Iniciando servidor local sem terminal...")
     local ok,err=hosted:start(home.serverMode,home.vpnIP,
       home.botsEnabled and home.botCount or 0,home.difficulty,home.modIds,home.mapId)
     if ok then
       home.starting=true;home.hosting=false
+      home.screen="play"
       home.hostCode="";home.hostAddress=""
     else
       home.starting=false
@@ -787,17 +821,7 @@ homeAction=function(action)
       end
     else home:setStatus("A sala ainda nao esta pronta.",true) end
   elseif action=="stop" then
-    if isAndroid then
-      -- Stop the independent Lua hosting thread, even while the app remains open.
-      if client then client:close();client=nil end
-      hosted:stop()
-      home.hosting=false;home.starting=false
-      home.hostAddress="";home.hostCode=""
-      home:setStatus("Sala encerrada. Servidor desligado; memoria liberada.")
-      return
-    end
-    -- Even from the main menu, the owner must confirm disconnecting
-    -- everybody before the host process can be stopped.
+    -- Same confirmation as Windows. Never disconnect friends silently.
     if hosted.state=="ready" or hosted.state=="starting" then
       pause:confirm(true,false)
     end
@@ -806,7 +830,7 @@ homeAction=function(action)
       connectRoom(hosted.hostIP,hosted.port,hosted.code)
     else
       local target,why=Home.parseInvite(home.invite,home.joinCode)
-      if target then connectRoom(target.host,target.port,target.code)
+      if target then connectRoom(target.host,target.port,target.code,nil,target.secure)
       else home:setStatus(why,true) end
     end
   elseif action=="copy" then
@@ -873,9 +897,23 @@ local function stopGameplay(owned)
   chatOpen=false;chatDraft=""
   panels:reset();clans:close();profile:close()
   phase="menu";died=false
+  deathBackdrop=false;deathReturnPending=false;deathChoiceStatus=""
   home.screen="play"
   home:setStatus(owned and "Sala encerrada. Servidor desligado; participantes desconectados."
     or "Voce saiu da partida. A sala do anfitriao continua online.")
+end
+-- Guests respawn in the original authenticated session, just like Windows.
+local function returnAfterDeath()
+  if phase~="death_choice" or sessionIsHost or deathReturnPending then return false end
+  if not client then deathChoiceStatus="Conexao indisponivel.";return false end
+  local name=type(client.name)=="string" and client.name or home.nickname
+  local ok,err=client:spawn({name=name,skin=0})
+  if ok then
+    deathReturnPending=true;deathChoiceStatus=""
+  else
+    deathChoiceStatus="Falha ao renascer: "..tostring(err):sub(1,75)
+  end
+  return ok
 end
 local function stopPlayerControls()
   if mobile then mobile:reset();mobileAttackSent=false;mobileInteractLeft=0 end
@@ -892,7 +930,10 @@ local function stopPlayerControls()
   end
 end
 local function pauseAction(action)
-  if action=="toggle_grid" then
+  if action=="edit_controls" then
+    if mobile then mobile:stopForOverlay() end
+    home:setStatus("Controles touchscreen Android permanecem ativos.")
+  elseif action=="toggle_grid" then
     home.showGrid=not home.showGrid
     menu.grid=home.showGrid
     previewAge=2
@@ -917,6 +958,11 @@ local function pauseAction(action)
   end
 end
 function love.keypressed(key)
+  if phase=="death_choice" then
+    if key=="return" or key=="r" then returnAfterDeath()
+    elseif key=="escape" then stopGameplay(false) end
+    return
+  end
   if pause:isOpen() then
     pauseAction(pause:keypressed(key))
     return
@@ -1090,6 +1136,15 @@ function love.focus(focused)
 end
 function love.mousepressed(x,y,button)
   if isAndroid and not mobileForwardMouse then return end
+  if phase=="death_choice" then
+    if button==1 then
+      local w,h=love.graphics.getDimensions()
+      local action=death:choiceAt(x,y,w,h)
+      if action=="return" then returnAfterDeath()
+      elseif action=="leave" then stopGameplay(false) end
+    end
+    return
+  end
   if pause:isOpen() then
     if button==1 then pauseAction(pause:click(x,y)) end
     return
@@ -1304,6 +1359,12 @@ local function mobileMouse(x,y)
 end
 function love.touchpressed(id,x,y)
   if not mobile then return end
+  if phase=="death_choice" then
+    mobileForwardMouse=true
+    love.mousepressed(x,y,1)
+    mobileForwardMouse=false
+    return
+  end
   if chatOpen and phase=="playing" and not pause:isOpen() then
     local w,h=love.graphics.getDimensions()
     local l=mobile:layout(w,h)
