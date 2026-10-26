@@ -75,14 +75,11 @@ return function(death,home,hosted,setWorld,getWorld,setClient,getClient,
   "owner death must not close its game connection")
  assert(getWorld().lastDeath.x==1240 and getCamera().x==1240)
  love.draw() -- Owner sees last death site behind familiar menu.
- -- Regression for the actual user's path: owner presses JOGAR AGORA after
- -- dying. connectRoom() used to close the old socket and construct a new
- -- World, silently discarding its lastDeath position.
- local original=require("src.net.original_client")
+ -- The owner's Play Again MUST use the SAME Player/socket. Reconnecting
+ -- discards shop purchases and triggers removal of placed server objects.
  local Marker=require("src.game.death_marker")
- local previousNew=original.new
  local oldState,oldIP,oldPort,oldCode=
-  hosted.state,hosted.hostIP,hosted.port,hosted.code
+   hosted.state,hosted.hostIP,hosted.port,hosted.code
  hosted.state="ready"
  hosted.hostIP="127.0.0.1"
  hosted.port=19128
@@ -90,34 +87,36 @@ return function(death,home,hosted,setWorld,getWorld,setClient,getClient,
  owner.host=hosted.hostIP
  owner.port=hosted.port
  owner.inviteCode=hosted.code
- local nextClient={name="Visitante",state="keyed_transport",
-   host=hosted.hostIP,port=hosted.port,inviteCode=hosted.code}
- function nextClient:connect() return true end
- function nextClient:close() self.closed=true end
- original.new=function() return nextClient end
- assert(connectRoom(hosted.hostIP,hosted.port,hosted.code),
-  "owner must be able to reconnect to the SAME still-running local room")
- local rejoined=getWorld()
- assert(owner.closed==1 and getClient()==nextClient,
-  "rejoin must replace the owner client socket")
- assert(rejoined~=world and rejoined.lastDeath
-   and rejoined.lastDeath.x==1240 and rejoined.lastDeath.y==1780,
-  "owner reconnect erased the last death X from the map")
- assert(rejoined:apply("C",{7}) and rejoined.lastDeath.x==1240,
-  "server spawn confirmation erased owner's last death X")
- assert(rejoined:apply("D",{{18,7,"Visitante",8400,9400,0,100,100,35,0}}))
- assert(Marker.minimapPoint(rejoined,130,14400),
-  "owner's death marker must be visible on the minimap after respawn")
- assert(not Marker.forHostReconnect(rejoined,true,
-   {host=owner.host,port=owner.port,inviteCode=owner.inviteCode},
-   {host=owner.host,port=owner.port,inviteCode="DIFFERENT-ROOM"},hosted),
-   "the death X must not leak to another room")
- original.new=previousNew
+ owner.name="Jogador"
+ -- Server player retains purchases and placed buildings when no socket is closed.
+ world.store.hats[5]=true;world.store.hatIndex=5
+ local oldMark=world.lastDeath
+ home.hosting=true
+ home.hostAddress=hosted.hostIP
+ home.hostCode=hosted.code
+ home.screen="play"
+ -- Exercise the actual GUI's JOGAR AGORA button, not a direct fake spawn.
+ love.mousepressed(530,506,1)
+ assert(owner.spawns==1 and owner.closed==0,
+   "owner must respawn without closing the purchased-items socket")
+ assert(getWorld()==world and getWorld().lastDeath==oldMark,
+   "owner's respawn must preserve world state and death X")
+ assert(world.store.hats[5] and world.store.hatIndex==5,
+   "shop purchases must not be reset on owner respawn")
+ owner.queue={{kind="game_packet",data={name="C",args={7}}}}
+ owner.state="spawn_confirmed"
+ love.update(0.016)
+ assert(getPhase()=="playing" and getClient()==owner,
+   "owner should resume after server C confirmation on existing socket")
+ assert(world.store.hats[5] and world.store.hatIndex==5)
+ assert(Marker.minimapPoint(world,130,14400),
+   "last death X must remain on the minimap after owner respawns")
  hosted.state,hosted.hostIP,hosted.port,hosted.code=
-  oldState,oldIP,oldPort,oldCode
+   oldState,oldIP,oldPort,oldCode
+ home.hosting=false
  setClient(nil)
  setOwner(false)
  setPhase("menu")
  death:reset()
- print("MOO IO DEATH FLOW PASS: guest return/exit, owner rejoin and persistent original minimap X")
+ print("MOO IO DEATH FLOW PASS: guest return/exit, owner same-session respawn with purchased items and minimap X")
 end
