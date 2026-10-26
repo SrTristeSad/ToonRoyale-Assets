@@ -261,8 +261,23 @@ assert(before~=adjusted and adjusted.move.r>before.move.r,
 assert(m.uiOpacity==.55)
 m:configure(100,-2)
 assert(m.uiScale==1.55 and m.uiOpacity==.5,"settings must clamp")
+m.auto=true
 m:setDirectionLock(true)
+local px,py=w*.20,h*.65
+eq(m:pressed(510,px,py,w,h,14400,10),"move")
+eq(m:pressed(511,w*.80,py,w,h,14400,10),"attack")
+assert(m.moveId==510 and m.fireId==511,"Must capture both pointers before pause")
+m.rankOpen=true;m.mapOpen=true
+m:pauseControls()
+assert(m.auto==true,"Pause or background must preserve server AUTO mode")
+assert(m.aimLocked==true and m.lockedDir~=nil,
+  "Pause must preserve server direction lock")
+assert(m.moveId==nil and m.fireId==nil and not m:attacking(),
+  "Pause must always release all held inputs")
+assert(not m.mapOpen and not m.rankOpen,
+  "Pause must not restore old rank/map overlays when resumed")
 m:reset()
+assert(not m.auto,"Disconnect must clear stale AUTO setting")
 assert(not m.aimLocked and m.lockedDir==nil)
 assert(not m:attacking() and m.moveId==nil)
 print("MOO IO ANDROID TOUCH STABLE PASS")

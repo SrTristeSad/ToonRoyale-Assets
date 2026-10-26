@@ -1,7 +1,7 @@
 name: Moo IO Android host - testes Lua
 on:
   push:
-    branches: [main, android-port-windows-lua-core-preserve-touch, fix/android-single-hud-preserve-windows-lua]
+    branches: [main, fix/android-hud-audit-v055]
     paths:
       - "android/**"
       - "windows atualização/server-lua/**"
@@ -57,6 +57,8 @@ jobs:
           MOO_IO_TEST_MOD_DATA_DIR="$RUNNER_TEMP/android-mod-data" lua server-lua/tests/mod-extra-mobs-smoke.lua
           lua server-lua/tests/life-persistence-smoke.lua
           lua tests/touch_controls_test.lua
+          lua tests/mobile_upgrade_position_test.lua
+          luajit tests/mobile_upgrade_position_test.lua
           lua tests/mobile_single_hud_test.lua
           luajit tests/mobile_single_hud_test.lua
           lua tests/ability_actions_test.lua

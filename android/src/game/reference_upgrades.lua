@@ -5,9 +5,19 @@ local Assets=require("src.game.reference_assets")
 local Objects=require("src.game.reference_objects")
 local Icons=require("src.game.reference_icons")
 local U={}
+local MobileRuntime=require("src.mobile.runtime")
 local SLOT=66
 local GAP=10
-local TOP=10
+local DESKTOP_TOP=10
+-- Android HUD occupies the upper row; put upgrade choices below it.
+-- Drawing and click geometry must always use the same position.
+function U.top()
+  if MobileRuntime.active() then
+    local _,h=love.graphics.getDimensions()
+    return math.min(128,math.max(92,h*.155))
+  end
+  return DESKTOP_TOP
+end
 
 local function owns(entries,id)
   for _,v in ipairs(entries or {}) do
@@ -48,22 +58,24 @@ function U.draw(world,w)
   local n=#offers
   if n==0 then return end
   local left=leftFor(w,n)
+  local top=U.top()
   for i,entry in ipairs(offers) do
     local x=left+(i-1)*(SLOT+GAP)
     love.graphics.setColor(0,0,0,0.25)
-    love.graphics.rectangle("fill",x,TOP,SLOT,SLOT,4,4)
-    Icons.draw(entry.kind,entry.data,x+SLOT/2,TOP+SLOT/2,SLOT)
+    love.graphics.rectangle("fill",x,top,SLOT,SLOT,4,4)
+    Icons.draw(entry.kind,entry.data,x+SLOT/2,top+SLOT/2,SLOT)
   end
   local font=love.graphics.getFont()
   love.graphics.setColor(1,1,1)
   love.graphics.printf("Select Items ("..tostring(world.upgradePoints)..")",
-    0,95,w,"center")
+    0,top+SLOT+10,w,"center")
   love.graphics.setFont(font)
 end
 
 function U.hitTest(world,w,x,y)
   if type(x)~="number" or type(y)~="number" then return nil end
-  if y<TOP or y>=TOP+SLOT then return nil end
+  local top=U.top()
+  if y<top or y>=top+SLOT then return nil end
   local offers=U.offers(world)
   if #offers==0 then return nil end
   local start=leftFor(w,#offers)
