@@ -26,9 +26,10 @@ local Camera=require("src.camera")
 local Input=require("src.input")
 local Pack=require("src.protocol.msgpack")
 local Mobile=require("src.mobile.controls")
+local MobileRuntime=require("src.mobile.runtime")
 local Abilities=require("src.mobile.ability_actions")
 local Performance=require("src.mobile.performance")
-local isAndroid=love.system and love.system.getOS and love.system.getOS()=="Android" or os.getenv("MOO_IO_FORCE_ANDROID_E2E")=="1"
+local isAndroid=MobileRuntime.active()
 local mobile=isAndroid and Mobile.new() or nil
 local framePacer=isAndroid and Performance.new() or nil
 local mobileAttackSent=false
@@ -569,8 +570,16 @@ function love.draw()
     View.draw(world,camera,frameDelta,
       {showGrid=menu.grid,showDungeonMap=showDungeonMap,
        localAim=View.localAim(lockDir,currentAttackDir(),lastAim)})
-    Hud.draw(world,chatOpen,chatDraft,
-      chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen(),mobile~=nil)
+    if mobile then
+      -- EXCLUSIVE mobile gameplay HUD: only touch controls draw resources,
+      -- mini-map, experience and inventory. Desktop draws none of these.
+      Upgrades.draw(world,w)
+    else
+      Hud.draw(world,chatOpen,chatDraft,
+        chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen())
+    end
+    -- Shop/Tribe overlays remain available, but their Windows HUD buttons
+    -- must not appear on Android, over the dedicated mobile shortcuts.
     panels:draw(world,not mobile)
     if mobile and not pause:isOpen() and not panels:isOpen()
       and not clans:isOpen() and not profile:isOpen() then
