@@ -263,10 +263,11 @@ m:configure(100,-2)
 assert(m.uiScale==1.55 and m.uiOpacity==.5,"settings must clamp")
 m.auto=true
 m:setDirectionLock(true)
-m.rankOpen=true;m.mapOpen=true
 local px,py=w*.20,h*.65
-m:pressed(510,px,py,w,h,14400,10)
-m:pressed(511,w*.80,py,w,h,14400,10)
+eq(m:pressed(510,px,py,w,h,14400,10),"move")
+eq(m:pressed(511,w*.80,py,w,h,14400,10),"attack")
+assert(m.moveId==510 and m.fireId==511,"Must capture both pointers before pause")
+m.rankOpen=true;m.mapOpen=true
 m:pauseControls()
 assert(m.auto==true,"Pause or background must preserve server AUTO mode")
 assert(m.aimLocked==true and m.lockedDir~=nil,
