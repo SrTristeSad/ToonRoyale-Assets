@@ -57,6 +57,7 @@ jobs:
           MOO_IO_TEST_MOD_DATA_DIR="$RUNNER_TEMP/android-mod-data" lua server-lua/tests/mod-extra-mobs-smoke.lua
           lua server-lua/tests/life-persistence-smoke.lua
           lua tests/touch_controls_test.lua
+          lua tests/ability_actions_test.lua
           lua tests/latest_world_touch_test.lua
           luajit tests/latest_world_touch_test.lua
           lua tests/performance_test.lua
