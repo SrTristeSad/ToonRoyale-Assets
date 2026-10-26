@@ -1,114 +1,153 @@
--- Android: the native Node service is started ON DEMAND by the create-room button.
--- Never claim a room is ready without the live native Node control endpoint.
+-- Android: host the SAME authoritative Windows LOCAL Lua gameplay in a LÖVE thread.
+-- Do not start Node, an Android foreground service or any fake server.
+local Random=require("src.net.secure_random")
+local Network=require("src.net.mooio_network")
 local Host={}
 Host.__index=Host
-local function getSessionCode()
-  -- Stored in the app's private internal files by MooIOActivity. Not a fake room.
-  local f=io.open("/data/user/0/io.srtristesad.mooio.beta/files/mooio-host/room-code.txt","rb")
-  if not f then return nil end
-  local code=f:read("*a");f:close()
-  if code and #code>=8 and #code<=64 and code:match("^[%w%-]+$") then
-    return code
+local function localAddress(mode)
+  local ok,socket=pcall(require,"socket")
+  if not ok then return mode=="lan" and "127.0.0.1" or nil end
+  local udp=socket.udp()
+  local address
+  if udp then
+    udp:settimeout(0)
+    pcall(function() udp:setpeername("192.0.2.1",9) end)
+    address=udp:getsockname()
+    udp:close()
   end
-  return nil
+  if not Network.accept(address,mode) then
+    local name=socket.dns and socket.dns.gethostname()
+    local resolved=name and socket.dns.toip(name)
+    if Network.accept(resolved,mode) then address=resolved end
+  end
+  return Network.accept(address,mode) and address
+    or (mode=="lan" and "127.0.0.1" or nil)
 end
-local function getStatus()
-  local ok,http=pcall(require,"socket.http")
-  if not ok then return nil end
-  local old=http.TIMEOUT
-  http.TIMEOUT=0.4
-  local call,body,status=pcall(http.request,"http://127.0.0.1:8081/status")
-  http.TIMEOUT=old
-  if not call or status~=200 or type(body)~="string" then return nil end
-  if not body:find('"project"%s*:%s*"Moo%-IO"') then return nil end
-  local host=body:match('"host"%s*:%s*"([%d%.]+)"')
-  if not host then return nil end
-  return host
+local function roomCode()
+  return (Random.bytes(18):gsub(".",function(ch)
+    return string.format("%02x",ch:byte())
+  end))
 end
--- The loopback lifecycle port belongs to the Android LÖVE Activity, not Node.
--- It is only called from the explicit create/stop actions; never in the main
--- render loop. Fail closed rather than displaying a fake ready/hosting state.
-local function controlServer(action,options)
-  if action~="start" and action~="stop" then return false end
-  local f=io.open("/data/user/0/io.srtristesad.mooio.beta/files/mooio-control-token.txt","rb")
-  if not f then return false end
-  local token=f:read("*a");f:close()
-  if type(token)~="string" or #token~=48 or token:find("[^%x]") then
-    return false
+local function backend()
+  assert(love and love.thread and love.filesystem,
+    "LÖVE threads/filesystem required for Lua hosting")
+  return {
+    createDirectory=function(dir)return love.filesystem.createDirectory(dir)end,
+    saveDirectory=function()return love.filesystem.getSaveDirectory()end,
+    newChannel=function(name)return love.thread.getChannel(name)end,
+    newThread=function(path)return love.thread.newThread(path)end
+  }
+end
+local function optionsValid(bots,difficulty,mods,map)
+  if type(bots)~="number" or bots%1~=0 or bots<0 or bots>8 then
+    return false,"Quantidade de bots invalida (0 a 8)."
   end
-  local ok,http=pcall(require,"socket.http")
-  if not ok then return false end
-  local previous=http.TIMEOUT
-  http.TIMEOUT=.75
-  local path="http://127.0.0.1:8082/"..action.."/"..token
-  if action=="start" then
-    local bots=options and options.bots or 0
-    if type(bots)~="number" or bots%1~=0 or bots<0 or bots>8 then
-      http.TIMEOUT=previous
-      return false
-    end
-    path=path.."?bots="..tostring(bots)
+  if not ({normal=true,pacifico=true,dificil=true,extremo=true})[difficulty] then
+    return false,"Dificuldade desconhecida."
   end
-  local call,body,status=pcall(http.request,path)
-  http.TIMEOUT=previous
-  return call and status==200 and
-    type(body)=="string" and
-    body:find(action=="start" and "started" or "stopped",1,true)~=nil
+  if type(mods)~="string" or #mods>512 or mods:find("[^a-z0-9,%-]") then
+    return false,"Lista de mods invalida."
+  end
+  if type(map)~="string" or #map>48 or
+    (map~="" and not map:match("^[a-z][a-z0-9%-]*$")) then
+    return false,"Mapa invalido."
+  end
+  return true
 end
 function Host.new(options)
   options=options or {}
   return setmetatable({
-    readStatus=options.readStatus or getStatus,
-    readSessionCode=options.readSessionCode or getSessionCode,
-    controlServer=options.controlServer or controlServer,state="idle",code="",address="",port=8080,
-    hostIP="",mode="lan",elapsed=0,check=0,error=nil,progress="",lastLog=""},Host)
+    platform=options.platform,chooseIP=options.chooseIP or localAddress,
+    generateCode=options.generateCode or roomCode,
+    state="idle",code="",address="",hostIP="",port=8080,
+    mode="lan",error=nil,progress="",lastLog="",elapsed=0,
+    thread=nil,events=nil,commands=nil
+  },Host)
 end
-function Host:start(mode,requestedIP,requestedBots)
-  local bots=requestedBots or 0
-  if type(bots)~="number" or bots%1~=0 or bots<0 or bots>8 then
-    return false,"Quantidade de bots invalida (0 a 8)."
-  end
+function Host:start(mode,requestedIP,requestedBots,difficulty,modIds,mapId)
   if self.state=="starting" or self.state=="ready" then
     return false,"Sala local ja aberta."
   end
-  if not self.controlServer("start",{bots=bots}) then
-    self.state="failed"
-    self.error="Nao foi possivel ligar o servidor Android. Verifique o aplicativo."
+  if self.thread and self.thread:isRunning() then
+    return false,"Aguarde o encerramento da sala Lua anterior."
+  end
+  mode=mode=="vpn" and "vpn" or "lan"
+  local bots=requestedBots or 0
+  difficulty=difficulty or "normal"
+  modIds=modIds or ""
+  mapId=mapId or "classico"
+  local valid,why=optionsValid(bots,difficulty,modIds,mapId)
+  if not valid then return false,why end
+  local ip=requestedIP and requestedIP~="" and requestedIP or self.chooseIP(mode)
+  if not Network.accept(ip,mode) then
+    return false,"Informe um IP privado valido desta rede LAN/VPN."
+  end
+  local ok,result=pcall(function()
+    local platform=self.platform or backend()
+    assert(platform.createDirectory("lua-server"),"Nao foi possivel criar dados do servidor")
+    local code=self.generateCode()
+    assert(type(code)=="string" and #code>=8 and #code<=64
+      and code:match("^[%w%-]+$"),"Codigo privado de sala invalido")
+    local id=code:sub(1,24)
+    local eventsName="mooio-lua-events-"..id
+    local commandsName="mooio-lua-commands-"..id
+    local events=platform.newChannel(eventsName)
+    local commands=platform.newChannel(commandsName)
+    if events.clear then events:clear() end
+    if commands.clear then commands:clear() end
+    local thread=platform.newThread("src/mobile/lua_host_thread.lua")
+    assert(thread:start(commandsName,eventsName,ip,mode,code,bots,
+      difficulty,modIds,mapId,platform.saveDirectory().."/lua-server")~=false,
+      "Falha ao abrir thread Lua")
+    return {thread=thread,events=events,commands=commands,code=code,ip=ip}
+  end)
+  if not ok then
+    self.state="failed";self.error=tostring(result);self.lastLog=self.error
     return false,self.error
   end
-  self.state="starting"
-  self.botCount=bots
-  self.error=nil;self.elapsed=0;self.check=0
-  self.progress="Ligando o servidor Node.js no celular..."
+  self.thread=result.thread;self.events=result.events;self.commands=result.commands
+  self.code=result.code;self.hostIP=result.ip
+  self.address=result.ip..":8080";self.mode=mode
+  self.state="starting";self.elapsed=0;self.error=nil;self.lastLog=""
+  self.progress="Iniciando o servidor Lua do Windows no celular..."
   return true
 end
 function Host:update(dt)
-  if self.state~="starting" then return end
+  if self.state~="starting" and self.state~="ready" then return end
   self.elapsed=self.elapsed+(dt or 0)
-  self.check=self.check+(dt or 0)
-  if self.check<.7 then return end
-  self.check=0
-  local ip=self.readStatus()
-  local code=self.readSessionCode()
-  if ip and code then
-    self.hostIP=ip
-    self.code=code
-    self.address=ip..":"..self.port
-    self.state="ready"
-    self.progress="Servidor Android pronto. Pode jogar offline."
-    return
+  if self.events then
+    for _=1,16 do
+      local event=self.events:pop()
+      if not event then break end
+      if event=="ready" then
+        if self.state=="starting" then
+          self.state="ready";self.progress="Servidor Lua pronto. Sala local ativa."
+        end
+      elseif event=="stopped" then
+        self.state="failed";self.error="Servidor Lua foi encerrado."
+      elseif type(event)=="string" and event:sub(1,7)=="failed:" then
+        self.state="failed";self.error=event:sub(8)
+        self.lastLog=self.error
+      end
+    end
   end
-  if self.elapsed>25 then
-    self.controlServer("stop") -- do not leave a broken foreground service running
-    self.state="failed"
-    self.error="Node.js integrado nao iniciou. Veja o log MooIO-Host no Android."
+  local failed=self.thread and self.thread:getError()
+  if failed then
+    self.state="failed";self.error="Servidor Lua: "..tostring(failed)
+    self.lastLog=self.error
+  elseif self.thread and not self.thread:isRunning() and
+     (self.state=="starting" or self.state=="ready") then
+    self.state="failed";self.error=self.error or "Thread do servidor Lua terminou."
+  elseif self.state=="starting" and self.elapsed>25 then
+    self:stop()
+    self.state="failed";self.error="Servidor Lua nao ficou pronto em 25 segundos."
+    self.lastLog=self.error
   end
 end
 function Host:stop()
-  -- Native STOP closes the Android foreground service. Its isolated Node
-  -- process is killed and Android removes the notification and frees RAM.
-  local wasActive=self.state=="ready" or self.state=="starting"
-  if wasActive then self.controlServer("stop") end
+  if self.thread and self.thread:isRunning() and self.commands then
+    self.commands:push("stop")
+  end
   self.state="idle";self.code="";self.address="";self.hostIP=""
   self.error=nil;self.progress=""
 end
