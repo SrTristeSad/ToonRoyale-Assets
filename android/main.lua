@@ -234,9 +234,13 @@ function love.update(dt)
     home.starting=false;home.hosting=true
     home.hostAddress=hosted.address;home.hostCode=hosted.code
     home:setStatus("Sala criada. Convide amigos pelo menu ESC.")
-  elseif home.starting and hosted.state=="failed" then
+  elseif (home.starting or home.hosting) and hosted.state=="failed" then
+    -- A server thread can crash AFTER sending ready. Do not keep showing
+    -- "SUA SALA ESTA ATIVA" if the actual authoritative server is gone.
     home.starting=false;home.hosting=false
-    home:setStatus(hosted.error or "Nao foi possivel iniciar o servidor.",true)
+    home.hostAddress="";home.hostCode=""
+    home:setStatus("Servidor Lua encerrou: "..
+      tostring(hosted.error or hosted.lastLog or "falha desconhecida"),true)
   end
   -- PKCE polling over the already-private LAN/VPN connection.
   -- No long-lived hub token or password is ever returned to Lua.
