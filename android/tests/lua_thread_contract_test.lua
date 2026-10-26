@@ -1,7 +1,7 @@
 -- Verify that the shipped Android LÖVE thread executes the real Windows
 -- LOCAL server; a stub or bundled Node runtime does not satisfy this contract.
-local io=assert(io.open("src/mobile/lua_host_thread.lua","rb"))
-local code=io:read("*a");io:close()
+local source=assert(io.open("src/mobile/lua_host_thread.lua","rb"))
+local code=source:read("*a");source:close()
 assert(code:find('require("server-lua.local_server")',1,true))
 assert(code:find("Local.new",1,true))
 assert(code:find("server:update()",1,true))
