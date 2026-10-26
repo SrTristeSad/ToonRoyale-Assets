@@ -35,7 +35,7 @@ $scripts=Join-Path $OutputDir 'scripts'
 New-Item -ItemType Directory -Force $scripts | Out-Null
 foreach ($file in @('start-server-lua.ps1','tls-relay.mjs',
     'import-json-pack.ps1','import-animation.ps1',
-    'build-windows.ps1','test-lua-release.ps1',
+    'build-windows.ps1','build-windows-exe.ps1','test-lua-release.ps1',
     'export-github-source.ps1','prepare-release-main.ps1')) {
   Copy-Item -LiteralPath (Join-Path $root "scripts\$file") -Destination (Join-Path $scripts $file) -Force
 }
