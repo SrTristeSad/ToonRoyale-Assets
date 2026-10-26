@@ -233,7 +233,12 @@ function Original:update()
     elseif evt.kind=="close" then
       self.state="closed"
       local raw=evt.value
-      local code=type(raw)=="string" and #raw>=2 and (raw:byte(1)*256+raw:byte(2)) or nil
+      -- Only an actual RFC6455 close frame carries a 16-bit status code.
+      -- Transport EOF previously decoded the ASCII "so" in "socket closed"
+      -- as 29551, inventing a meaningless "server error".
+      local code=evt.protocolClose and type(raw)=="string" and #raw>=2
+        and (raw:byte(1)*256+raw:byte(2)) or nil
+      if code and (code<1000 or code>4999) then code=nil end
       local descriptions={
         [4001]="ticket, banimento, limite de conexoes ou politica do servidor",
         [4002]="versao do build ou bundle nao corresponde ao servidor",
@@ -241,7 +246,13 @@ function Original:update()
         [4004]="origem WebSocket nao aceita"
       }
       local description=code and descriptions[code] or "conexao encerrada"
-      self.status="Servidor original fechou WebSocket: "..(code and tostring(code) or "?").." - "..description
+      if not evt.protocolClose then
+        self.status="Conexao TCP encerrada sem codigo WebSocket (EOF). "..
+          "Verifique se o servidor Lua ainda esta ativo e o log da sala."
+      else
+        self.status="Servidor encerrou WebSocket: "..
+          (code and tostring(code) or "sem codigo").." - "..description
+      end
       self.error=self.status
     elseif evt.kind=="error" then
       self.state="failed"
@@ -249,7 +260,8 @@ function Original:update()
       self.status="Erro no WebSocket original: "..self.error
     end
   end
-  if ws.state=="closed" and self.state~="closed" and self.state~="failed" then
+  if ws.state=="closed" and self.state~="closed" and self.state~="failed"
+    and self.state~="blocked" then
     self.state="closed"
     self.status="Conexao original fechada antes de entrar no jogo."
   end
