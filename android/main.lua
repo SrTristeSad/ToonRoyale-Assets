@@ -917,7 +917,7 @@ local function openProfile(sid)
     return false
   end
   profile:open(sid)
-  if mobile then mobile:reset();mobileAttackSent=false end
+  if mobile then mobile:pauseControls();mobileAttackSent=false end
   panels:close()
   clans:close()
   chatOpen=false;chatDraft=""
@@ -966,7 +966,7 @@ local function returnAfterDeath()
   return ok
 end
 local function stopPlayerControls()
-  if mobile then mobile:reset();mobileAttackSent=false;mobileInteractLeft=0 end
+  if mobile then mobile:pauseControls();mobileAttackSent=false;mobileInteractLeft=0 end
   input.keys={}
   lastMove=false
   mouseAttack=false;spaceAttack=false
@@ -1094,7 +1094,7 @@ function love.keypressed(key)
     and client.state=="spawn_confirmed" and not died then
     chatOpen=true;chatDraft=""
     if mobile then
-      mobile:reset();mobileAttackSent=false
+      mobile:pauseControls();mobileAttackSent=false
       if love.keyboard and love.keyboard.setTextInput then
         local w,h=love.graphics.getDimensions()
         love.keyboard.setTextInput(true,math.floor(w*.22),math.floor(h*.27),
@@ -1211,7 +1211,7 @@ function love.focus(focused)
   appFocused=focused
   if framePacer then framePacer:reset() end
   if not focused and client and client.state=="spawn_confirmed" then
-    if mobile then mobile:reset();mobileAttackSent=false end
+    if mobile then mobile:pauseControls();mobileAttackSent=false end
     client:send("e",{})
     client:send("F",{0,Pack.null})
     mouseAttack=false;spaceAttack=false
@@ -1268,7 +1268,7 @@ function love.mousepressed(x,y,button)
       if consumed then return end
     end
     if clans:click(x,y,w,h,false,client and client.authToken) then
-      if mobile then mobile:reset();mobileAttackSent=false end
+      if mobile then mobile:pauseControls();mobileAttackSent=false end
       if clans:isOpen() and panels:isOpen() then panels:close() end
       -- Keep the permanent Clan window exclusive with Shop and Tribe,
       -- matching how the original client hides competing overlays.
@@ -1296,7 +1296,7 @@ function love.mousepressed(x,y,button)
         -- stop gathering while the menu takes keyboard/mouse focus.
         chatOpen=false;chatDraft=""
         if panels:isOpen() then
-          if mobile then mobile:reset();mobileAttackSent=false end
+          if mobile then mobile:pauseControls();mobileAttackSent=false end
           input.keys={}
           lastMove=false
           mouseAttack=false;spaceAttack=false
