@@ -25,14 +25,14 @@ local function inside(x,y,b)
   return x>=b[1] and y>=b[2] and x<b[1]+b[3] and y<b[2]+b[4]
 end
 local hostedBoxes={
-  nickname={425,249,430,51},roomCopy={425,409,430,54},
-  roomEnter={425,482,210,55},roomStop={645,482,210,55}
+  nickname={425,229,430,51},roomCopy={425,389,430,54},
+  roomEnter={425,462,210,55},roomStop={645,462,210,55}
 }
 local boxes={
   back={1041,93,171,45},
   homePlay={360,278,560,64},homeServers={360,354,560,64},
   homeSettings={360,452,266,58},homeQuit={654,452,266,58},
-  nickname={155,236,462,52},modeLan={155,312,223,46},
+  nickname={155,216,462,52},modeLan={155,312,223,46},
   modeVpn={393,312,224,46},vpnIP={155,368,462,46},
   createLan={155,623,462,53},createVpn={155,623,462,53},
   difficulty={155,524,302,47},mapBrowse={468,524,149,47},modIds={155,577,302,39},
@@ -42,26 +42,26 @@ local boxes={
   botsPlus={508,475,109,42},
   roomCopy={155,419,462,55},roomEnter={155,485,226,55},
   roomStop={392,485,225,55},
-  joinIP={704,287,421,51},joinCode={704,359,421,51},
-  join={704,430,421,54},joinRetry={704,506,421,49},
-  v2Login={704,557,421,38},
+  joinIP={704,267,421,51},joinCode={704,339,421,51},
+  join={704,410,421,54},joinRetry={704,486,421,49},
+  v2Login={704,537,421,38},
   serverAddress={150,260,600,50},serverRefresh={768,260,335,50},
   serverCode={773,513,326,49},serverEnter={773,573,326,51},
   serverPrev={150,633,260,42},serverNext={448,633,260,42},
   grid={355,280,570,57},fullscreen={355,364,570,57},
   controls={355,447,570,57},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43},
-  playConfigure={155,418,462,63},
+  playConfigure={155,398,462,63},
   -- One compact, centred setup panel. No giant map preview.
-  chooseLan={367,246,265,40},chooseVpn={645,246,265,40},
-  createVpnIP={367,295,543,34},
-  easyDiff={367,358,265,35},normalDiff={645,358,265,35},
-  hardDiff={367,400,265,35},extremeDiff={645,400,265,35},
-  createBots={367,444,543,36},createBotsMinus={367,489,107,37},
-  createBotsPlus={803,489,107,37},
-  createMods={367,539,543,43},
-  chooseMapNext={367,589,543,43},
-  createBack={367,644,191,34},createSubmit={569,644,341,34}
+  chooseLan={367,226,265,40},chooseVpn={645,226,265,40},
+  createVpnIP={367,275,543,34},
+  easyDiff={367,338,265,35},normalDiff={645,338,265,35},
+  hardDiff={367,380,265,35},extremeDiff={645,380,265,35},
+  createBots={367,424,543,36},createBotsMinus={367,469,107,37},
+  createBotsPlus={803,469,107,37},
+  createMods={367,519,543,43},
+  chooseMapNext={367,569,543,43},
+  createBack={367,624,191,34},createSubmit={569,624,341,34}
 }
 local function button(id,text,primary,hosted)
  local box=hosted and hostedBoxes[id] or boxes[id]
@@ -583,82 +583,82 @@ function Home:draw(state,detail,showWorld)
       if self.hosting then
         -- Host view is distinct from Join view. No connection form appears
         -- after room creation, including when the host returns after death.
-        panel(397,193,486,415,C.panel)
-        printText("SUA SALA ESTA ATIVA",425,210,24,C.green,430,"center")
+        panel(397,173,486,415,C.panel)
+        printText("SUA SALA ESTA ATIVA",425,190,24,C.green,430,"center")
         field("nickname",self.nickname,"Seu apelido",
           self.focus=="nickname",true)
         printText(self.botsEnabled and self.botCount>0
             and (self.botCount.." bots ativos; convide seus amigos.")
             or "Sua sala continua aberta para seus amigos.",
-            425,318,16,C.muted,430,"center")
-        printText("CONVITE DA SALA",425,354,14,C.green,430,"center")
+            425,298,16,C.muted,430,"center")
+        printText("CONVITE DA SALA",425,334,14,C.green,430,"center")
         printText(UI.oneLine(self:roomInvite(),418,16),
-          425,380,16,C.white,430,"center")
+          425,360,16,C.white,430,"center")
         button("roomCopy","COPIAR CONVITE",false,true)
         button("roomEnter","JOGAR AGORA",true,true)
         button("roomStop","ENCERRAR SALA",false,true)
         printText("Se morrer, JOGAR AGORA renasce nesta mesma sala.",
-          404,562,14,C.muted,473,"center")
+          404,542,14,C.muted,473,"center")
       else
-      panel(130,194,505,493,C.panel,0)
-      panel(672,194,477,402,C.panel,0)
-      printText("01  CRIAR MINHA SALA",155,204,19,C.green)
+      panel(130,174,505,493,C.panel,0)
+      panel(672,174,477,402,C.panel,0)
+      printText("01  CRIAR MINHA SALA",155,184,19,C.green)
       field("nickname",self.nickname,"Seu apelido",self.focus=="nickname")
       if self.hosting then
         printText(self.botsEnabled and self.botCount>0 and
           ("Sala criada - "..self.botCount.." bots ativos.")
-          or "Sala criada - amigos podem entrar.",155,316,17,C.green)
-        panel(155,351,462,51,C.raised,9)
+          or "Sala criada - amigos podem entrar.",155,296,17,C.green)
+        panel(155,331,462,51,C.raised,9)
         local invite=self:roomInvite()
-        printText(invite,170,365,16,C.white,432,"center")
+        printText(invite,170,345,16,C.white,432,"center")
         button("roomCopy","COPIAR CONVITE",false)
         button("roomEnter","JOGAR AGORA",true)
         button("roomStop","ENCERRAR",false)
       elseif self.starting then
-        printText("Preparando sua sala...",155,331,18,C.green)
-        printText("Voce escolheu criar esta sala.",155,383,16,C.muted)
-        printText("Ninguem precisa abrir um terminal.",155,417,16,C.muted)
+        printText("Preparando sua sala...",155,311,18,C.green)
+        printText("Voce escolheu criar esta sala.",155,363,16,C.muted)
+        printText("Ninguem precisa abrir um terminal.",155,397,16,C.muted)
         printText(self.botsEnabled and
-          ("Bots de IA: "..self.botCount) or "Bots desativados.",155,482,15,C.muted)
+          ("Bots de IA: "..self.botCount) or "Bots desativados.",155,462,15,C.muted)
       else
-        printText("Configure mapa, dificuldade e mods",158,330,17,C.muted,449)
-        printText("MAPA SELECIONADO:",158,367,15,C.green)
-        printText(self:mapName(),158,389,21,C.white,440)
+        printText("Configure mapa, dificuldade e mods",158,310,17,C.muted,449)
+        printText("MAPA SELECIONADO:",158,347,15,C.green)
+        printText(self:mapName(),158,369,21,C.white,440)
         button("playConfigure","CONFIGURAR MINHA SALA",true)
-        panel(155,504,462,118,C.raised,0)
-        printText("DIFICULDADE  "..self.difficulty:upper(),172,520,17,C.white,412)
+        panel(155,484,462,118,C.raised,0)
+        printText("DIFICULDADE  "..self.difficulty:upper(),172,500,17,C.white,412)
         printText("BOTS: "..(self.botsEnabled and self.botCount or 0)
           .."     |     MODS: "..(self.modIds=="" and "NENHUM" or "PERSONALIZADOS"),
-          172,554,15,C.muted,425)
-        printText("Clique em CONFIGURAR para criar a partida.",172,588,14,C.amber,422)
+          172,534,15,C.muted,425)
+        printText("Clique em CONFIGURAR para criar a partida.",172,568,14,C.amber,422)
       end
-      printText("02  CONECTAR A OUTRA SALA",704,214,19,C.green)
-      printText("IP, porta ou convite completo",704,256,15,C.muted)
+      printText("02  CONECTAR A OUTRA SALA",704,194,19,C.green)
+      printText("IP, porta ou convite completo",704,236,15,C.muted)
       field("joinIP",self.invite,"192.168.1.5:8080",self.focus=="invite")
-      printText("Codigo de acesso (separado ou no convite)",704,340,14,C.muted)
+      printText("Codigo de acesso (separado ou no convite)",704,320,14,C.muted)
       field("joinCode",self.joinCode,"Codigo da sala",self.focus=="joinCode")
       button("join","ENTRAR NA SALA",true)
       if self.error then
         button("joinRetry","TENTAR NOVAMENTE",false)
       else
-        printText("Convite LAN/VPN ou HTTPS V2 com certificado valido.",706,517,15,C.muted)
+        printText("Convite LAN/VPN ou HTTPS V2 com certificado valido.",706,497,15,C.muted)
       end
       if not self.hosting and not self.starting then
         button("v2Login","ENTRAR COM CONTA V2 (NAVEGADOR)",false)
       end
       end
     elseif self.screen=="create" then
-      printText("F5: atualizar mapas e mods",367,176,13,C.amber,543,"center")
-      panel(344,202,591,482,C.panel,0)
-      printText("CONEXAO",367,215,15,C.green)
+      printText("F5: atualizar mapas e mods",367,160,13,C.amber,543,"center")
+      panel(344,182,591,482,C.panel,0)
+      printText("CONEXAO",367,195,15,C.green)
       button("chooseLan",self.serverMode=="lan" and "LAN ATIVA" or "LAN",self.serverMode=="lan")
       button("chooseVpn",self.serverMode=="vpn" and "VPN ATIVA" or "VPN",self.serverMode=="vpn")
       if self.serverMode=="vpn" then
         field("createVpnIP",self.vpnIP,"IP do computador na VPN",self.focus=="vpnIP")
       else
-        printText("Amigos na mesma rede local.",367,300,15,C.muted,543,"center")
+        printText("Amigos na mesma rede local.",367,280,15,C.muted,543,"center")
       end
-      printText("DIFICULDADE",367,337,14,C.green)
+      printText("DIFICULDADE",367,317,14,C.green)
       local opts={{"easyDiff","PACIFICO","pacifico"},
         {"normalDiff","NORMAL","normal"},{"hardDiff","DIFICIL","dificil"},
         {"extremeDiff","EXTREMO","extremo"}}
@@ -666,7 +666,7 @@ function Home:draw(state,detail,showWorld)
       button("createBots",self.botsEnabled and "BOTS: ATIVADOS" or "BOTS: DESATIVADOS",self.botsEnabled)
       button("createBotsMinus","-")
       printText("QUANTIDADE "..(self.botsEnabled and self.botCount or 0).."/8",
-        474,495,17,C.white,329,"center")
+        474,475,17,C.white,329,"center")
       button("createBotsPlus","+")
       button("createMods",self.modIds=="" and "MODS: NENHUM - ESCOLHER" or "MODS: PERSONALIZADOS - EDITAR",false)
       button("chooseMapNext",self.mapId=="" and "MAPA: DESATIVADO - ESCOLHER"
