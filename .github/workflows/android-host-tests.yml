@@ -54,6 +54,7 @@ jobs:
           lua tests/touch_controls_test.lua
           lua tests/performance_test.lua
           lua tests/windows_core_port_test.lua
+          lua tests/websocket_close_reason_test.lua
           lua -e 'require("src.test_server_directory")()'
       - name: Android Lua client vs real authoritative Lua WebSocket (M -> C/D)
         working-directory: android
