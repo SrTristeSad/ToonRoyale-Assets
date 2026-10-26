@@ -26,11 +26,13 @@ local Camera=require("src.camera")
 local Input=require("src.input")
 local Pack=require("src.protocol.msgpack")
 local Mobile=require("src.mobile.controls")
+local Abilities=require("src.mobile.ability_actions")
 local Performance=require("src.mobile.performance")
 local isAndroid=love.system and love.system.getOS and love.system.getOS()=="Android" or os.getenv("MOO_IO_FORCE_ANDROID_E2E")=="1"
 local mobile=isAndroid and Mobile.new() or nil
 local framePacer=isAndroid and Performance.new() or nil
 local mobileAttackSent=false
+local mobileAbilitySentAt=-math.huge
 local mobileAimSentAt=-math.huge
 local mobileForwardMouse=false
 local mobileInteractLeft=0
@@ -1386,10 +1388,7 @@ local function mobileAction(action,payload)
   end
   if action=="map_open" or action=="chat_open" or action=="rank_open" then
     mobileStop()
-    if mobile.auto and client and client.state=="spawn_confirmed" then
-      local ok=client:send("K",{1}) -- E: disable previous auto-gather
-      if ok then mobile.auto=false end
-    end
+    -- Opening a map, chat or ranking does not disable server AUTO mode.
     if action=="rank_open" and client and client.state=="spawn_confirmed" then
       client:send("Y",{payload or mobile.rankingCategory})
       mobile.rankRefresh=3
@@ -1428,12 +1427,18 @@ local function mobileAction(action,payload)
       mobile.auto=not mobile.auto
       latestEvent="Ataque automatico indisponivel: "..tostring(err)
     end
-  elseif action=="skill" then
-    -- The first four use the same mapping as the middle strip.
-    local itemId,isWeapon=require("src.mobile.slots").at(world,payload)
-    if itemId~=nil then
-      client:send("z",{itemId,isWeapon})
-    else latestEvent="Atalho "..tostring(payload).." ainda sem item." end
+  elseif action=="skill" or action=="slot" then
+    -- Real weapon select / consumable / building action, checked by Lua server.
+    -- Tap an item while firing with the other thumb without cancelling it.
+    local now=love.timer.getTime()
+    if now-mobileAbilitySentAt>=.17 then
+      mobileAbilitySentAt=now
+      local ok,why=Abilities.activate(world,payload,currentAttackDir(),
+        function(packet,args) return client:send(packet,args) end,
+        Pack.null,mobile:attacking())
+      if ok then mobile:abilityFeedback(payload,now)
+      else latestEvent="Item nao executado: "..tostring(why) end
+    end
   elseif action=="attack" then
     local active=mobile:attacking()
     if active~=mobileAttackSent then
@@ -1441,9 +1446,6 @@ local function mobileAction(action,payload)
         active and currentAttackDir() or Pack.null})
       if ok then mobileAttackSent=active end
     end
-  elseif action=="slot" then
-    local id,isWeapon=require("src.mobile.slots").at(world,payload)
-    if id~=nil then client:send("z",{id,isWeapon}) end
   elseif action=="ping" and payload then
     local ok,err=client:send("U",{payload.x,payload.y})
     if ok then world.mapMarker={x=payload.x,y=payload.y}
