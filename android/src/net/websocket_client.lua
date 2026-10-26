@@ -20,8 +20,10 @@ function Client.new(options)
     maxBuffer=options.maxBuffer or 1048576
   },Client)
 end
-function Client:emit(kind,value)
-  self.events[#self.events+1]={kind=kind,value=value}
+function Client:emit(kind,value,protocolClose)
+  self.events[#self.events+1]={
+    kind=kind,value=value,protocolClose=protocolClose==true
+  }
 end
 function Client:drain()
   local events=self.events
@@ -113,11 +115,19 @@ function Client:update()
     for _,frame in ipairs(frames) do
       if frame.opcode==2 then self:emit("binary",frame.payload)
       elseif frame.opcode==9 then self:send(frame.payload,10)
-      elseif frame.opcode==8 then self:emit("close",frame.payload);self:close();return end
+      elseif frame.opcode==8 then
+        self:emit("close",frame.payload,true)
+        self:close()
+        return
+      end
     end
   end
   if err and err~="timeout" then
-    if err=="closed" then self:emit("close","socket closed");self:close()
+    if err=="closed" then
+      -- EOF is not an RFC6455 close frame. "socket closed" must never be
+      -- interpreted as network-order 16-bit status code (29551 == "so").
+      self:emit("close","socket closed",false)
+      self:close()
     else self:fail(err) end
   end
 end
