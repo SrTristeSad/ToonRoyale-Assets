@@ -1,3 +1,17 @@
+## Consumo e estabilidade no celular
+
+O cliente Android limita o desenho a aproximadamente **30 FPS em jogo**,
+**20 FPS nos menus** e **10 FPS sem foco** para reduzir a carga de GPU/CPU,
+evitando renderizar o menu continuamente quando o jogo está ativo. Isso
+mantém o processamento e as mensagens de rede normais; não altera o
+ritmo do servidor, as colisões, os controles touchscreen ou a simulação
+autoritativa. O canvas do menu é liberado ao entrar na partida.
+
+O limite de FPS reduz trabalho gráfico, mas **não garante uma temperatura
+específica**: hospedagem Node local, brilho, clima, hardware e bateria
+também influenciam. A verificação sintática e os testes automatizados
+não substituem testes de longa duração em um celular real.
+
 ## Atualizacao Android baseada no Windows (ToonRoyale-Assets, 26/10/2026)
 
 Esta pasta deriva de `Moo-IO/android` (256 arquivos copiados) e recebe os modulos de
