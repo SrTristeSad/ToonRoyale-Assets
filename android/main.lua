@@ -1046,6 +1046,22 @@ function love.keypressed(key)
     client:send("F",{0,Pack.null})
     return
   end
+  -- Windows latest-map interactions remain usable with a hardware keyboard.
+  -- Android touch uses the same nearest-object rule on the on-screen prompt.
+  if key=="f" and phase=="playing" and client
+     and client.state=="spawn_confirmed" and world.map
+     and not panels:isOpen() and not chatOpen then
+    local obj=View.nearestInteraction(world)
+    if obj then client:send("j",{"interact",obj.id}) end
+    return
+  end
+  if key=="m" and phase=="playing" and client
+     and client.state=="spawn_confirmed" and world.map
+     and world.spaceId~="surface" and not panels:isOpen()
+     and not chatOpen then
+    showDungeonMap=not showDungeonMap
+    return
+  end
   input:keypressed(key)
   -- Mirror the reference client's default gameplay bindings.
   if client and client.state=="spawn_confirmed" and not died then
@@ -1390,6 +1406,19 @@ function love.touchpressed(id,x,y)
     return
   end
   local w,h=love.graphics.getDimensions()
+  -- Keep the original Moo-IO controls and their pointer ownership 1:1.
+  -- The most recent Windows map added [F] for nearby switches, chests and
+  -- nodes. Android can tap its existing contextual prompt with another
+  -- finger while both joysticks remain captured and moving/attacking.
+  if not (mobile.mapOpen or mobile.rankOpen) and not chatOpen
+     and client and client.state=="spawn_confirmed" then
+    local id=View.touchInteraction(world,x,y,w,h)
+    if id then
+      local sent,err=client:send("j",{"interact",id})
+      if not sent then latestEvent="Interacao: "..tostring(err) end
+      return
+    end
+  end
   if not (mobile.mapOpen or mobile.rankOpen)
     and Upgrades.hitTest(world,w,x,y) then
     mobileMouse(x,y)
