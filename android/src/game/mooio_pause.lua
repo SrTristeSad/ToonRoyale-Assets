@@ -20,6 +20,12 @@ local rects={
   info={410,386,460,58},
   controls={410,453,460,53},
   settingsBack={410,521,460,44},
+  hudSizeLess={407,221,88,41},hudSizeMore={785,221,88,41},
+  hudOpacityLess={407,272,88,41},hudOpacityMore={785,272,88,41},
+  hudMoveLess={407,323,88,41},hudMoveMore={785,323,88,41},
+  hudFireLess={407,374,88,41},hudFireMore={785,374,88,41},
+  hudDeadLess={407,425,88,41},hudDeadMore={785,425,88,41},
+  hudReset={400,493,222,45},hudBack={652,493,222,45},
   copyInvite={410,359,460,58},
   inviteBack={410,431,460,52},
   confirm={410,404,216,56},
@@ -71,6 +77,8 @@ function Pause:keypressed(key)
     if self.page=="invite" then
       self.page="root"
       return "back"
+    elseif self.page=="hud" then
+      self.page="settings"
     elseif self.page=="confirm" or self.page=="settings" or self.page=="info" then
       self.page="root"
       self.confirmQuit=false
@@ -103,6 +111,17 @@ function Pause:click(screenX,screenY)
     if which("info") then self.page="info";return "info" end
     if which("controls") then return "edit_controls" end
     if which("settingsBack") then self.page="root";return "back" end
+  elseif self.page=="hud" then
+    local actions={
+      hudSizeLess="hud_smaller",hudSizeMore="hud_bigger",
+      hudOpacityLess="opacity_less",hudOpacityMore="opacity_more",
+      hudMoveLess="move_less",hudMoveMore="move_more",
+      hudFireLess="fire_less",hudFireMore="fire_more",
+      hudDeadLess="dead_less",hudDeadMore="dead_more",
+      hudReset="hud_reset"
+    }
+    for key,action in pairs(actions) do if which(key) then return action end end
+    if which("hudBack") then self.page="settings";return "back" end
   elseif self.page=="info" then
     if which("back") then self.page="settings";return "back" end
   elseif self.page=="invite" then
@@ -118,7 +137,7 @@ function Pause:click(screenX,screenY)
   end
   return nil
 end
-function Pause:draw(grid,fullscreen,inviteText,world)
+function Pause:draw(grid,fullscreen,inviteText,world,mobileHud)
   if not self.page then return end
   local w,h=love.graphics.getDimensions()
   love.graphics.push("all")
@@ -152,8 +171,22 @@ function Pause:draw(grid,fullscreen,inviteText,world)
     button("GRADE DO MAPA: "..(grid and "LIGADA" or "DESLIGADA"),"grid")
     button("TELA CHEIA: "..(fullscreen and "LIGADA" or "DESLIGADA"),"fullscreen")
     button("INFORMACOES DO MAPA","info")
-    button("EDITAR TECLADO E JOYSTICK","controls")
+    button(mobileHud and "CONTROLES TOUCH" or "EDITAR TECLADO E JOYSTICK","controls")
     button("VOLTAR","settingsBack")
+  elseif self.page=="hud" then
+    label("CONTROLES TOUCH",395,145,490,58,29)
+    local rows={
+      {"hudSizeLess","hudSizeMore","BOTOES",mobileHud and mobileHud.hudScale or 1.2,221},
+      {"hudOpacityLess","hudOpacityMore","OPACIDADE",mobileHud and mobileHud.hudOpacity or .9,272},
+      {"hudMoveLess","hudMoveMore","MOVIMENTO",mobileHud and mobileHud.moveScale or 1,323},
+      {"hudFireLess","hudFireMore","MIRA + ATAQUE",mobileHud and mobileHud.fireScale or 1,374},
+      {"hudDeadLess","hudDeadMore","ZONA MORTA",mobileHud and mobileHud.deadzone or .15,425}
+    }
+    for _,r in ipairs(rows) do
+      button("-",r[1]);button("+",r[2])
+      label(r[3].."   "..string.format("%.0f%%",r[4]*100),502,r[5],275,42,18)
+    end
+    button("RESTAURAR","hudReset");button("VOLTAR","hudBack")
   elseif self.page=="info" then
     label("INFORMACOES DA PARTIDA",395,146,490,58,28)
     local map=world and world.map
@@ -182,8 +215,10 @@ function Pause:draw(grid,fullscreen,inviteText,world)
     button("SIM, ENCERRAR","confirm")
     button("CANCELAR","cancel",true)
   end
-  label("ESC: voltar  |  Multiplayer: o mundo nao e pausado",
-    376,508,528,35,14,{0.79,0.85,0.77})
+  if self.page~="hud" then
+    label("ESC: voltar  |  Multiplayer: o mundo nao e pausado",
+      376,508,528,35,14,{0.79,0.85,0.77})
+  end
   love.graphics.pop()
 end
 return Pause

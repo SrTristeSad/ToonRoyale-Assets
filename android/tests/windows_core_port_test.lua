@@ -41,7 +41,9 @@ local mobile=Mobile.new()
 local w,h=1280,720
 local layout=mobile:layout(w,h)
 assert(layout==mobile:layout(w,h))
-assert(layout.move and layout.fire and #layout.skills==4)
+assert(layout.move and layout.fire and layout.hotbar and layout.shop and layout.clan and layout.tribe)
+local slots,scroll=mobile:hotbar(10,w,h)
+assert(#slots==10 and scroll,"Continuous mobile item bar must include the unlocked inventory")
 local move,attack=layout.move,layout.fire
 assert(mobile:pressed(1,move.x,move.y,w,h,14400,5)=="move")
 assert(mobile:pressed(2,attack.x,attack.y,w,h,14400,5)=="attack")
@@ -92,6 +94,38 @@ assert(pause:click(550,327)=="settings")
 assert(pause:click(550,410)=="info")
 assert(pause:click(550,478)=="back")
 assert(pause:click(550,480)=="edit_controls")
+pause:close()
+-- The newest mobile UI must expose tappable HUD customization over Windows Lua.
+screen.screen="settings"
+assert(screen:click(500,480)=="edit_controls","Menu must offer touch settings")
+screen.screen="hud"
+local oldScale=screen.hudScale
+assert(screen:click(805,250)=="hud_changed" and screen.hudScale>oldScale,
+  "Touch size plus must change actual HUD model")
+assert(screen:click(480,318)=="hud_changed" and screen.hudOpacity<.90,
+  "Touch transparency minus must update preference")
+assert(screen:click(800,385)=="hud_changed" and screen.moveScale>1,
+  "Movement joystick size must be independently adjustable")
+assert(screen:click(800,450)=="hud_changed" and screen.fireScale>1,
+  "Attack joystick size must be independently adjustable")
+assert(screen:click(800,520)=="hud_changed" and screen.deadzone>.15,
+  "Deadzone must be adjustable")
+assert(screen:click(600,600)=="hud_changed" and screen.hudScale==1.2
+  and screen.moveScale==1 and screen.fireScale==1 and screen.deadzone==.15,
+  "Restore mobile controls must return all valid default values")
+assert(screen:click(1120,110)=="back" and screen.screen=="settings",
+  "HUD back must return to Settings, not directly to Home")
+pause:open(true)
+assert(pause:click(550,327)=="settings")
+assert(pause:click(550,480)=="edit_controls")
+pause.page="hud"  -- Android main routes edit_controls here.
+assert(pause:click(830,245)=="hud_bigger")
+assert(pause:click(450,293)=="opacity_less")
+assert(pause:click(450,342)=="move_less")
+assert(pause:click(830,393)=="fire_more")
+assert(pause:click(830,447)=="dead_more")
+assert(pause:click(510,514)=="hud_reset")
+assert(pause:click(760,514)=="back" and pause.page=="settings")
 pause:close()
 screen.modIds="lobos-em-matilha,mais-lobos"
 screen.mapId=""

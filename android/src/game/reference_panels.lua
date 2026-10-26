@@ -324,11 +324,13 @@ local function preview(entry,accessory,x,y)
   return Assets.draw(accessory and "accessories" or "hats",
     filename,x+24,y+24,43,43)
 end
-function P:draw(world)
+function P:draw(world,showDesktopButtons)
   local w,h=love.graphics.getDimensions()
-  local storeX,tribeX,top,size=self:buttons(w)
-  hudButton("Shop",storeX,top,size,size,self.opened=="store")
-  hudButton("Tribe",tribeX,top,size,size,self.opened=="tribe")
+  if showDesktopButtons~=false then
+    local storeX,tribeX,top,size=self:buttons(w)
+    hudButton("Shop",storeX,top,size,size,self.opened=="store")
+    hudButton("Tribe",tribeX,top,size,size,self.opened=="tribe")
+  end
   if world.tribeOwner and #world.joinRequests>0 then
     local first=world.joinRequests[1]
     rect(w-440,88,190,49,0,0,0,0.64)

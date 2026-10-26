@@ -1,7 +1,7 @@
 name: ToonRoyale Moo-IO Android - APK servidor Lua
 on:
   push:
-    branches: [main, android-port-windows-lua-core-preserve-touch]
+    branches: [main, android-port-windows-lua-core-preserve-touch, feat/android-floating-hud-windows-lua]
     paths:
       - "android/**"
       - "windows atualização/server-lua/**"
@@ -40,7 +40,7 @@ jobs:
           sed -i 's/^#app.name=.*/app.name=Moo IO Beta/' "$engine/gradle.properties"
           sed -i 's/^app.application_id=.*/app.application_id=io.srtristesad.mooio.beta/' "$engine/gradle.properties"
           sed -i 's/^app.version_code=.*/app.version_code=7/' "$engine/gradle.properties"
-          sed -i 's/^app.version_name=.*/app.version_name=0.5.2-mooio-controls/' "$engine/gradle.properties"
+          sed -i 's/^app.version_name=.*/app.version_name=0.5.3-lua-floating-hud/' "$engine/gradle.properties"
           sed -i 's/^app.orientation=.*/app.orientation=landscape/' "$engine/gradle.properties"
           game="$engine/app/src/embed/assets"
           mkdir -p "$game"
@@ -136,6 +136,8 @@ jobs:
           grep -F 'assets/src/mobile/controls.lua' "$RUNNER_TEMP/apk-files.txt"
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:attackJoystick'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:pressed'
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:hotbar'
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/main.lua | grep -F 'saveHudSettings'
           ! grep -Eq 'assets/mooio-server.zip|libnode.so|libmooiohost.so' "$RUNNER_TEMP/apk-files.txt"
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/lua_host_thread.lua | grep -F 'require("server-lua.local_server")'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/net/mooio_host.lua | grep -F 'love.thread.newThread'

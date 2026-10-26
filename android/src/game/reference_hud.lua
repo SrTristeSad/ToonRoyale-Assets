@@ -325,9 +325,14 @@ function H.hoveredItem(world,w,h,x,y)
   end
   return nil
 end
-function H.draw(world,chatActive,chatText,suppressItemInfo)
+function H.draw(world,chatActive,chatText,suppressItemInfo,mobileMode)
   fonts()
   local w,h=love.graphics.getDimensions()
+  if mobileMode then
+    -- The Android HUD owns resources, ranking, minimap and item bar.
+    Upgrades.draw(world,w)
+    return
+  end
   leaderboard(world,w)
   kills(world,w)
   resource("food","food",world.resources.food,w-20,h-175,

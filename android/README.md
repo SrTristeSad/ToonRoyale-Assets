@@ -54,3 +54,13 @@ Windows. O workflow `android-host-apk.yml` compila o
 temperatura, estabilidade de longa duração nem multiplayer em aparelhos
 físicos. O Android pode suspender a thread da sala ao sair de primeiro plano.
 Salas em Wi-Fi/VPN precisam ser confirmadas nos aparelhos dos participantes.
+
+
+## Android 0.5.3: interface flutuante sobre nucleo Lua Windows
+
+- A logica da versao **`windows atualização/`** continua como base: o servidor autoritativo e Lua (`android/server-lua/`), sem Node nem WebView; salas LAN/VPN, servidor V2 externo, mapas, mods, dificuldade, bots e arte existentes sao preservados.
+- **Controles touchscreen atuais**: analogico esquerdo livre para movimento, analogico direito flutuante para mira (arrasto curto) e ataque (arrasto longo); a zona central de mira nao ataca acidentalmente.
+- **HUD**: barra horizontal rolavel com os itens reais desbloqueados; botoes Loja, Cla permanente, Tribo temporaria, chat, ranking, mapa, pings, pausa, AUTO e trava da mira.
+- **Personalizacao**: Menu principal > Configuracoes > Controles e interface; durante a partida, Pausa > Configuracoes > Controles Touch. Tamanho geral, opacidade, tamanho individual dos analogicos e zona morta sao salvos em `mooio-hud-v1.cfg` (arquivo privado do aplicativo).
+- No Android os antigos botoes desktop de Loja/Tribo e barra de inventario desktop nao sao desenhados sobre o HUD touch. As interacoes seguem usando pacotes da partida Lua real.
+- Foi preservado o historico Git do Android anterior na branch base; nenhuma exclusao em massa do servidor Lua ou conteudos mais recentes do Windows foi feita.

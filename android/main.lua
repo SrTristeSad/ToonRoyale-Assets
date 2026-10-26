@@ -26,11 +26,13 @@ local Camera=require("src.camera")
 local Input=require("src.input")
 local Pack=require("src.protocol.msgpack")
 local Mobile=require("src.mobile.controls")
+local Abilities=require("src.mobile.ability_actions")
 local Performance=require("src.mobile.performance")
 local isAndroid=love.system and love.system.getOS and love.system.getOS()=="Android" or os.getenv("MOO_IO_FORCE_ANDROID_E2E")=="1"
 local mobile=isAndroid and Mobile.new() or nil
 local framePacer=isAndroid and Performance.new() or nil
 local mobileAttackSent=false
+local mobileAbilitySentAt=-math.huge
 local mobileAimSentAt=-math.huge
 local mobileForwardMouse=false
 local mobileInteractLeft=0
@@ -53,6 +55,37 @@ local previewAge=2
 local menu=Menu.new()
 local home=Home.new()
 local hosted=Host.new()
+local function saveHudSettings()
+  if mobile then mobile:configure(home.hudScale,home.hudOpacity,
+    home.moveScale,home.fireScale,home.deadzone) end
+  if mobile and love.filesystem then
+    love.filesystem.write("mooio-hud-v1.cfg",
+      string.format("%.3f %.3f %.3f %.3f %.3f",
+        home.hudScale,home.hudOpacity,home.moveScale,home.fireScale,home.deadzone))
+  end
+end
+local function loadHudSettings()
+  if love.filesystem then
+    local content=love.filesystem.read("mooio-hud-v1.cfg")
+    if type(content)=="string" then
+      local values={}
+      for number in content:gmatch("%d+%.?%d*") do
+        values[#values+1]=tonumber(number)
+      end
+      if #values>=2 then
+        home.hudScale=math.max(.85,math.min(1.55,values[1]))
+        home.hudOpacity=math.max(.50,math.min(1,values[2]))
+      end
+      if #values>=5 then
+        home.moveScale=math.max(.75,math.min(1.50,values[3]))
+        home.fireScale=math.max(.75,math.min(1.50,values[4]))
+        home.deadzone=math.max(.05,math.min(.30,values[5]))
+      end
+    end
+  end
+  if mobile then mobile:configure(home.hudScale,home.hudOpacity,
+    home.moveScale,home.fireScale,home.deadzone) end
+end
 local pause=Pause.new()
 local sessionIsHost=false
 local allowQuit=false
@@ -118,6 +151,7 @@ local function backspaceUtf8(text)
 end
 
 function love.load()
+  if mobile then loadHudSettings() end
   love.graphics.setDefaultFilter("linear","linear")
   camera=Camera.new()
   menuCamera=Camera.new()
@@ -524,7 +558,8 @@ function love.draw()
     local state=client and client.state or "idle"
     home:draw(state,client and (client.error or client.status) or "",true)
     if home.roomOverlay then home:drawRoomOverlay() end
-    if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world) end
+    if pause:isOpen() then pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world,
+      mobile and home or nil) end
     return
   end
   if client and client.state=="spawn_confirmed" and not died
@@ -535,8 +570,8 @@ function love.draw()
       {showGrid=menu.grid,showDungeonMap=showDungeonMap,
        localAim=View.localAim(lockDir,currentAttackDir(),lastAim)})
     Hud.draw(world,chatOpen,chatDraft,
-      chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen())
-    panels:draw(world)
+      chatOpen or panels:isOpen() or clans:isOpen() or profile:isOpen(),mobile~=nil)
+    panels:draw(world,not mobile)
     if mobile and not pause:isOpen() and not panels:isOpen()
       and not clans:isOpen() and not profile:isOpen() then
       if chatOpen then
@@ -556,7 +591,8 @@ function love.draw()
       love.event.quit(0)
     end
     if pause:isOpen() then
-      pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world)
+      pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world,
+        mobile and home or nil)
       return
     end
     -- Only show missing PNG diagnostics on explicit developer opt-in.
@@ -708,9 +744,10 @@ end
 
 homeAction=function(action)
   if action=="edit_controls" then
-    -- Deliberately keep the dedicated touch control surface. Do not
-    -- substitute desktop keyboard/gamepad bindings on Android.
-    home:setStatus("Controles Android preservados: joystick, ataque e atalhos.")
+    if mobile then home.screen="hud" end
+    return
+  elseif action=="hud_changed" then
+    saveHudSettings()
     return
   elseif action=="quit_game" then
     if hosted.state=="ready" or hosted.state=="starting" then
@@ -935,8 +972,27 @@ local function stopPlayerControls()
 end
 local function pauseAction(action)
   if action=="edit_controls" then
-    if mobile then mobile:stopForOverlay() end
-    home:setStatus("Controles touchscreen Android permanecem ativos.")
+    if mobile then mobile:stopForOverlay();pause.page="hud" end
+  elseif action=="hud_smaller" or action=="hud_bigger"
+    or action=="opacity_less" or action=="opacity_more"
+    or action=="move_less" or action=="move_more"
+    or action=="fire_less" or action=="fire_more"
+    or action=="dead_less" or action=="dead_more" or action=="hud_reset" then
+    local data={
+      hud_smaller={"hudScale",-.10,.85,1.55},hud_bigger={"hudScale",.10,.85,1.55},
+      opacity_less={"hudOpacity",-.10,.50,1},opacity_more={"hudOpacity",.10,.50,1},
+      move_less={"moveScale",-.10,.75,1.50},move_more={"moveScale",.10,.75,1.50},
+      fire_less={"fireScale",-.10,.75,1.50},fire_more={"fireScale",.10,.75,1.50},
+      dead_less={"deadzone",-.025,.05,.30},dead_more={"deadzone",.025,.05,.30}
+    }
+    if action=="hud_reset" then
+      home.hudScale=1.20;home.hudOpacity=.90;home.moveScale=1
+      home.fireScale=1;home.deadzone=.15
+    else
+      local d=data[action]
+      home[d[1]]=math.floor(math.max(d[3],math.min(d[4],home[d[1]]+d[2]))*1000+.5)/1000
+    end
+    saveHudSettings()
   elseif action=="toggle_grid" then
     home.showGrid=not home.showGrid
     menu.grid=home.showGrid
@@ -1313,13 +1369,26 @@ local function mobileSelect(kind,slot)
   end
 end
 local function mobileAction(action,payload)
+  if action=="top_toggle" or action=="bar_hold"
+    or action=="bar_scroll" or action=="bar_release" then return end
   if action=="pause" then love.keypressed("escape");return end
+  if action=="shop_open" or action=="clan_open" or action=="tribe_open" then
+    mobileStop()
+    if client and client.state=="spawn_confirmed" then
+      chatOpen=false;chatDraft="";input.keys={}
+      if action=="shop_open" then
+        clans:close();panels:toggle("store")
+      elseif action=="tribe_open" then
+        clans:close();panels:toggle("tribe")
+      else
+        panels:close();clans:toggle(client.authToken)
+      end
+    end
+    return
+  end
   if action=="map_open" or action=="chat_open" or action=="rank_open" then
     mobileStop()
-    if mobile.auto and client and client.state=="spawn_confirmed" then
-      local ok=client:send("K",{1}) -- E: disable previous auto-gather
-      if ok then mobile.auto=false end
-    end
+    -- Opening a map, chat or ranking does not disable server AUTO mode.
     if action=="rank_open" and client and client.state=="spawn_confirmed" then
       client:send("Y",{payload or mobile.rankingCategory})
       mobile.rankRefresh=3
@@ -1340,18 +1409,36 @@ local function mobileAction(action,payload)
     client:send("Y",{payload})
   elseif action=="ping_here" then
     client:send("S",{1}) -- Same real team ping as keyboard R on Windows
+  elseif action=="lock_aim" then
+    if not lockDir then
+      local dir=currentAttackDir()
+      local sent,err=client:send("D",{dir})
+      if not sent then latestEvent="Mira: "..tostring(err);return end
+      lastAim=dir
+    end
+    local ok,err=client:send("K",{0})
+    if ok then
+      lockDir=not lockDir
+      mobile:setDirectionLock(lockDir)
+    else latestEvent="Trava de mira indisponivel: "..tostring(err) end
   elseif action=="server_auto" then
     local ok,err=client:send("K",{1}) -- Same toggle as E on Windows
     if not ok then
       mobile.auto=not mobile.auto
       latestEvent="Ataque automatico indisponivel: "..tostring(err)
     end
-  elseif action=="skill" then
-    -- The first four use the same mapping as the middle strip.
-    local itemId,isWeapon=require("src.mobile.slots").at(world,payload)
-    if itemId~=nil then
-      client:send("z",{itemId,isWeapon})
-    else latestEvent="Atalho "..tostring(payload).." ainda sem item." end
+  elseif action=="skill" or action=="slot" then
+    -- Real weapon select / consumable / building action, checked by Lua server.
+    -- Tap an item while firing with the other thumb without cancelling it.
+    local now=love.timer.getTime()
+    if now-mobileAbilitySentAt>=.17 then
+      mobileAbilitySentAt=now
+      local ok,why=Abilities.activate(world,payload,currentAttackDir(),
+        function(packet,args) return client:send(packet,args) end,
+        Pack.null,mobile:attacking())
+      if ok then mobile:abilityFeedback(payload,now)
+      else latestEvent="Item nao executado: "..tostring(why) end
+    end
   elseif action=="attack" then
     local active=mobile:attacking()
     if active~=mobileAttackSent then
@@ -1359,9 +1446,6 @@ local function mobileAction(action,payload)
         active and currentAttackDir() or Pack.null})
       if ok then mobileAttackSent=active end
     end
-  elseif action=="slot" then
-    local id,isWeapon=require("src.mobile.slots").at(world,payload)
-    if id~=nil then client:send("z",{id,isWeapon}) end
   elseif action=="ping" and payload then
     local ok,err=client:send("U",{payload.x,payload.y})
     if ok then world.mapMarker={x=payload.x,y=payload.y}
@@ -1406,7 +1490,7 @@ function love.touchpressed(id,x,y)
     return
   end
   local w,h=love.graphics.getDimensions()
-  -- Keep the original Moo-IO controls and their pointer ownership 1:1.
+  -- Two floating joysticks + current HUD preserved; authoritative Lua world.
   -- The most recent Windows map added [F] for nearby switches, chests and
   -- nodes. Android can tap its existing contextual prompt with another
   -- finger while both joysticks remain captured and moving/attacking.
@@ -1430,14 +1514,13 @@ end
 function love.touchmoved(id,x,y)
   if not mobile or phase~="playing" or pause:isOpen() then return end
   local w,h=love.graphics.getDimensions()
-  local action=mobile:moved(id,x,y,w,h)
-  -- The attack thumb IS the aim control. Send real Node direction packets
-  -- promptly during a drag (max 25 Hz). The normal 70-ms tick remains a
-  -- fallback when Android coalesces touch events.
-  if action=="aim" and mobile:attacking() and not chatOpen and client
+  local action,attackChanged=mobile:moved(id,x,y,w,h)
+  -- Inner right drag aims; moving outward activates manual attack.
+  -- Send D even while aiming only; transition sends F only when needed.
+  if action=="aim" and not chatOpen and client
     and client.state=="spawn_confirmed" then
     local now=love.timer.getTime()
-    if now-mobileAimSentAt>=.04 then
+    if not lockDir and (attackChanged or now-mobileAimSentAt>=.04) then
       local dir=currentAttackDir()
       if not lastAim or math.abs(dir-lastAim)>.02 then
         local ok=client:send("D",{dir})
@@ -1445,6 +1528,7 @@ function love.touchmoved(id,x,y)
       end
       mobileAimSentAt=now
     end
+    if attackChanged then mobileAction("attack") end
   end
 end
 function love.touchreleased(id)

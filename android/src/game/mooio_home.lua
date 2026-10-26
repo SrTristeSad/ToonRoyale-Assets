@@ -50,6 +50,12 @@ local boxes={
   serverPrev={150,633,260,42},serverNext={448,633,260,42},
   grid={355,280,570,57},fullscreen={355,364,570,57},
   controls={355,447,570,57},
+  hudSizeLess={430,231,87,47},hudSizeMore={765,231,87,47},
+  hudOpacityLess={430,298,87,47},hudOpacityMore={765,298,87,47},
+  hudMoveLess={430,365,87,47},hudMoveMore={765,365,87,47},
+  hudFireLess={430,432,87,47},hudFireMore={765,432,87,47},
+  hudDeadLess={430,499,87,47},hudDeadMore={765,499,87,47},
+  hudReset={430,574,422,49},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43},
   playConfigure={155,398,462,63},
   -- One compact, centred setup panel. No giant map preview.
@@ -102,7 +108,8 @@ function Home.new()
     status="",statusScreen=nil,error=false,hosting=false,starting=false,
     hostAddress="",hostCode="",connectionState="idle",serverLog="",
     showGrid=true,fullscreen=false,sessionTitle="",
-    roomOverlay=false,botsEnabled=false,botCount=2
+    roomOverlay=false,botsEnabled=false,botCount=2,
+    hudScale=1.20,hudOpacity=.90,moveScale=1,fireScale=1,deadzone=.15
   },Home)
 end
 function Home:scale(x,y)
@@ -184,7 +191,8 @@ end
 function Home:click(sx,sy)
   local x,y=self:scale(sx,sy)
   if self.screen~="home" and inside(x,y,boxes.back) then
-    self.screen=(self.screen=="mods" and "create"
+    self.screen=(self.screen=="hud" and "settings"
+      or self.screen=="mods" and "create"
       or self.screen=="maps" and "create"
       or self.screen=="create" and "play" or "home")
     self.focus=nil;return "back"
@@ -375,6 +383,25 @@ function Home:click(sx,sy)
     if inside(x,y,boxes.grid) then self.showGrid=not self.showGrid;return "grid" end
     if inside(x,y,boxes.fullscreen) then self.fullscreen=not self.fullscreen;return "fullscreen" end
     if inside(x,y,boxes.controls) then return "edit_controls" end
+  elseif self.screen=="hud" then
+    local steps={
+      {"hudSizeLess","hudScale",-.10,.85,1.55},{"hudSizeMore","hudScale",.10,.85,1.55},
+      {"hudOpacityLess","hudOpacity",-.10,.50,1},{"hudOpacityMore","hudOpacity",.10,.50,1},
+      {"hudMoveLess","moveScale",-.10,.75,1.50},{"hudMoveMore","moveScale",.10,.75,1.50},
+      {"hudFireLess","fireScale",-.10,.75,1.50},{"hudFireMore","fireScale",.10,.75,1.50},
+      {"hudDeadLess","deadzone",-.025,.05,.30},{"hudDeadMore","deadzone",.025,.05,.30}
+    }
+    for _,step in ipairs(steps) do
+      if inside(x,y,boxes[step[1]]) then
+        self[step[2]]=math.floor(math.max(step[4],math.min(step[5],self[step[2]]+step[3]))*1000+.5)/1000
+        return "hud_changed"
+      end
+    end
+    if inside(x,y,boxes.hudReset) then
+      self.hudScale=1.20;self.hudOpacity=.90;self.moveScale=1
+      self.fireScale=1;self.deadzone=.15
+      return "hud_changed"
+    end
   end
   return nil
 end
@@ -419,6 +446,10 @@ function Home:navTargets()
   ids[#ids+1]="modsDone";ids[#ids+1]="back"
  elseif self.screen=="settings" then
   ids={"grid","fullscreen","controls","back"}
+ elseif self.screen=="hud" then
+  ids={"hudSizeLess","hudSizeMore","hudOpacityLess","hudOpacityMore",
+    "hudMoveLess","hudMoveMore","hudFireLess","hudFireMore",
+    "hudDeadLess","hudDeadMore","hudReset","back"}
  end
  local rects={}
  for _,id in ipairs(ids) do
@@ -469,7 +500,8 @@ function Home:keypressed(key)
     return "refresh_installed"
   end
   if key=="escape" then
-    self.screen=(self.screen=="mods" and "create"
+    self.screen=(self.screen=="hud" and "settings"
+      or self.screen=="mods" and "create"
       or self.screen=="maps" and "create"
       or self.screen=="create" and "play" or "home")
     self.focus=nil;return "back"
@@ -738,11 +770,26 @@ function Home:draw(state,detail,showWorld)
       button("serverEnter","ENTRAR NA SALA",true)
       button("serverPrev","ANTERIOR",false)
       button("serverNext","PROXIMAS",false)
+    elseif self.screen=="hud" then
+      printText("PERSONALIZAR CONTROLES TOUCH",420,166,23,C.white,452,"center")
+      printText("Os analogicos surgem sob seus dedos durante a partida.",319,204,15,C.muted,650,"center")
+      local rows={
+        {"hudSizeLess","hudSizeMore","BOTOES",self.hudScale,231},
+        {"hudOpacityLess","hudOpacityMore","OPACIDADE",self.hudOpacity,298},
+        {"hudMoveLess","hudMoveMore","MOVIMENTO",self.moveScale,365},
+        {"hudFireLess","hudFireMore","MIRA + ATAQUE",self.fireScale,432},
+        {"hudDeadLess","hudDeadMore","ZONA MORTA",self.deadzone,499}
+      }
+      for _,r in ipairs(rows) do
+        button(r[1],"-",false);button(r[2],"+",false)
+        printText(r[3].."   "..string.format("%.0f%%",r[4]*100),527,r[5]+9,19,C.white,228,"center")
+      end
+      button("hudReset","RESTAURAR PADRAO",false)
     else
       button("grid","GRADE DO MAPA     "..(self.showGrid and "LIGADA" or "DESLIGADA"),false)
       button("fullscreen","TELA CHEIA       "..(self.fullscreen and "LIGADA" or "DESLIGADA"),false)
-      button("controls","EDITAR TECLADO E JOYSTICK",false)
-      printText("Remapeie botoes e analogicos, altere a sensibilidade.",360,537,16,C.muted)
+      button("controls","CONTROLES E INTERFACE",false)
+      printText("No Android: configure os analogicos, botoes e opacidade.",360,537,16,C.muted)
     end
   end
   panel(83,684,1111,34,{0.13,0.17,0.15},0)
@@ -753,7 +800,8 @@ function Home:draw(state,detail,showWorld)
    maps="Mapas extras sao opcionais. Veja os requisitos antes de selecionar.",
    mods="Ative ou desative mods. Algumas especies dependem de um pacote.",
    server="Informe o endereco do servidor e selecione uma sala.",
-   settings="Ajuste a imagem e personalize os controles do joystick."
+   settings="Ajuste a imagem e personalize os controles do joystick.",
+   hud="Os ajustes sao gravados automaticamente no Android."
   }
   local message=currentStatus and self.status or
     (state=="joining" and "Entrando na partida..." or
