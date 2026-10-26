@@ -56,6 +56,6 @@ return function(perform,home,hosted,getClient)
   home.screen="home"
   perform("play_tab")
   assert(starts==1 and getClient()==nil,"opening Play must not create new room")
-  assert(home:click(180,505)=="play_local")
+  assert(home:click(530,505)=="play_local")
   print("MOO IO ROOM CHOICE PASS: visible cave map + difficulty -> real host")
 end
