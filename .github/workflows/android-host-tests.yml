@@ -35,7 +35,12 @@ jobs:
           find . -type f -name '*.lua' -print0 | xargs -0 -n1 luac -p
           lua tests/android_host_test.lua
           lua tests/lua_thread_contract_test.lua
+          # The Android LÖVE runtime is LuaJIT: validate its 5.1 grammar too.
+          find server-lua -type f -name '*.lua' -print0 | xargs -0 -n1 sh -c 'luajit -b "$0" /dev/null'
           lua server-lua/tests/local-server-boot-smoke.lua
+          lua server-lua/tests/map-mod-random-generation-smoke.lua
+          lua server-lua/tests/mod-extra-mobs-smoke.lua
+          lua server-lua/tests/life-persistence-smoke.lua
           lua tests/touch_controls_test.lua
           lua tests/performance_test.lua
           lua -e 'require("src.test_server_directory")()'
