@@ -446,6 +446,10 @@ function Home:navTargets()
   ids[#ids+1]="modsDone";ids[#ids+1]="back"
  elseif self.screen=="settings" then
   ids={"grid","fullscreen","controls","back"}
+ elseif self.screen=="hud" then
+  ids={"hudSizeLess","hudSizeMore","hudOpacityLess","hudOpacityMore",
+    "hudMoveLess","hudMoveMore","hudFireLess","hudFireMore",
+    "hudDeadLess","hudDeadMore","hudReset","back"}
  end
  local rects={}
  for _,id in ipairs(ids) do
@@ -496,7 +500,8 @@ function Home:keypressed(key)
     return "refresh_installed"
   end
   if key=="escape" then
-    self.screen=(self.screen=="mods" and "create"
+    self.screen=(self.screen=="hud" and "settings"
+      or self.screen=="mods" and "create"
       or self.screen=="maps" and "create"
       or self.screen=="create" and "play" or "home")
     self.focus=nil;return "back"
@@ -765,11 +770,26 @@ function Home:draw(state,detail,showWorld)
       button("serverEnter","ENTRAR NA SALA",true)
       button("serverPrev","ANTERIOR",false)
       button("serverNext","PROXIMAS",false)
+    elseif self.screen=="hud" then
+      printText("PERSONALIZAR CONTROLES TOUCH",420,166,23,C.white,452,"center")
+      printText("Os analogicos surgem sob seus dedos durante a partida.",319,204,15,C.muted,650,"center")
+      local rows={
+        {"hudSizeLess","hudSizeMore","BOTOES",self.hudScale,231},
+        {"hudOpacityLess","hudOpacityMore","OPACIDADE",self.hudOpacity,298},
+        {"hudMoveLess","hudMoveMore","MOVIMENTO",self.moveScale,365},
+        {"hudFireLess","hudFireMore","MIRA + ATAQUE",self.fireScale,432},
+        {"hudDeadLess","hudDeadMore","ZONA MORTA",self.deadzone,499}
+      }
+      for _,r in ipairs(rows) do
+        button(r[1],"-",false);button(r[2],"+",false)
+        printText(r[3].."   "..string.format("%.0f%%",r[4]*100),527,r[5]+9,19,C.white,228,"center")
+      end
+      button("hudReset","RESTAURAR PADRAO",false)
     else
       button("grid","GRADE DO MAPA     "..(self.showGrid and "LIGADA" or "DESLIGADA"),false)
       button("fullscreen","TELA CHEIA       "..(self.fullscreen and "LIGADA" or "DESLIGADA"),false)
-      button("controls","EDITAR TECLADO E JOYSTICK",false)
-      printText("Remapeie botoes e analogicos, altere a sensibilidade.",360,537,16,C.muted)
+      button("controls","CONTROLES E INTERFACE",false)
+      printText("No Android: configure os analogicos, botoes e opacidade.",360,537,16,C.muted)
     end
   end
   panel(83,684,1111,34,{0.13,0.17,0.15},0)
@@ -780,7 +800,8 @@ function Home:draw(state,detail,showWorld)
    maps="Mapas extras sao opcionais. Veja os requisitos antes de selecionar.",
    mods="Ative ou desative mods. Algumas especies dependem de um pacote.",
    server="Informe o endereco do servidor e selecione uma sala.",
-   settings="Ajuste a imagem e personalize os controles do joystick."
+   settings="Ajuste a imagem e personalize os controles do joystick.",
+   hud="Os ajustes sao gravados automaticamente no Android."
   }
   local message=currentStatus and self.status or
     (state=="joining" and "Entrando na partida..." or
