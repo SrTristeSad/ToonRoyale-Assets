@@ -58,8 +58,22 @@ local untilTime=Socket.gettime()+1.2
 local sentMove=false
 while Socket.gettime()<untilTime do
   if not sentMove then
-    local sent,err=client:send("9",{Pack.null})
-    assert(sent,"Server gameplay input failed: "..tostring(err))
+    -- Send the real on-wire commands produced by the original Moo-IO
+    -- left joystick, ATACAR right thumb, aim updates and auto toggle.
+    for _,command in ipairs({
+      {"9",{.5}},          -- movement joystick angle
+      {"D",{-.8}},         -- aim direction on attack drag
+      {"F",{1,-.8}},       -- hold ATACAR
+      {"F",{0,Pack.null}}, -- release ATACAR
+      {"9",{Pack.null}},   -- release movement joystick
+      {"K",{1}},          -- original server AUTO toggle
+      {"K",{1}},          -- restore AUTO off
+      {"0",{}}             -- keepalive
+    }) do
+      local sent,err=client:send(command[1],command[2])
+      assert(sent,"Original Moo-IO control "..command[1]..
+        " failed over Lua WebSocket: "..tostring(err))
+    end
     sentMove=true
   end
   client:update()

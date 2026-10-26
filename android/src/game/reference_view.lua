@@ -529,6 +529,20 @@ end
 
 -- Original game uses a flat surface. Custom LC map packs add their own
 -- visually separate zones; all collision/teleport authority stays server-side.
+-- The Android overlay uses a contextual tap instead of adding a new button
+-- to the original Moo-IO twin-joystick HUD. Exactly the same nearest-object
+-- rule used by Windows [F]; server validates range and object state.
+function View.touchInteraction(world,x,y,w,h)
+ if type(x)~="number" or type(y)~="number" or
+    type(w)~="number" or type(h)~="number" or
+    w<=0 or h<=0 or x~=x or y~=y then return nil end
+ if x<w/2-205 or x>w/2+205 or y<h-170 or y>h-133 then
+   return nil
+ end
+ local obj=View.nearestInteraction(world)
+ if obj and type(obj.id)=="string" and #obj.id>0 then return obj.id end
+ return nil
+end
 local function drawMapHelp(world)
  if not world.map then return end
  local w,h=love.graphics.getDimensions()
@@ -546,7 +560,10 @@ local function drawMapHelp(world)
   if obj.kind=="node" then
    label=label.." ("..tostring(obj.remaining or obj.charges)..")"
   end
-  love.graphics.printf("F: "..label:sub(1,48),w/2-196,h-161,392,"center")
+  local touch=love.system and love.system.getOS
+    and love.system.getOS()=="Android"
+  love.graphics.printf((touch and "TOQUE: " or "F: ")..
+    label:sub(1,48),w/2-196,h-161,392,"center")
  end
  if world.mapMessage and (world.mapMessageTimer or 0)>0 then
   love.graphics.setColor(0.07,0.10,0.07,0.91)
