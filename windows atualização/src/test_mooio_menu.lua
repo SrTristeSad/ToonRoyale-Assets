@@ -110,7 +110,7 @@ return function()
   assert(home:click(530,505)=="play_local","host must be able to play")
   assert(home:click(751,505)=="stop","host must be able to close the room")
   -- Host-only room must not leave a second guest-join form visible.
-  assert(home:click(721,452)==nil,"host cannot use guest-join UI")
+  assert(home:click(1015,452)==nil,"host cannot use guest-join UI")
   local render=love.graphics.newCanvas(1280,720)
   love.graphics.push("all")
   love.graphics.setCanvas(render)
