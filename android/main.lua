@@ -16,6 +16,7 @@ local Hud=require("src.game.reference_hud")
 local Panels=require("src.game.reference_panels")
 local Clans=require("src.game.account_clans")
 local Death=require("src.game.reference_death")
+local DeathMarker=require("src.game.death_marker")
 local Notices=require("src.game.reference_notices")
 local Profile=require("src.game.reference_profile")
 local Upgrades=require("src.game.reference_upgrades")
@@ -278,6 +279,18 @@ function love.update(dt)
       local packet=evt.data
       world:apply(packet.name,packet.args)
       serverPackets=serverPackets+1
+      if packet.name=="j" and world.justChangedSpace then
+        -- Adopt the Windows map/floor transition while retaining touch input.
+        world.justChangedSpace=false
+        if camera then camera.hasTarget=false end
+        movementClock=0;lastMove=false;lastAim=nil
+        mouseAttack=false;spaceAttack=false
+        if mobile then mobile:reset();mobileAttackSent=false;mobileInteractLeft=0 end
+        client:send("9",{Pack.null})
+        client:send("F",{0,Pack.null})
+        latestEvent="Area: "..tostring(world.spaceId)
+        home:setStatus("Explorando "..tostring(world.spaceId))
+      end
       if packet.name=="C" then
         profile:close()
         panels:reset()
@@ -309,6 +322,10 @@ function love.update(dt)
           end
         end
       elseif packet.name=="P" then
+        -- Keep the server-confirmed death location as the background anchor.
+        if camera and world.lastDeath then
+          camera:follow(world.lastDeath.x,world.lastDeath.y)
+        end
         -- No stale profile selection after death; stop the real Node's
         -- watchStats stream instead of just concealing the local overlay.
         if profile:isOpen() then
@@ -620,8 +637,14 @@ end
 
 -- Native menu actions. Only one authoritative Node session exists at a time.
 connectRoom=function(ip,port,inviteCode,authToken,secure)
+  -- Retain the last death marker only when reconnecting to the same hosted room.
+  local preservedDeath=DeathMarker.forHostReconnect(world,sessionIsHost,
+    client and {host=client.host,port=client.port,inviteCode=client.inviteCode},
+    {host=ip,port=port,inviteCode=inviteCode},hosted)
   if client then client:close();client=nil end
   world=World.new()
+  world.lastDeath=preservedDeath
+  death:reset()
   local ok,connection=pcall(Original.new,{
     host=ip,port=port,server="LC",inviteCode=inviteCode,autoSpawn=false,
     authToken=authToken,secure=secure==true
