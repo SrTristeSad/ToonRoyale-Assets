@@ -68,7 +68,8 @@ return function(death,home,hosted,setWorld,getWorld,setClient,getClient,
  assert(getPhase()=="menu" and getClient()==nil
    and guestExit.closed==1,"guest exit must disconnect local client")
  assert(hosted.state==hostState,"guest exit must never terminate friend server")
- local owner=prepare(true)
+ local owner,ownerWorld=prepare(true)
+ world=ownerWorld
  love.update(death.DURATION+0.1)
  assert(getPhase()=="menu","owner should retain existing post-death menu")
  assert(getClient()==owner and owner.closed==0,
