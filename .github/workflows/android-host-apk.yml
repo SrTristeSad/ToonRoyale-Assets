@@ -15,6 +15,9 @@ on:
       - "windows atualização/shared/**"
       - ".github/workflows/android-host-apk.yml"
   workflow_dispatch:
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
