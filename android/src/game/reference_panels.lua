@@ -1,8 +1,9 @@
 -- In-game store and Tribe/Alliance overlays from the ORIGINAL browser UI.
 -- Sources: client/src/index.js generateStoreList/showAllianceMenu and
 -- client/public/html/play.html #storeButton/#allianceButton.
--- Every mutation is a packet sent to Node; UI never grants items or memberships.
+-- Mutations are server-authoritative packets; UI never grants items or memberships.
 local Store=require("src.game.store_catalog")
+local MobileRuntime=require("src.mobile.runtime")
 local Assets=require("src.game.reference_assets")
 local P={}
 P.__index=P
@@ -163,12 +164,16 @@ function P:clanJoinAvailable(world,team)
 end
 function P:click(world,x,y,w,h)
   if type(x)~="number" or type(y)~="number" then return nil end
-  local storeX,tribeX,top,size=self:buttons(w)
-  if inside(x,y,storeX,top,size,size) then
-    self:toggle("store");return {consumed=true}
-  end
-  if inside(x,y,tribeX,top,size,size) then
-    self:toggle("tribe");return {consumed=true}
+  -- The Android app owns the Shop/Tribe controls in src/mobile/controls.lua.
+  -- Never leave invisible desktop hitboxes active underneath touch buttons.
+  if not MobileRuntime.active() then
+    local storeX,tribeX,top,size=self:buttons(w)
+    if inside(x,y,storeX,top,size,size) then
+      self:toggle("store");return {consumed=true}
+    end
+    if inside(x,y,tribeX,top,size,size) then
+      self:toggle("tribe");return {consumed=true}
+    end
   end
   -- Join request notifications are independent of the open window.
   if world.tribeOwner and #world.joinRequests>0 then
@@ -326,7 +331,7 @@ local function preview(entry,accessory,x,y)
 end
 function P:draw(world,showDesktopButtons)
   local w,h=love.graphics.getDimensions()
-  if showDesktopButtons~=false then
+  if showDesktopButtons==true and not MobileRuntime.active() then
     local storeX,tribeX,top,size=self:buttons(w)
     hudButton("Shop",storeX,top,size,size,self.opened=="store")
     hudButton("Tribe",tribeX,top,size,size,self.opened=="tribe")

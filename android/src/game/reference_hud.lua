@@ -9,6 +9,7 @@ local Assets=require("src.game.reference_assets")
 local Upgrades=require("src.game.reference_upgrades")
 local ItemInfo=require("src.game.reference_item_info")
 local DeathMarker=require("src.game.death_marker")
+local MobileRuntime=require("src.mobile.runtime")
 local H={}
 local fontSmall,fontMedium,fontLarge
 local function fonts()
@@ -328,7 +329,7 @@ end
 function H.draw(world,chatActive,chatText,suppressItemInfo,mobileMode)
   fonts()
   local w,h=love.graphics.getDimensions()
-  if mobileMode then
+  if mobileMode or MobileRuntime.active() then
     -- The Android HUD owns resources, ranking, minimap and item bar.
     Upgrades.draw(world,w)
     return
