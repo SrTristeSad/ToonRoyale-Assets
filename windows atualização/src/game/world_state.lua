@@ -486,7 +486,9 @@ function World:apply(name,args)
       local sid,x,y=data[i],data[i+1],data[i+2]
       if validId(sid) and number(x) and number(y) then
         insertObject(self,sid,{sid=sid,x=x,y=y,dir=data[i+3],scale=data[i+4],
-          type=data[i+5],
+          -- MessagePack null is the correct wire placeholder for items with
+          -- no natural-resource type. Keep it out of the Lua object model.
+          type=type(data[i+5])=="number" and data[i+5] or nil,
           id=type(data[i+6])=="number" and data[i+6] or nil,
           owner=data[i+7]})
       end
