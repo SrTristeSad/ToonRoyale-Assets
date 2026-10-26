@@ -1,9 +1,10 @@
 name: Moo IO Android host - testes Lua
 on:
   push:
-    branches: [main, android-port-windows-core-20261026]
+    branches: [main, android-actual-lua-server-20261026]
     paths:
       - "android/**"
+      - "windows atualização/server-lua/**"
       - ".github/workflows/android-host-tests.yml"
   pull_request:
     paths:
@@ -21,13 +22,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Instalar Lua 5.4
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq lua5.4
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lua5.4 lua-socket luajit
+      - name: Stage Windows Lua gameplay for Android smoke tests
+        run: |
+          set -e
+          cp -a "windows atualização/server-lua" android/server-lua
+          test -s android/server-lua/local_server.lua
       - name: Verificar host e cliente Android
         working-directory: android
         run: |
           set -e
           find . -type f -name '*.lua' -print0 | xargs -0 -n1 luac -p
           lua tests/android_host_test.lua
+          lua tests/lua_thread_contract_test.lua
+          # The Android LÖVE runtime is LuaJIT: validate its 5.1 grammar too.
+          find server-lua -type f -name '*.lua' -print0 | xargs -0 -n1 sh -c 'luajit -b "$0" /dev/null'
+          lua server-lua/tests/local-server-boot-smoke.lua
+          lua server-lua/tests/map-mod-random-generation-smoke.lua
+          mkdir -p "$RUNNER_TEMP/android-mod-data"
+          MOO_IO_TEST_MOD_DATA_DIR="$RUNNER_TEMP/android-mod-data" lua server-lua/tests/mod-extra-mobs-smoke.lua
+          lua server-lua/tests/life-persistence-smoke.lua
           lua tests/touch_controls_test.lua
           lua tests/performance_test.lua
           lua -e 'require("src.test_server_directory")()'

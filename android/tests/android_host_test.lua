@@ -1,76 +1,93 @@
 package.path="./?.lua;./?/init.lua;"..package.path
 local Host=require("src.net.mooio_host")
-local address,code=nil,nil
-local active=false
-local starts,stops=0,0
-local lastRequestedBots=-1
-local function native(action,options)
-  if action=="start" then
-    starts=starts+1
-    lastRequestedBots=options and options.bots or -1
-    active=true
-    return true
+local channels={}
+local threads={}
+local function channel(name)
+  if not channels[name] then
+    local ch={messages={}}
+    function ch:clear() self.messages={} end
+    function ch:push(msg) self.messages[#self.messages+1]=msg end
+    function ch:pop()
+      if #self.messages==0 then return nil end
+      return table.remove(self.messages,1)
+    end
+    channels[name]=ch
   end
-  if action=="stop" then
-    stops=stops+1
-    active=false
-    return true
-  end
-  error("unexpected control action")
+  return channels[name]
 end
-local h=Host.new({
-  readStatus=function() return active and address or nil end,
-  readSessionCode=function() return active and code or nil end,
-  controlServer=native
-})
-assert(h.state=="idle" and not active and starts==0,
-  "opening the app or entering menus must never run the Node server")
-local ok=h:start("lan",nil,0)
-assert(ok and active and starts==1 and h.state=="starting")
-assert(lastRequestedBots==0,"default room must create no bots")
-for _=1,12 do h:update(.7) end
-assert(h.state=="starting","must not report ready before Node controller responds")
-address="192.168.1.12"
-h:update(.7)
-assert(h.state=="starting","must not report ready without Android room code")
-code="android-room-code"
-h:update(.7)
-assert(h.state=="ready")
-assert(h.hostIP=="192.168.1.12" and h.port==8080)
-assert(h.address=="192.168.1.12:8080" and h.code=="android-room-code")
-local again,reason=h:start("lan")
-assert(not again and starts==1 and reason,"must never start a second Node process")
-h:stop()
-assert(h.state=="idle" and stops==1 and not active,
-  "leaving room must actually stop native service and free resources")
-h:stop()
-assert(stops==1,"stopping an already-closed room must not restart service")
-assert(h:start("lan",nil,3) and active and starts==2,
-  "must be able to start a new room after the previous native service exited")
-assert(lastRequestedBots==3,"native Node must receive chosen number of bots")
-h:stop()
-assert(stops==2 and not active)
-local invalid=h:start("lan",nil,9)
-assert(not invalid and starts==2 and h.state=="idle",
-  "invalid room options must not start the native service")
-local failedCalls=0
-local blocked=Host.new({readStatus=function()return nil end,
-  readSessionCode=function()return nil end,
-  controlServer=function(action)failedCalls=failedCalls+1;return false end})
-local startOk=blocked:start("lan")
-assert(not startOk and blocked.state=="failed" and failedCalls==1,
-  "controller failure must not claim hosting or show ongoing service")
-local timeoutStop=0
-local dead=Host.new({readStatus=function() return nil end,
-  readSessionCode=function() return nil end,
-  controlServer=function(action)
-    if action=="stop" then timeoutStop=timeoutStop+1 end
+local folderCount=0
+local platform={
+  createDirectory=function(path)
+    assert(path=="lua-server")
+    folderCount=folderCount+1
     return true
-  end})
-assert(dead:start("lan"))
-for _=1,38 do dead:update(.7) end
-assert(dead.state=="failed" and type(dead.error)=="string" and timeoutStop==1,
-  "startup timeout must stop the native foreground service")
-dead:stop()
-assert(timeoutStop==1,"no second shutdown needed after timeout")
-print("MOO IO ANDROID HOST LIFECYCLE PASS")
+  end,
+  saveDirectory=function()return "/mock-private-files" end,
+  newChannel=channel,
+  newThread=function(path)
+    assert(path=="src/mobile/lua_host_thread.lua")
+    local thread={running=false,args=nil}
+    function thread:start(...)
+      self.running=true
+      self.args={...}
+      return true
+    end
+    function thread:isRunning()return self.running end
+    function thread:getError()return self.error end
+    threads[#threads+1]=thread
+    return thread
+  end
+}
+local h=Host.new({
+  platform=platform,
+  chooseIP=function(mode)
+    assert(mode=="lan")
+    return "192.168.1.40"
+  end,
+  generateCode=function()return "secure-private-room-1234" end
+})
+assert(h.state=="idle" and #threads==0)
+assert(h:start("lan",nil,3,"dificil","lobos-em-matilha","bunker-e-cavernas"))
+assert(h.state=="starting" and #threads==1 and folderCount==1)
+local opts=threads[1].args
+assert(opts[3]=="192.168.1.40" and opts[4]=="lan")
+assert(opts[5]=="secure-private-room-1234" and opts[6]==3)
+assert(opts[7]=="dificil" and opts[8]=="lobos-em-matilha")
+assert(opts[9]=="bunker-e-cavernas" and
+  opts[10]=="/mock-private-files/lua-server")
+assert(h.address=="192.168.1.40:8080")
+for i=1,10 do h:update(.1) end
+assert(h.state=="starting","must never report ready before Lua opens sockets")
+channel(opts[2]):push("ready")
+h:update(.01)
+assert(h.state=="ready")
+assert(not h:start("lan"),"must not launch two authoritative servers")
+h:stop()
+assert(h.state=="idle" and channel(opts[1]):pop()=="stop")
+assert(not h:start("lan"),"must not restart before previous thread stops")
+threads[1].running=false
+assert(h:start("lan",nil,0,"pacifico","","classico"))
+local second=threads[2].args
+channel(second[2]):push("failed:socket already in use")
+threads[2].running=false
+h:update(0.1)
+assert(h.state=="failed" and h.error:find("socket already in use",1,true))
+h:stop()
+for _,bad in ipairs({-1,9,1.5}) do
+  assert(not h:start("lan",nil,bad))
+end
+assert(not h:start("lan",nil,2,"unknown"))
+assert(not h:start("lan",nil,2,"normal","../hack"))
+assert(not h:start("lan",nil,2,"normal","","../../hack"))
+local localOnly=Host.new({
+  platform=platform,generateCode=function()return "another-private-code" end,
+  chooseIP=function()return "127.0.0.1" end
+})
+assert(localOnly:start("lan",nil,0,"extremo"))
+assert(localOnly.hostIP=="127.0.0.1")
+local internal=Host.new({
+  platform=platform,generateCode=function()return "another-private-code" end,
+  chooseIP=function()return "8.8.8.8" end
+})
+assert(not internal:start("lan"),"public IP must be rejected")
+print("ANDROID LUA HOST PASS: real thread lifecycle, ready gate, server options, private IP and restart")

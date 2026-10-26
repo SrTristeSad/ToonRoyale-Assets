@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: AGPL-3.0-only
 -- Moo IO: personal play rooms are separate from dedicated server providers.
--- Gameplay authority remains in the existing Node process; no bots or fake world.
+-- Gameplay authority is provided by the same Lua LOCAL server as Windows.
 local Network=require("src.net.mooio_network")
 local isAndroid=love.system and love.system.getOS and love.system.getOS()=="Android" or os.getenv("MOO_IO_FORCE_ANDROID_E2E")=="1"
 local Home={}
@@ -50,6 +50,8 @@ local boxes={
   nickname={155,236,462,52},modeLan={155,312,223,46},
   modeVpn={393,312,224,46},vpnIP={155,368,462,46},
   createLan={155,530,462,53},createVpn={155,530,462,53},
+  difficulty={155,303,462,39},mapChoice={155,349,462,38},
+  modsChoice={155,391,462,29},
   botsToggle={155,423,462,39},botsMinus={155,475,110,42},
   botsPlus={508,475,109,42},
   roomCopy={155,419,462,55},roomEnter={155,485,226,55},
@@ -115,7 +117,8 @@ function Home.new()
     status="",error=false,hosting=false,starting=false,
     hostAddress="",hostCode="",connectionState="idle",serverLog="",
     showGrid=true,fullscreen=false,sessionTitle="",
-    roomOverlay=false,botsEnabled=false,botCount=2
+    roomOverlay=false,botsEnabled=false,botCount=2,
+    difficulty="normal",mapId="classico",modIds=""
   },Home)
 end
 function Home:scale(x,y)
@@ -149,9 +152,64 @@ function Home:click(sx,sy)
     if inside(x,y,boxes.joinIP) then self.focus="invite";return "focus" end
     if inside(x,y,boxes.joinCode) then self.focus="joinCode";return "focus" end
     if isAndroid and not self.hosting and not self.starting then
+      if inside(x,y,boxes.difficulty) then
+        local modes={"normal","pacifico","dificil","extremo"}
+        for i,value in ipairs(modes) do
+          if self.difficulty==value then
+            self.difficulty=modes[i%#modes+1];break
+          end
+        end
+        return "difficulty"
+      end
+      if inside(x,y,boxes.mapChoice) then
+        local maps={"classico"}
+        if love.filesystem and love.filesystem.getDirectoryItems then
+          for _,dir in ipairs({"server-lua/maps","server-lua/mods/maps"}) do
+            local ok,items=pcall(love.filesystem.getDirectoryItems,dir)
+            if ok and type(items)=="table" then
+              for _,file in ipairs(items) do
+                local name=file:match("^([a-z][a-z0-9%-]*)%.json$")
+                if name then maps[#maps+1]=name end
+              end
+            end
+          end
+        end
+        table.sort(maps)
+        for i,id in ipairs(maps) do
+          if id==self.mapId then self.mapId=maps[i%#maps+1];break end
+        end
+        return "map"
+      end
+      if inside(x,y,boxes.modsChoice) then
+        local mods={""}
+        if love.filesystem and love.filesystem.getDirectoryItems then
+          local ok,items=pcall(love.filesystem.getDirectoryItems,"server-lua/mods")
+          if ok and type(items)=="table" then
+            for _,file in ipairs(items) do
+              local id=file:match("^([a-z][a-z0-9%-]*)%.json$")
+              if id then mods[#mods+1]=id end
+            end
+          end
+        end
+        table.sort(mods)
+        for i,id in ipairs(mods) do
+          if self.modIds==id then self.modIds=mods[i%#mods+1];break end
+        end
+        return "mods"
+      end
+      if inside(x,y,boxes.botsToggle) then
+        self.botsEnabled=not self.botsEnabled;return "bots_toggle"
+      end
+      if inside(x,y,boxes.botsMinus) then
+        self.botCount=math.max(0,self.botCount-1)
+        self.botsEnabled=self.botCount>0;return "bots_count"
+      end
+      if inside(x,y,boxes.botsPlus) then
+        self.botCount=math.min(8,self.botCount+1)
+        self.botsEnabled=true;return "bots_count"
+      end
       if inside(x,y,boxes.createLan) then
-        self.focus=nil
-        return "create"
+        self.focus=nil;return "create"
       end
     elseif not isAndroid and not self.hosting and not self.starting then
       if inside(x,y,boxes.modeLan) then self.serverMode="lan";self.focus=nil;return "mode_lan" end
@@ -343,10 +401,15 @@ function Home:draw(state,detail,showWorld)
       printText("01  CRIAR MINHA SALA",155,204,19,C.green)
       field("nickname",self.nickname,"Seu apelido",self.focus=="nickname")
       if isAndroid and not self.hosting and not self.starting then
-        printText("SERVIDOR NO CELULAR",155,316,22,C.green)
-        printText("Partida solo sem internet ou PC.",155,371,16,C.white)
-        printText("Na rede Wi-Fi, amigos tambem podem entrar.",155,405,16,C.muted)
-        button("createLan","CRIAR MINHA SALA",true)
+        button("difficulty","DIFICULDADE: "..self.difficulty:upper(),false)
+        button("mapChoice","MAPA: "..self.mapId:upper(),false)
+        button("modsChoice","MOD: "..(self.modIds=="" and "DESLIGADO" or self.modIds:upper()),false)
+        button("botsToggle",self.botsEnabled and "BOTS LIGADOS" or "BOTS DESLIGADOS",self.botsEnabled)
+        button("botsMinus","-")
+        printText("QUANTIDADE: "..(self.botsEnabled and self.botCount or 0).." / 8",
+          274,485,17,C.white,225,"center")
+        button("botsPlus","+")
+        button("createLan","CRIAR SALA LUA",true)
       elseif self.hosting then
         printText(self.botsEnabled and self.botCount>0 and
           ("Sala criada - "..self.botCount.." bots ativos.")

@@ -1,6 +1,6 @@
 -- Moo-Quest is a Lua client for the UNMODIFIED al007ex/moomoo-clone server.
 -- Real native gameplay rendering is gated by actual server C/D/a/H/I packets.
--- Never generate local entities or claim spawn before the Node server confirms it.
+-- Never generate local entities or claim spawn before the authoritative server confirms it.
 local Original=require("src.net.original_client")
 local World=require("src.game.world_state")
 local View=require("src.game.reference_view")
@@ -209,7 +209,7 @@ function love.update(dt)
   if integration then integration:update(dt);return end
   if diagnostic then return end
   -- The menu backdrop reuses the original top-down world preview even
-  -- before connecting to a Node server.
+  -- before connecting to the Lua server.
   if phase=="menu" then
     -- Menu world is drawn from a cached canvas: advance it only when the
     -- backdrop is about to be refreshed, rather than on every CPU tick.
@@ -309,7 +309,7 @@ function love.update(dt)
         phase="playing"
         home:setStatus("Partida iniciada.")
         menu.status=""
-        latestEvent="SPAWN CONFIRMADO pelo Node original. SID "..tostring(client.sid)
+        latestEvent="SPAWN CONFIRMADO pelo servidor. SID "..tostring(client.sid)
         movementClock=0
         lastMove=false
         lastAim=nil
@@ -354,7 +354,7 @@ function love.update(dt)
         death:start()
         if mobile then mobile:reset();mobileAttackSent=false;mobileInteractLeft=0 end
         menu.status=""
-        latestEvent="YOU DIED: morte confirmada pelo Node."
+        latestEvent="YOU DIED: morte confirmada pelo servidor."
       elseif packet.name=="B" then
         latestEvent="Servidor recusou partida: "..tostring(packet.args[1])
       end
@@ -437,7 +437,7 @@ function love.draw()
   if framePacer then framePacer:pace(phase,appFocused) end
   love.graphics.clear(0.075,0.11,0.10)
   if integration then
-    love.graphics.print("Real Node integration: "..integration.mode,30,30)
+    love.graphics.print("Real multiplayer integration: "..integration.mode,30,30)
     love.graphics.print("State: "..tostring(integration.client.state),30,60)
     integration:draw()
     return
@@ -583,7 +583,7 @@ local function requestPlay()
     return false
   end
   died=false
-  menu.status="Entrando na partida; aguardando confirmacao do Node..."
+  menu.status="Entrando na partida; aguardando confirmacao do servidor..."
   return true
 end
 local function accountAction(action)
@@ -601,7 +601,7 @@ local function accountAction(action)
   elseif action=="auth_verify" then
     local account,err=Auth.verifyCode(menu.authFlow,menu.authCode)
     if not account then menu.authMessage=err;return end
-    if not client then menu.authMessage="Cliente Node indisponivel";return end
+    if not client then menu.authMessage="Servidor indisponivel";return end
     client.authToken=account.token
     clans:reset()
     menu.accountEmail=menu.authEmail
@@ -727,7 +727,7 @@ homeAction=function(action)
     if client then client:close();client=nil end
     home:setStatus("Iniciando servidor local sem terminal...")
     local ok,err=hosted:start(home.serverMode,home.vpnIP,
-      home.botsEnabled and home.botCount or 0)
+      home.botsEnabled and home.botCount or 0,home.difficulty,home.modIds,home.mapId)
     if ok then
       home.starting=true;home.hosting=false
       home.hostCode="";home.hostAddress=""
@@ -788,7 +788,7 @@ homeAction=function(action)
     else home:setStatus("A sala ainda nao esta pronta.",true) end
   elseif action=="stop" then
     if isAndroid then
-      -- Stop Node's isolated Android service NOW, even if the game stays open.
+      -- Stop the independent Lua hosting thread, even while the app remains open.
       if client then client:close();client=nil end
       hosted:stop()
       home.hosting=false;home.starting=false

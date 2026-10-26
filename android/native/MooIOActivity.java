@@ -8,16 +8,10 @@ import java.io.File;
 
 /** LÖVE game window. Hosting only starts after the player creates a room. */
 public final class MooIOActivity extends GameActivity {
-    private MooIOHostControl control;
     private MooIOTlsBridge tlsBridge;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        try {
-            control = new MooIOHostControl(this);
-        } catch (java.io.IOException e) {
-            Log.e("MooIO-Host", "Could not initialize local room controller", e);
-        }
         // Verified TLS tunnel uses Android's own CA trust store; no Node
         // foreground server and no notification are needed just to JOIN.
         try {
@@ -34,17 +28,11 @@ public final class MooIOActivity extends GameActivity {
             Log.e("MooIO-TLS","Secure transport not available",e);
             if(tlsBridge!=null){tlsBridge.close();tlsBridge=null;}
         }
-        // No foreground Node process or ongoing notification in menus.
+        // Local hosting runs inside a LÖVE Lua thread, never a Node process.
     }
 
     @Override protected void onDestroy() {
         if(tlsBridge!=null){tlsBridge.close();tlsBridge=null;}
-        if (control != null) {
-            control.close();
-            control = null;
-        } else {
-            stopService(new android.content.Intent(this, MooIOServerService.class));
-        }
         super.onDestroy();
     }
 }
