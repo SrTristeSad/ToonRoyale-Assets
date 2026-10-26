@@ -39,7 +39,8 @@ jobs:
           find server-lua -type f -name '*.lua' -print0 | xargs -0 -n1 sh -c 'luajit -b "$0" /dev/null'
           lua server-lua/tests/local-server-boot-smoke.lua
           lua server-lua/tests/map-mod-random-generation-smoke.lua
-          lua server-lua/tests/mod-extra-mobs-smoke.lua
+          mkdir -p "$RUNNER_TEMP/android-mod-data"
+          MOO_IO_TEST_MOD_DATA_DIR="$RUNNER_TEMP/android-mod-data" lua server-lua/tests/mod-extra-mobs-smoke.lua
           lua server-lua/tests/life-persistence-smoke.lua
           lua tests/touch_controls_test.lua
           lua tests/performance_test.lua
