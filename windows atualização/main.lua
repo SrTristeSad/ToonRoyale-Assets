@@ -978,7 +978,24 @@ homeAction=function(action)
     connectRoom(target.host,target.port,target.code,nil,target.secure)
   elseif action=="play_local" then
     if hosted.state=="ready" then
-      connectRoom(hosted.hostIP,hosted.port,hosted.code)
+      -- Returning after death is a RESPAWN, never a second join. Replacing
+      -- the socket removed the player's server-owned cosmetics and built
+      -- objects. The original live Player survives death in this room.
+      local sameRoom=sessionIsHost and world.dead and client
+        and client.state=="spawn_confirmed"
+        and client.host==hosted.hostIP and client.port==hosted.port
+        and client.inviteCode==hosted.code
+      if sameRoom then
+        local name=type(client.name)=="string" and client.name or home.nickname
+        local ok,err=client:spawn({name=name,skin=0})
+        if ok then
+          home:setStatus("Renascendo na mesma sala. Compras e construcoes preservadas.")
+        else
+          home:setStatus("Nao foi possivel renascer: "..tostring(err),true)
+        end
+      else
+        connectRoom(hosted.hostIP,hosted.port,hosted.code)
+      end
     else home:setStatus("A sala ainda nao esta pronta.",true) end
   elseif action=="stop" then
     -- Even from the main menu, the owner must confirm disconnecting
