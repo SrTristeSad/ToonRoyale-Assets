@@ -57,8 +57,9 @@ local boxes={
   joinIP={704,287,421,51},joinCode={704,359,421,51},
   join={704,430,421,54},joinRetry={704,506,421,49},
   v2Login={704,557,421,38},
-  serverLite={159,274,433,58},serverFirebase={661,274,433,58},
-  serverToPlay={381,526,518,54},
+  serverAddress={155,239,668,51},serverCode={155,302,668,51},
+  serverRefresh={846,239,283,51},serverEnter={846,302,283,51},
+  serverPrev={155,566,209,43},serverNext={920,566,209,43},
   grid={355,280,570,57},fullscreen={355,364,570,57},
   overlayCopy={478,395,322,55},overlayClose={880,177,55,43}
 }
@@ -109,6 +110,8 @@ function Home.new()
   return setmetatable({
     screen="home",nickname="Jogador",invite="",joinCode="",vpnIP="",
     serverMode="lan",provider="lite",focus=nil,
+    serverAddress="",serverCode="",serverRooms={},serverDirectory=nil,
+    serverSelected=1,serverPage=0,
     status="",error=false,hosting=false,starting=false,
     hostAddress="",hostCode="",connectionState="idle",serverLog="",
     showGrid=true,fullscreen=false,sessionTitle="",
@@ -188,9 +191,24 @@ function Home:click(sx,sy)
     if self.error and inside(x,y,boxes.joinRetry) then self.focus=nil;return "retry" end
     self.focus=nil
   elseif self.screen=="server" then
-    if inside(x,y,boxes.serverLite) then self.provider="lite";return "provider_lite" end
-    if inside(x,y,boxes.serverFirebase) then self.provider="firebase";return "provider_firebase" end
-    if inside(x,y,boxes.serverToPlay) then self.screen="play";return "server_to_play" end
+    if inside(x,y,boxes.serverAddress) then self.focus="serverAddress";return "focus" end
+    if inside(x,y,boxes.serverCode) then self.focus="serverCode";return "focus" end
+    if inside(x,y,boxes.serverRefresh) then self.focus=nil;return "server_browse" end
+    if inside(x,y,boxes.serverEnter) then self.focus=nil;return "server_join" end
+    if inside(x,y,boxes.serverPrev) then
+      self.serverPage=math.max(0,self.serverPage-1);return "server_page"
+    end
+    if inside(x,y,boxes.serverNext) then
+      self.serverPage=math.min(math.max(0,math.ceil(#self.serverRooms/4)-1),
+        self.serverPage+1);return "server_page"
+    end
+    for row=1,4 do
+      local index=self.serverPage*4+row
+      local rect={155,375+(row-1)*44,974,40}
+      if self.serverRooms[index] and inside(x,y,rect) then
+        self.serverSelected=index;self.focus=nil;return "server_select"
+      end
+    end
   elseif self.screen=="settings" then
     if inside(x,y,boxes.grid) then self.showGrid=not self.showGrid;return "grid" end
     if inside(x,y,boxes.fullscreen) then self.fullscreen=not self.fullscreen;return "fullscreen" end
@@ -213,6 +231,8 @@ function Home:keypressed(key)
       local from=self.focus
       self.focus=nil
       if from=="invite" then return "join" end
+      if from=="serverAddress" then return "server_browse" end
+      if from=="serverCode" then return "server_join" end
     end
     return nil
   end
@@ -237,6 +257,12 @@ function Home:textinput(chars)
   elseif self.focus=="vpnIP" then
     chars=chars:gsub("[^%d%.]","")
     self.vpnIP=(self.vpnIP..chars):sub(1,15)
+  elseif self.focus=="serverAddress" then
+    chars=chars:gsub("[%c%s]","")
+    self.serverAddress=(self.serverAddress..chars):sub(1,128)
+  elseif self.focus=="serverCode" then
+    chars=chars:gsub("[^%w%-]","")
+    self.serverCode=(self.serverCode..chars):sub(1,64)
   end
 end
 local function decorate(showWorld)
@@ -367,24 +393,32 @@ function Home:draw(state,detail,showWorld)
         printText("HTTPS usa TLS validado; LAN/VPN mantem conexao original.",706,517,13,C.muted)
       end
     elseif self.screen=="server" then
-      printText("SERVIDORES",140,165,31,C.white)
-      printText("Servidores dedicados e descoberta de partidas.",145,220,16,C.muted)
-      panel(130,239,491,265,self.provider=="lite" and C.raised or C.panel,0)
-      panel(633,239,492,265,self.provider=="firebase" and C.raised or C.panel,0)
-      button("serverLite","SERVIDOR V2 LITE",self.provider=="lite")
-      button("serverFirebase","FIREBASE",self.provider=="firebase")
-      if self.provider=="lite" then
-        printText("Servidor dedicado comunitario.",158,355,18,C.muted)
-        printText("A integracao com o protocolo V2 Lite",158,389,16,C.muted)
-        printText("ainda depende da API compativel.",158,413,16,C.amber)
-        printText("Contas, amigos e lista de salas.",661,355,18,C.muted)
-      else
-        printText("Servidor dedicado comunitario.",158,355,18,C.muted)
-        printText("Identidade, amigos e catalogo de salas.",661,355,17,C.muted)
-        printText("Exige configurar um projeto Firebase.",661,390,16,C.amber)
-        printText("Nao hospeda o motor do jogo.",661,414,16,C.muted)
+      printText("SERVIDORES V2",140,157,31,C.white)
+      printText("Consulte salas reais em LAN/VPN ou gateway HTTPS.",155,208,17,C.muted)
+      field("serverAddress",self.serverAddress,
+        "192.168.1.10:8080 ou https://v2.dominio.com",self.focus=="serverAddress")
+      field("serverCode",self.serverCode,
+        "Codigo da sala privada (se necessario)",self.focus=="serverCode")
+      button("serverRefresh","BUSCAR SALAS",true)
+      button("serverEnter","ENTRAR NA SALA",true)
+      for row=1,4 do
+        local index=self.serverPage*4+row
+        local room=self.serverRooms[index]
+        local yy=375+(row-1)*44
+        panel(155,yy,974,40,room and index==self.serverSelected and C.raised or C.panel,0)
+        if room then
+          local capacity=tostring(room.players or 0).."/"..tostring(room.capacity or 0)
+          local label=(room.online and "[ON] " or "[OFF] ")..
+            tostring(room.name).."  |  "..capacity.."  |  "..tostring(room.preset)
+          printText(label,170,yy+8,16,room.online and C.white or C.muted,940)
+        elseif row==1 and #self.serverRooms==0 then
+          printText("Informe o endereco e toque em BUSCAR SALAS.",174,yy+8,17,C.muted)
+        end
       end
-      button("serverToPlay","ENTRAR COM IP NO JOGAR",false)
+      button("serverPrev","ANTERIOR")
+      button("serverNext","PROXIMO")
+      printText("Pagina "..tostring(self.serverPage+1).."/"..
+        tostring(math.max(1,math.ceil(#self.serverRooms/4))),481,573,17,C.muted,333,"center")
     else
       printText("CONFIGURACOES",336,190,31,C.white)
       button("grid","GRADE DO MAPA     "..(self.showGrid and "LIGADA" or "DESLIGADA"),false)
