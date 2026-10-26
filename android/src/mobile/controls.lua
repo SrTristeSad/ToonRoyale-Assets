@@ -52,6 +52,12 @@ function M:stopForOverlay()
  self.barTouchId=nil;self.barTouchX=nil;self.barTouchIndex=nil
  self.barTouchMoved=false;self.barTouchDistance=0
 end
+-- Suspend transient inputs without clearing persistent server toggles.
+-- AUTO (K1) and fixed aim (K0) survive pause, focus loss and overlays.
+function M:pauseControls()
+ self:stopForOverlay()
+ self.mapOpen=false;self.rankOpen=false;self.rankRefresh=0
+end
 function M:configure(size,opacity,movement,attack,deadzone)
  local nextSize=clamp(tonumber(size) or 1.20,.85,1.55)
  local nextOpacity=clamp(tonumber(opacity) or .90,.50,1)
