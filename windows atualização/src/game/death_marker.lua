@@ -49,14 +49,14 @@ function Marker.drawMini(world,x,y,size,worldSize)
  local g=love.graphics
  g.push("all")
  local mx,my=x+dx,y+dy
- -- MooMoo.io marks the most recent death with a conspicuous RED X.
- -- Keep it above player/team dots; do not use a corpse, circle or ping.
- local radius=9
- g.setLineWidth(6)
+ -- Keep the red death X legible without overwhelming the small minimap.
+ -- The death position is unchanged; only its icon size and stroke shrink.
+ local radius=5
+ g.setLineWidth(3)
  g.setColor(0.04,0.01,0.01,0.96)
  g.line(mx-radius,my-radius,mx+radius,my+radius)
  g.line(mx-radius,my+radius,mx+radius,my-radius)
- g.setLineWidth(3.5)
+ g.setLineWidth(2)
  g.setColor(1,0.22,0.17,1)
  g.line(mx-radius,my-radius,mx+radius,my+radius)
  g.line(mx-radius,my+radius,mx+radius,my-radius)
