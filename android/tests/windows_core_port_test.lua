@@ -41,7 +41,9 @@ local mobile=Mobile.new()
 local w,h=1280,720
 local layout=mobile:layout(w,h)
 assert(layout==mobile:layout(w,h))
-assert(layout.move and layout.fire and #layout.skills==4)
+assert(layout.move and layout.fire and layout.hotbar and layout.shop and layout.clan and layout.tribe)
+local slots,scroll=mobile:hotbar(10,w,h)
+assert(#slots==10 and scroll,"Continuous mobile item bar must include the unlocked inventory")
 local move,attack=layout.move,layout.fire
 assert(mobile:pressed(1,move.x,move.y,w,h,14400,5)=="move")
 assert(mobile:pressed(2,attack.x,attack.y,w,h,14400,5)=="attack")
