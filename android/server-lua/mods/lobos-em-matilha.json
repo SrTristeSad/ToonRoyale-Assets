@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "lobos-em-matilha",
+  "name": "Lobos em Matilha",
+  "description": "Ativa colaboracao dos lobos mesmo na dificuldade Normal.",
+  "requiresClient": "base",
+  "changes": {
+    "rules": {
+      "cooperativeWolves": true
+    }
+  }
+}

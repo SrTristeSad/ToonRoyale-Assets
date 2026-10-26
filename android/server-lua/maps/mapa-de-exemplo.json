@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "mapa-de-exemplo",
+  "name": "Mapa de Exemplo Aleatorio",
+  "description": "Mapa com geracao original do MooMoo.io; recursos distribuidos aleatoriamente a cada partida.",
+  "mode": "generated",
+  "generation": {},
+  "surface": [],
+  "spaces": [],
+  "portals": []
+}

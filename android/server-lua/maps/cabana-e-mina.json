@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "cabana-e-mina",
+  "name": "Cabana e Mina",
+  "description": "Geracao com interior de cabana e mina subterranea como zonas independentes.",
+  "mode": "generated",
+  "generation": {},
+  "surface": [],
+  "portals": [
+    {
+      "id": "entrar-cabana",
+      "to": "cabana",
+      "targetX": 600,
+      "targetY": 900,
+      "label": "Cabana",
+      "style": "house",
+      "placement": "random"
+    }
+  ],
+  "spaces": [
+    {
+      "id": "cabana",
+      "type": "interior",
+      "width": 1400,
+      "height": 1200,
+      "obstacles": [
+        {
+          "x": 100,
+          "y": 100,
+          "width": 1000,
+          "height": 80
+        },
+        {
+          "x": 100,
+          "y": 100,
+          "width": 80,
+          "height": 1000
+        },
+        {
+          "x": 1220,
+          "y": 100,
+          "width": 80,
+          "height": 1000
+        }
+      ],
+      "portals": [
+        {
+          "id": "sair-cabana",
+          "x": 600,
+          "y": 900,
+          "to": "surface",
+          "targetX": 1950,
+          "targetY": 1950,
+          "style": "door",
+          "label": "Superficie"
+        },
+        {
+          "id": "escada-mina",
+          "x": 1050,
+          "y": 800,
+          "to": "mina",
+          "targetX": 400,
+          "targetY": 500,
+          "style": "stairs",
+          "label": "mina"
+        }
+      ],
+      "mobs": [],
+      "visual": {
+        "floor": "wood",
+        "wall": "wood",
+        "tileSize": 112,
+        "name": "Cabana"
+      }
+    },
+    {
+      "id": "mina",
+      "type": "underground",
+      "width": 2400,
+      "height": 1800,
+      "obstacles": [
+        {
+          "x": 100,
+          "y": 100,
+          "width": 1000,
+          "height": 90
+        },
+        {
+          "x": 1700,
+          "y": 350,
+          "width": 120,
+          "height": 900
+        }
+      ],
+      "portals": [
+        {
+          "id": "subir-escada",
+          "x": 400,
+          "y": 500,
+          "to": "cabana",
+          "targetX": 1050,
+          "targetY": 800,
+          "style": "stairs",
+          "label": "cabana"
+        }
+      ],
+      "mobs": [
+        {
+          "kind": 4,
+          "x": 1250,
+          "y": 700
+        },
+        {
+          "kind": 4,
+          "x": 2100,
+          "y": 1200
+        },
+        {
+          "kind": 0,
+          "x": 850,
+          "y": 1200
+        }
+      ],
+      "visual": {
+        "floor": "rock",
+        "wall": "stone",
+        "tileSize": 128,
+        "name": "Caverna"
+      }
+    }
+  ]
+}
