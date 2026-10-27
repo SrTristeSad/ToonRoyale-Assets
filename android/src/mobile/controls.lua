@@ -5,6 +5,7 @@ local Slots=require("src.mobile.slots")
 local Catalog=require("src.game.catalog")
 local Icons=require("src.game.reference_icons")
 local Assets=require("src.game.reference_assets")
+local Editor=require("src.mobile.hud_editor")
 local M={}
 M.__index=M
 local sqrt=math.sqrt
@@ -36,7 +37,8 @@ function M.new()
    auto=false,rankOpen=false,mapOpen=false,
    rankRefresh=0,rankingCategory="gold",lastPoint=nil,
    barScroll=0,barCount=0,barTouchId=nil,barTouchX=nil,
-   barTouchMoved=false,barTouchIndex=nil,
+   barTouchMoved=false,barTouchIndex=nil,barTouchStartX=nil,
+    editor=Editor.new(),
    topCollapsed=false,abilityPulse=nil,abilityPulseAt=0,
    cachedW=0,cachedH=0,cachedLayout=nil,
     barCacheLayout=nil,barCacheTotal=nil,barCacheScroll=nil,
@@ -46,7 +48,7 @@ function M:reset()
  self.moveId=nil;self.fireId=nil
  self.moveX=0;self.moveY=0;self.moveOrigin=nil;self.fireOrigin=nil
  self.fireOffsetX=0;self.fireOffsetY=0;self.fireActive=false
- self.barTouchId=nil;self.barTouchX=nil;self.barTouchIndex=nil
+ self.barTouchId=nil;self.barTouchX=nil;self.barTouchStartX=nil;self.barTouchIndex=nil
  self.barTouchMoved=false;self.barTouchDistance=0
  self.barScroll=0;self.barCount=0
  self.barCacheLayout=nil;self.barCacheSlots=nil;self.barCacheBounds=nil
@@ -57,7 +59,7 @@ function M:stopForOverlay()
  self.moveId=nil;self.fireId=nil
  self.moveOrigin=nil;self.fireOrigin=nil;self.moveX=0;self.moveY=0
  self.fireOffsetX=0;self.fireOffsetY=0;self.fireActive=false
- self.barTouchId=nil;self.barTouchX=nil;self.barTouchIndex=nil
+ self.barTouchId=nil;self.barTouchX=nil;self.barTouchStartX=nil;self.barTouchIndex=nil
  self.barTouchMoved=false;self.barTouchDistance=0
 end
 -- Suspend transient inputs without clearing persistent server toggles.
@@ -117,6 +119,7 @@ function M:layout(w,h)
     chatPanel={x=w*.17,y=h*.17,w=w*.66,h=h*.23},
    chatSend={x=w*.70,y=h*.275,w=w*.12,h=h*.079},
    chatCancel={x=w*.77,y=h*.182,w=w*.055,h=h*.06}}
+ self.editor:apply(l,w,h)
  self.cachedW=w;self.cachedH=h;self.cachedLayout=l
  return l
 end
@@ -169,8 +172,11 @@ function M:resourceLayout(w,h)
  local u=l.u
  local y=l.minimap.y+l.minimap.h+12*u
  local height=38*u;local step=43*u
- return {x=l.minimap.x,y=y,width=167*u,height=height,step=step,
+ local bounds={x=l.minimap.x,y=y,width=167*u,height=height,step=step,
   bottom=y+step*3+height}
+ bounds.x,bounds.y=self.editor:resourcePosition(bounds,w,h)
+ bounds.bottom=bounds.y+step*3+height
+ return bounds
 end
 
 -- Geometry shared by HP/level drawing and regression checks: all numbers
@@ -185,6 +191,40 @@ function M:statusLayout(w,h)
  local height=29*u
  return {life={x=hpX,y=y,w=hpW,h=height},
    level={x=hpX+hpW+gap,y=y,w=xpW,h=height}}
+end
+function M:loadEditor(text)
+ self.editor:load(text)
+ self.cachedLayout=nil;self.barCacheLayout=nil
+end
+function M:serializeEditor()
+ return self.editor:serialize()
+end
+function M:startEditing()
+ self:pauseControls();self.editor:begin()
+end
+function M:finishEditing(save)
+ self.editor:finish(save)
+ self.cachedLayout=nil;self.barCacheLayout=nil
+end
+function M:editorPressed(pointer,x,y,w,h)
+ return self.editor:pressed(pointer,x,y,self:layout(w,h),w,h,self:resourceLayout(w,h))
+end
+function M:editorMoved(pointer,x,y,w,h)
+ if self.editor:moved(pointer,x,y,self:layout(w,h),w,h) then
+  self.cachedLayout=nil;self.barCacheLayout=nil
+  return true
+ end
+ return false
+end
+function M:editorReleased(pointer) self.editor:released(pointer) end
+function M:resetEditor()
+ self.editor:reset();self.cachedLayout=nil;self.barCacheLayout=nil
+end
+function M:drawEditor(world,scale)
+ self:draw(world,scale)
+ local g=love.graphics
+ local w,h=g.getDimensions()
+ self.editor:draw(g,self:layout(w,h),w,h,self:resourceLayout(w,h))
 end
 function M:movement()
  if self.moveId then return self.moveX,self.moveY end
@@ -291,23 +331,34 @@ function M:pressed(id,x,y,w,h,scale,total)
  if self.barTouchId==nil and x>=bar.clipX and x<=bar.clipX+bar.clipW
    and y>=bar.top and y<=bar.bottom then
    self.barTouchId=id
-   self.barTouchX=x
+   self.barTouchX=x;self.barTouchStartX=x;self.barTouchDistance=0
    self.barTouchMoved=false
    self.barTouchIndex=nil
+   local nearest=math.huge
    for _,p in ipairs(slots) do
-     if near(x,y,p) then self.barTouchIndex=p.index;break end
+     local dx=math.abs(x-p.x)
+     if dx<nearest and dx<=p.r*1.15
+       and p.x>=bar.clipX-p.r and p.x<=bar.clipX+bar.clipW+p.r then
+       nearest=dx;self.barTouchIndex=p.index
+     end
    end
    return "bar_hold"
  end
- -- Floating left movement: any open place in the lower-left touch zone.
- if x<w*.35 and y>h*.38 and self.moveId==nil then
+ -- Floating joysticks retain open zones, plus the user-edited anchor.
+ local moveOverride=self.editor.positions.move
+ local fireOverride=self.editor.positions.fire
+ local moveExtra=moveOverride and near(x,y,{x=l.move.x,y=l.move.y,r=l.move.r*1.8})
+ local fireExtra=fireOverride and near(x,y,{x=l.fire.x,y=l.fire.y,r=l.fire.r*1.8})
+ if (moveExtra or (not fireExtra and x<w*.35 and y>h*.38))
+   and self.moveId==nil then
    self.moveId=id;self.moveOrigin={x=x,y=y}
    self:joystick(x,y,l)
    return "move"
  end
  -- Single floating right control: touch starts aim-only; pull outward
  -- to attack+aim. Returning inward stops only manual fire, not AUTO.
- if x>w*.68 and y>h*.38 and self.fireId==nil then
+ if (fireExtra or (not moveExtra and x>w*.68 and y>h*.38))
+   and self.fireId==nil then
    self.fireId=id;self.fireActive=false;self.fireOrigin={x=x,y=y}
    self:attackJoystick(x,y,l)
    return "attack"
@@ -319,17 +370,17 @@ function M:moved(id,x,y,w,h)
    local previous=self.barTouchX or x
    local delta=x-previous
    self.barTouchX=x
-   if not self.barTouchMoved and math.abs(delta)>0 then
-     self.barTouchDistance=(self.barTouchDistance or 0)+math.abs(delta)
-     if self.barTouchDistance>=12*self:layout(w,h).u then
-       self.barTouchMoved=true
-     end
+   -- Ignore incidental finger jitter; deliberate drag moves the whole
+   -- unlimited item strip without triggering a selection.
+   local drag=math.abs(x-(self.barTouchStartX or x))
+   if not self.barTouchMoved and drag>=24*self:layout(w,h).u then
+     self.barTouchMoved=true
    end
    if self.barTouchMoved then
      local _,bar=self:hotbar(self.barCount,w,h)
      self.barScroll=clamp(self.barScroll-delta,0,bar.maxScroll)
    end
-   return "bar_scroll"
+   return self.barTouchMoved and "bar_scroll" or "bar_hold"
  end
  if id==self.moveId and self.moveOrigin then
    self:joystick(x,y,self:layout(w,h))
@@ -347,7 +398,7 @@ end
 function M:released(id)
  if id==self.barTouchId then
    local index=not self.barTouchMoved and self.barTouchIndex or nil
-   self.barTouchId=nil;self.barTouchX=nil
+   self.barTouchId=nil;self.barTouchX=nil;self.barTouchStartX=nil
    self.barTouchIndex=nil;self.barTouchMoved=false;self.barTouchDistance=0
    if index then return "slot",index end
    return "bar_release"
