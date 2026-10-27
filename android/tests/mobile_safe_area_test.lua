@@ -20,30 +20,20 @@ assert(l.hotbar.clipX>=l.safe.left and
   l.hotbar.clipX+l.hotbar.clipW<=l.safe.right,
   "Bottom hotbar viewport must not enter Android navigation strip")
 local icons,bar=m:hotbar(8,w,h)
-assert(#icons==8 and bar.maxScroll>0,
- "All eight unlocked items must remain reachable without overlapping joysticks")
-local visible=0
-for _,p in ipairs(icons) do
- if p.x-p.r>=bar.clipX and p.x+p.r<=bar.clipX+bar.clipW then
-  visible=visible+1
- end
-end
-assert(visible>=6,"Full circles, not severed buttons, must occupy the strip")
--- Unlocks must not suddenly jump the bar to its rightmost items.
+assert(#icons==8 and bar.maxScroll==0 and bar.rows>=1,
+  "All unlocked icons must be on-screen simultaneously")
 local many,manyBar=m:hotbar(25,w,h)
-assert(#many==25 and manyBar.maxScroll>0 and manyBar.scroll==0)
-assert(many[1].x-many[1].r>=manyBar.clipX)
-m.barScroll=manyBar.maxScroll
-local endIcons,endBar=m:hotbar(25,w,h)
-assert(endIcons[25].x+endIcons[25].r<=endBar.clipX+endBar.clipW)
-assert(m:pressed(80,endIcons[25].x,endIcons[25].y,w,h,14400,25)=="bar_hold")
+assert(#many==25 and manyBar.maxScroll==0 and manyBar.rows>=2)
+for _,p in ipairs(many) do
+ assert(p.x-p.r>=manyBar.clipX and p.x+p.r<=manyBar.clipX+manyBar.clipW,
+   "No unlocked circle can enter the Android navigation bar")
+ assert(p.y-p.r>=manyBar.top and p.y+p.r<=manyBar.bottom,
+   "Multirow icons must stay inside safe viewport")
+end
+local last=many[25]
+assert(m:pressed(80,last.x,last.y,w,h,14400,25)=="bar_hold")
 local action,index=m:released(80)
-assert(action=="slot" and index==25,"Last item remains reachable")
--- A swipe can settle between items but half-buttons are never hit targets.
-local swipeX=endBar.clipX+endBar.clipW*.5
-assert(m:pressed(81,swipeX,l.hotbar.y,w,h,14400,25)=="bar_hold")
-assert(m:moved(81,swipeX+160,l.hotbar.y,w,h)=="bar_scroll")
-assert(m:released(81)=="bar_release")
+assert(action=="slot" and index==25,"Last item remains directly accessible")
 -- Previously saved customized positions may lie in the black strip;
 -- clamp the loaded layout back inside the safe viewport.
 local editor=Mobile.new()
@@ -61,4 +51,4 @@ local newIcons,newBar=m:hotbar(8,w,h)
 assert(#newIcons==8)
 assert(newBar.clipX>=42 and newBar.clipX+newBar.clipW<=1075)
 assert(newIcons[1].x-newIcons[1].r>=newBar.clipX)
-print("ANDROID SAFE AREA PASS: navigation bar, complete icons, 25 slots, editor")
+print("ANDROID SAFE AREA PASS: safe viewport, visible 25 icons, editor")
