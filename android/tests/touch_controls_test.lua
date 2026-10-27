@@ -21,7 +21,8 @@ end
 local three,shortBar=m:hotbar(3,w,h)
 eq(#three,3);eq(three[2].x,l.hotbar.x);eq(shortBar.maxScroll,0)
 local two=m:hotbar(2,w,h)
-eq(two[1].x+two[2].x,l.hotbar.x*2)
+assert(math.abs(two[1].x+two[2].x-l.hotbar.x*2)<.001,
+  "Two centered icons must stay aligned with safe-area strip")
 assert(two[1].x>three[1].x,"added choices must recenter the row")
 local six,sixBar=m:hotbar(6,w,h)
 eq(#six,6);assert(sixBar.maxScroll==0 and six[1].index==1,
