@@ -289,7 +289,8 @@ function M:isControlHit(x,y,w,h,total)
  end
  local slots=self:hotbar(total,w,h)
  for _,p in ipairs(slots) do
-   if near(x,y,{x=p.x,y=p.y,r=p.r*1.12}) then return true end
+   local dx,dy=x-p.x,y-p.y
+   if dx*dx+dy*dy<=(p.r*1.12)^2 then return true end
  end
  return false
 end
@@ -427,6 +428,18 @@ local function ring(g,p,active,accent)
  g.setColor(accent and .89 or .45,accent and .76 or .75,accent and .35 or .72,currentHudOpacity)
  g.setLineWidth(2.4);g.circle("line",p.x,p.y,r-1)
  g.setColor(.87,.96,.93,.22*currentHudOpacity);g.arc("line","open",p.x,p.y,r-5,math.pi*1.09,math.pi*1.86)
+end
+-- Mobile item tray draws up to dozens of controls. Render the flat ring
+-- in two primitives instead of the full HUD ring's four-plus primitives.
+-- The icon art, selection highlight and number badges remain unchanged.
+local function trayRing(g,p,active)
+ local r=p.r
+ g.setColor(.07,.16,.16,.90*currentHudOpacity)
+ g.circle("fill",p.x,p.y,r)
+ g.setColor(active and .98 or .42,active and .78 or .85,
+   active and .34 or .83,currentHudOpacity)
+ g.setLineWidth(2)
+ g.circle("line",p.x,p.y,r-1)
 end
 local function words(g,str,p,size)
  g.setColor(.97,.98,.94,1)
@@ -811,7 +824,7 @@ function M:draw(world,scale)
      if self.abilityPulse==p.index and love.timer and love.timer.getTime then
        pulse=clamp(1-(love.timer.getTime()-self.abilityPulseAt)/.27,0,1)
      end
-     ring(g,p,selected or pulse>0,selected or pulse>0)
+     trayRing(g,p,selected or pulse>0)
      if pulse>0 then
        g.setLineWidth((1+3*pulse)*bar.rowU)
        g.setColor(.98,.86,.42,.8*pulse)
