@@ -485,9 +485,10 @@ local function line(y,text,color)
 end
 
 function love.draw()
-  -- Mobile only: cap pacing BEFORE expensive GPU draws. Server ticks and
-  -- touch input still flow through the ordinary LÖVE event/update loop.
-  if framePacer then framePacer:pace(phase,appFocused) end
+  -- Android has VSync enabled in conf.lua. Sleeping again in draw()
+  -- caused uneven 30/20 fps pacing and touch latency on real screens.
+  -- Rely on VSync while focused; throttle only when backgrounded.
+  if framePacer and not appFocused then framePacer:pace(phase,false) end
   love.graphics.clear(0.075,0.11,0.10)
   if integration then
     love.graphics.print("Real multiplayer integration: "..integration.mode,30,30)
