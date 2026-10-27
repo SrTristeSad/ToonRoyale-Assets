@@ -59,6 +59,8 @@ jobs:
           lua tests/touch_controls_test.lua
           lua tests/mobile_editor_test.lua
           lua tests/mobile_input_audit_test.lua
+          lua tests/mobile_swipe_tray_test.lua
+          luajit tests/mobile_swipe_tray_test.lua
           lua tests/mobile_safe_area_test.lua
           luajit tests/mobile_safe_area_test.lua
           luajit tests/mobile_input_audit_test.lua
