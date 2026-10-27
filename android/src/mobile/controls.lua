@@ -181,7 +181,7 @@ function M:statusLayout(w,h)
  local xpW=146*u
  local gap=12*u
  local hpX=(w-hpW-xpW-gap)/2
- local y=h-154*u
+ local y=h-171*u
  local height=29*u
  return {life={x=hpX,y=y,w=hpW,h=height},
    level={x=hpX+hpW+gap,y=y,w=xpW,h=height}}
