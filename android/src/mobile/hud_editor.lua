@@ -103,13 +103,19 @@ function E:anchor(layout,id,w,h,resource)
  return p.x,p.y,(p.r or 30*layout.u)
 end
 function E:buttons(w,h)
- local z=math.max(.65,math.min(w/1280,h/720))
- local bw=155*z;local bh=54*z;local gap=16*z
- local x=w*.5-(bw*3+gap*2)*.5
+ -- Editor actions must remain usable above system bars and display cutouts.
+ local Safe=require("src.mobile.safe_area")
+ local safe=Safe.bounds(w,h)
+ local z=math.max(.45,math.min(safe.width/1280,safe.height/720))
+ local gap=12*z
+ local bw=math.min(155*z,(safe.width-24*z-2*gap)/3)
+ local bh=54*z
+ local x=safe.left+(safe.width-(bw*3+gap*2))*.5
+ local y=safe.top+8*z
  return {
-  save={x=x,y=8*z,w=bw,h=bh},
-  reset={x=x+bw+gap,y=8*z,w=bw,h=bh},
-  cancel={x=x+2*(bw+gap),y=8*z,w=bw,h=bh}
+  save={x=x,y=y,w=bw,h=bh},
+  reset={x=x+bw+gap,y=y,w=bw,h=bh},
+  cancel={x=x+2*(bw+gap),y=y,w=bw,h=bh}
  }
 end
 local function boxHit(x,y,b)
