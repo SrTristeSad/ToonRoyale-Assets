@@ -148,8 +148,8 @@ function M:hotbar(total,w,h)
  local width=total>0 and ((total-1)*step+2*edge) or 0
  local overflow=max(0,width-view.clipW)
  if total~=self.barCount then
-   -- When a new unlock arrives after spawn, bring it into view automatically.
-   self.barScroll=total>self.barCount and self.barCount>0 and overflow or 0
+   -- Don't jump the item strip when the server unlocks a new item.
+   if total<self.barCount then self.barScroll=0 end
    self.barCount=total
  end
  self.barScroll=clamp(self.barScroll,0,overflow)
@@ -165,7 +165,7 @@ function M:hotbar(total,w,h)
  -- The action-number badges are below the ring and its shadow. Previous
  -- vertical scissor used just 5*rowU and cut off the bottom of the circles.
  local top=view.y-radius-11*rowU
- local bottom=min(h,view.y+radius+25*rowU)
+ local bottom=min(l.safe.bottom,view.y+radius+25*rowU)
  local bounds={scroll=self.barScroll,maxScroll=overflow,
    clipX=view.clipX,clipW=view.clipW,top=top,bottom=bottom,
    rowU=rowU,edge=edge}
@@ -184,7 +184,9 @@ function M:resourceLayout(w,h)
   bottom=y+step*3+height}
  bounds.x,bounds.y=self.editor:resourcePosition(bounds,w,h)
  -- The complete four-row resource column must stay on screen after editing.
- bounds.y=clamp(bounds.y,0,max(0,h-(step*3+height)))
+ bounds.x=clamp(bounds.x,l.safe.left,max(l.safe.left,l.safe.right-bounds.width))
+ bounds.y=clamp(bounds.y,l.safe.top,
+  max(l.safe.top,l.safe.bottom-(step*3+height)))
  bounds.bottom=bounds.y+step*3+height
  return bounds
 end
@@ -196,8 +198,9 @@ function M:statusLayout(w,h)
  local hpW=240*u
  local xpW=146*u
  local gap=12*u
- local hpX=(w-hpW-xpW-gap)/2
- local y=h-171*u
+ local safe=self:layout(w,h).safe
+ local hpX=safe.left+(safe.width-hpW-xpW-gap)/2
+ local y=safe.bottom-171*u
  local height=29*u
  return {life={x=hpX,y=y,w=hpW,h=height},
    level={x=hpX+hpW+gap,y=y,w=xpW,h=height}}
@@ -367,7 +370,7 @@ function M:pressed(id,x,y,w,h,scale,total)
      local dx=math.abs(x-p.x)
      if dx<nearest and dx<=p.r*1.15
        and math.abs(y-p.y)<=p.r*1.15
-       and p.x>=bar.clipX-p.r and p.x<=bar.clipX+bar.clipW+p.r then
+       and p.x-p.r>=bar.clipX and p.x+p.r<=bar.clipX+bar.clipW then
        nearest=dx;self.barTouchIndex=p.index
      end
    end
@@ -823,7 +826,7 @@ function M:draw(world,scale)
  -- and the same row can be swiped. No arrows, pages or invented skills.
  g.setScissor(bar.clipX,bar.top,bar.clipW,bar.bottom-bar.top)
  for _,p in ipairs(slots) do
-   if p.x+p.r>=bar.clipX and p.x-p.r<=bar.clipX+bar.clipW then
+   if p.x-p.r>=bar.clipX and p.x+p.r<=bar.clipX+bar.clipW then
      local id,weapon=Slots.at(world,p.index)
      local selected=false
      if player and type(player.buildIndex)=="number" then
