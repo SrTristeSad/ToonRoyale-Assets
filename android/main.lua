@@ -34,6 +34,7 @@ local mobile=isAndroid and Mobile.new() or nil
 local framePacer=isAndroid and Performance.new() or nil
 local mobileAttackSent=false
 local mobileAbilitySentAt=-math.huge
+local mobileAbilityLastSlot=nil
 local mobileAimSentAt=-math.huge
 local mobileForwardMouse=false
 local mobileInteractLeft=0
@@ -1468,12 +1469,15 @@ local function mobileAction(action,payload)
     -- Real weapon select / consumable / building action, checked by Lua server.
     -- Tap an item while firing with the other thumb without cancelling it.
     local now=love.timer.getTime()
-    if now-mobileAbilitySentAt>=.17 then
-      mobileAbilitySentAt=now
+    -- Ignore accidental duplicate taps, but NEVER discard rapid taps on
+    -- different unlocked items (switch weapon, eat, build).
+    if payload~=mobileAbilityLastSlot or now-mobileAbilitySentAt>=.11 then
       local ok,why=Abilities.activate(world,payload,currentAttackDir(),
         function(packet,args) return client:send(packet,args) end,
         Pack.null,mobile:attacking())
-      if ok then mobile:abilityFeedback(payload,now)
+      if ok then
+        mobileAbilitySentAt=now;mobileAbilityLastSlot=payload
+        mobile:abilityFeedback(payload,now)
       else latestEvent="Item nao executado: "..tostring(why) end
     end
   elseif action=="attack" then
@@ -1541,7 +1545,9 @@ function love.touchpressed(id,x,y)
   -- nodes. Android can tap its existing contextual prompt with another
   -- finger while both joysticks remain captured and moving/attacking.
   if not (mobile.mapOpen or mobile.rankOpen) and not chatOpen
-     and client and client.state=="spawn_confirmed" then
+     and client and client.state=="spawn_confirmed"
+     and not mobile:isControlHit(x,y,w,h,
+       require("src.mobile.slots").total(world)) then
     local id=View.touchInteraction(world,x,y,w,h)
     if id then
       local sent,err=client:send("j",{"interact",id})
