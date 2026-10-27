@@ -19,9 +19,9 @@ end
 -- Growth always stays in ONE row. All unlocked options are reachable
 -- by a swipe instead of a second page; taps equip only on finger release.
 local three,shortBar=m:hotbar(3,w,h)
-eq(#three,3);eq(three[2].x,w*.50);eq(shortBar.maxScroll,0)
+eq(#three,3);eq(three[2].x,l.hotbar.x);eq(shortBar.maxScroll,0)
 local two=m:hotbar(2,w,h)
-eq(two[1].x+two[2].x,w)
+eq(two[1].x+two[2].x,l.hotbar.x*2)
 assert(two[1].x>three[1].x,"added choices must recenter the row")
 local six,sixBar=m:hotbar(6,w,h)
 eq(#six,6);assert(sixBar.maxScroll==0 and six[1].index==1,
