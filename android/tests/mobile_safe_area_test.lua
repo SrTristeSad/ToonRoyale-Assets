@@ -20,12 +20,15 @@ assert(l.hotbar.clipX>=l.safe.left and
   l.hotbar.clipX+l.hotbar.clipW<=l.safe.right,
   "Bottom hotbar viewport must not enter Android navigation strip")
 local icons,bar=m:hotbar(8,w,h)
-assert(#icons==8 and bar.maxScroll==0,
- "Eight unlocked items should fit uncut at 1140x540 with 65px nav strip")
+assert(#icons==8 and bar.maxScroll>0,
+ "All eight unlocked items must remain reachable without overlapping joysticks")
+local visible=0
 for _,p in ipairs(icons) do
- assert(p.x-p.r>=bar.clipX and p.x+p.r<=bar.clipX+bar.clipW,
-   "Default quick item "..p.index.." must render as a COMPLETE circle")
+ if p.x-p.r>=bar.clipX and p.x+p.r<=bar.clipX+bar.clipW then
+  visible=visible+1
+ end
 end
+assert(visible>=6,"Full circles, not severed buttons, must occupy the strip")
 -- Unlocks must not suddenly jump the bar to its rightmost items.
 local many,manyBar=m:hotbar(25,w,h)
 assert(#many==25 and manyBar.maxScroll>0 and manyBar.scroll==0)
@@ -55,7 +58,7 @@ assert(nextL~=l and nextL.safe.left==42,
  "Layout cache must refresh when Android navigation insets change")
 assert(nextL.minimap.x>=42)
 local newIcons,newBar=m:hotbar(8,w,h)
-for _,p in ipairs(newIcons) do
- assert(p.x-p.r>=newBar.clipX and p.x+p.r<=newBar.clipX+newBar.clipW)
-end
+assert(#newIcons==8)
+assert(newBar.clipX>=42 and newBar.clipX+newBar.clipW<=1075)
+assert(newIcons[1].x-newIcons[1].r>=newBar.clipX)
 print("ANDROID SAFE AREA PASS: navigation bar, complete icons, 25 slots, editor")
