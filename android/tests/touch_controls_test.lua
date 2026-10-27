@@ -24,8 +24,8 @@ local two=m:hotbar(2,w,h)
 eq(two[1].x+two[2].x,w)
 assert(two[1].x>three[1].x,"added choices must recenter the row")
 local six,sixBar=m:hotbar(6,w,h)
-eq(#six,6);eq(sixBar.maxScroll,0);eq(six[1].index,1)
-eq(six[3].x+six[4].x,w)
+eq(#six,6);assert(sixBar.maxScroll>0 and six[1].index==1,
+  "Six large items must scroll on a 1280-wide Android screen")
 local ten,tenBar=m:hotbar(10,w,h)
 eq(#ten,10)
 assert(tenBar.maxScroll>0 and tenBar.scroll==tenBar.maxScroll,
@@ -36,14 +36,14 @@ assert(m.page==nil and l.stripPrev==nil and l.stripNext==nil,
 -- abilities and the slot numbers against a straight horizontal edge.
 local function verifySkillHUD(sw,sh)
   local skills=Mobile.new()
-  local shown,bounds=skills:hotbar(6,sw,sh)
+  local shown,bounds=skills:hotbar(5,sw,sh)
   local margin=4*bounds.rowU
-  assert(#shown==6 and bounds.maxScroll==0)
+  assert(#shown==5 and bounds.maxScroll==0)
   for _,button in ipairs(shown) do
     assert(button.x-button.r-margin>=bounds.clipX and
       button.x+button.r+margin<=bounds.clipX+bounds.clipW,
       "skill border/shadow must fit entirely within the scissor")
-    local numberBottom=button.y+button.r*.80+button.r*.31
+    local numberBottom=button.y+button.r*.80+button.r*.32
     assert(numberBottom+2*bounds.rowU<=bounds.bottom,
       "skill keycap number cannot be vertically cropped")
     assert(button.y-button.r-margin>=bounds.top,
