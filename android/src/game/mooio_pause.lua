@@ -227,7 +227,7 @@ function Pause:draw(grid,fullscreen,inviteText,world,mobileHud)
       376,508,528,35,14,{0.79,0.85,0.77})
   end
   if mobileHud then
-    label("ANDROID LUA 0.5.8 - HUD MOVEL",392,
+    label("ANDROID LUA 0.5.9 - HUD MOVEL",392,
       self.page=="hud" and 615 or 550,500,20,13,{0.82,0.89,0.83})
   end
   love.graphics.pop()

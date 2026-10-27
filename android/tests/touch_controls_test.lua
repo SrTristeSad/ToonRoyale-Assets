@@ -19,20 +19,21 @@ end
 -- Growth always stays in ONE row. All unlocked options are reachable
 -- by a swipe instead of a second page; taps equip only on finger release.
 local three,shortBar=m:hotbar(3,w,h)
-eq(#three,3);eq(three[2].x,w*.50);eq(shortBar.maxScroll,0)
+eq(#three,3);eq(three[2].x,l.hotbar.x);eq(shortBar.maxScroll,0)
 local two=m:hotbar(2,w,h)
-eq(two[1].x+two[2].x,w)
+assert(math.abs(two[1].x+two[2].x-l.hotbar.x*2)<.001,
+  "Two centered icons must stay aligned with safe-area strip")
 assert(two[1].x>three[1].x,"added choices must recenter the row")
 local six,sixBar=m:hotbar(6,w,h)
-eq(#six,6);assert(sixBar.maxScroll>0 and six[1].index==1,
-  "Six large items must scroll on a 1280-wide Android screen")
+eq(#six,6);assert(sixBar.maxScroll==0 and six[1].index==1,
+  "Six items should fit entirely on the full-width mobile strip")
 local ten,tenBar=m:hotbar(10,w,h)
 eq(#ten,10)
 local cachedTen,cachedBounds=m:hotbar(10,w,h)
 assert(cachedTen==ten and cachedBounds==tenBar,
   "Unchanged skill layout should reuse cached slot positions")
-assert(tenBar.maxScroll>0 and tenBar.scroll==tenBar.maxScroll,
-  "newly unlocked options should automatically become visible")
+assert(tenBar.maxScroll>0 and tenBar.scroll==0,
+  "Unlocking a new item must not jump the bar or cut existing icons")
 assert(m.page==nil and l.stripPrev==nil and l.stripNext==nil,
   "one continuous row must not have inventory paging controls")
 -- Visual HUD regression: the old vertical scissor clipped the circular
@@ -180,6 +181,8 @@ assert(m.moveOrigin==nil and m.fireOrigin==nil)
 m:hotbar(3,w,h)
 local shown,bar=m:hotbar(Slots.total(world),w,h)
 eq(#shown,10);assert(bar.maxScroll>0)
+m.barScroll=bar.maxScroll
+shown,bar=m:hotbar(10,w,h) -- Navigate to the newest items explicitly.
 local visible=shown[#shown]
 assert(visible.x>=bar.clipX and visible.x<=bar.clipX+bar.clipW)
 eq(m:pressed(25,visible.x,visible.y,w,h,14400,10),"bar_hold")

@@ -1,7 +1,7 @@
 name: ToonRoyale Moo-IO Android - APK servidor Lua
 on:
   push:
-    branches: [main, fix/android-tap-input-audit-v058]
+    branches: [main, fix/android-safearea-hotbar-v059]
     paths:
       - "android/**"
       - "windows atualização/server-lua/**"
@@ -39,8 +39,8 @@ jobs:
           sed -i '/^app.name_byte_array=/d' "$engine/gradle.properties"
           sed -i 's/^#app.name=.*/app.name=Moo IO Beta/' "$engine/gradle.properties"
           sed -i 's/^app.application_id=.*/app.application_id=io.srtristesad.mooio.beta/' "$engine/gradle.properties"
-          sed -i 's/^app.version_code=.*/app.version_code=12/' "$engine/gradle.properties"
-          sed -i 's/^app.version_name=.*/app.version_name=0.5.8-lua-touch-reliability/' "$engine/gradle.properties"
+          sed -i 's/^app.version_code=.*/app.version_code=13/' "$engine/gradle.properties"
+          sed -i 's/^app.version_name=.*/app.version_name=0.5.9-lua-safe-hud/' "$engine/gradle.properties"
           sed -i 's/^app.orientation=.*/app.orientation=landscape/' "$engine/gradle.properties"
           game="$engine/app/src/embed/assets"
           mkdir -p "$game"
@@ -137,6 +137,8 @@ jobs:
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:attackJoystick'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:pressed'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:hotbar'
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/safe_area.lua | grep -F 'function S.bounds'
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'local safe=Safe.bounds(w,h)'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:editorPressed'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:isControlHit'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/main.lua | grep -F 'payload~=mobileAbilityLastSlot'

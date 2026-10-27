@@ -10,6 +10,8 @@ local sixteen,bar=m:hotbar(16,w,h)
 assert(#sixteen==16 and bar.maxScroll>0,
   "All actual unlocked items must remain in the scrolling hotbar")
 assert(m.barCount==16)
+m.barScroll=bar.maxScroll
+sixteen,bar=m:hotbar(16,w,h)
 local last=sixteen[16]
 assert(last.x>bar.clipX and last.x<bar.clipX+bar.clipW)
 assert(m:pressed(51,last.x,last.y,w,h,14400,16)=="bar_hold")
