@@ -175,6 +175,8 @@ function M:resourceLayout(w,h)
  local bounds={x=l.minimap.x,y=y,width=167*u,height=height,step=step,
   bottom=y+step*3+height}
  bounds.x,bounds.y=self.editor:resourcePosition(bounds,w,h)
+ -- The complete four-row resource column must stay on screen after editing.
+ bounds.y=clamp(bounds.y,0,max(0,h-(step*3+height)))
  bounds.bottom=bounds.y+step*3+height
  return bounds
 end
@@ -279,6 +281,24 @@ function M:joystick(x,y,l)
    self.moveX=dx/magnitude;self.moveY=dy/magnitude
  end
 end
+-- Claim mobile UI taps before contextual world interactions. The same
+-- rectangles/circles back both hit testing and the rendered controls.
+function M:isControlHit(x,y,w,h,total)
+ local l=self:layout(w,h)
+ if self.mapOpen or self.rankOpen then return true end
+ for _,id in ipairs({"fold","ping","mark","auto","lock"}) do
+   if near(x,y,l[id]) then return true end
+ end
+ if inside(x,y,l.minimap) then return true end
+ if not self.topCollapsed then
+   for _,id in ipairs({"pause","shop","clan","tribe","chat","rank"}) do
+     if near(x,y,l[id]) then return true end
+   end
+ end
+ local _,bar=self:hotbar(total,w,h)
+ return x>=bar.clipX and x<=bar.clipX+bar.clipW
+   and y>=bar.top and y<=bar.bottom
+end
 function M:pressed(id,x,y,w,h,scale,total)
  local l=self:layout(w,h)
  if self.mapOpen then
@@ -338,6 +358,7 @@ function M:pressed(id,x,y,w,h,scale,total)
    for _,p in ipairs(slots) do
      local dx=math.abs(x-p.x)
      if dx<nearest and dx<=p.r*1.15
+       and math.abs(y-p.y)<=p.r*1.15
        and p.x>=bar.clipX-p.r and p.x<=bar.clipX+bar.clipW+p.r then
        nearest=dx;self.barTouchIndex=p.index
      end
@@ -375,6 +396,9 @@ function M:moved(id,x,y,w,h)
    local drag=math.abs(x-(self.barTouchStartX or x))
    if not self.barTouchMoved and drag>=24*self:layout(w,h).u then
      self.barTouchMoved=true
+     -- Include the initial threshold distance. Otherwise every swipe loses
+     -- its first 24px and feels sticky on small Android screens.
+     delta=x-(self.barTouchStartX or x)
    end
    if self.barTouchMoved then
      local _,bar=self:hotbar(self.barCount,w,h)
