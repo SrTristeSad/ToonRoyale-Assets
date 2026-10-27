@@ -28,6 +28,9 @@ eq(#six,6);assert(sixBar.maxScroll>0 and six[1].index==1,
   "Six large items must scroll on a 1280-wide Android screen")
 local ten,tenBar=m:hotbar(10,w,h)
 eq(#ten,10)
+local cachedTen,cachedBounds=m:hotbar(10,w,h)
+assert(cachedTen==ten and cachedBounds==tenBar,
+  "Unchanged skill layout should reuse cached slot positions")
 assert(tenBar.maxScroll>0 and tenBar.scroll==tenBar.maxScroll,
   "newly unlocked options should automatically become visible")
 assert(m.page==nil and l.stripPrev==nil and l.stripNext==nil,
