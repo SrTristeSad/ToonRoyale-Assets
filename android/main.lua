@@ -995,7 +995,7 @@ local function pauseAction(action)
     if mobile then mobile:stopForOverlay();pause.page="hud" end
   elseif action=="editor_open" then
     if mobile and phase=="playing" then
-      mobile:startEditing();mobileStop();pause.page="editor"
+      mobile:startEditing();stopPlayerControls();pause.page="editor"
     end
   elseif action=="editor_save" then
     if mobile then
