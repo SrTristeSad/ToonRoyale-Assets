@@ -1,7 +1,7 @@
 name: ToonRoyale Moo-IO Android - APK servidor Lua
 on:
   push:
-    branches: [main, fix/android-resources-hotbar-render-v056]
+    branches: [main, fix/android-item-tap-custom-hud-v057]
     paths:
       - "android/**"
       - "windows atualização/server-lua/**"
@@ -39,8 +39,8 @@ jobs:
           sed -i '/^app.name_byte_array=/d' "$engine/gradle.properties"
           sed -i 's/^#app.name=.*/app.name=Moo IO Beta/' "$engine/gradle.properties"
           sed -i 's/^app.application_id=.*/app.application_id=io.srtristesad.mooio.beta/' "$engine/gradle.properties"
-          sed -i 's/^app.version_code=.*/app.version_code=10/' "$engine/gradle.properties"
-          sed -i 's/^app.version_name=.*/app.version_name=0.5.6-lua-mobile-hud/' "$engine/gradle.properties"
+          sed -i 's/^app.version_code=.*/app.version_code=11/' "$engine/gradle.properties"
+          sed -i 's/^app.version_name=.*/app.version_name=0.5.7-lua-hud-editor/' "$engine/gradle.properties"
           sed -i 's/^app.orientation=.*/app.orientation=landscape/' "$engine/gradle.properties"
           game="$engine/app/src/embed/assets"
           mkdir -p "$game"
@@ -137,6 +137,9 @@ jobs:
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:attackJoystick'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:pressed'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:hotbar'
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:editorPressed'
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/hud_editor.lua | grep -F 'function E:serialize'
+          unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/main.lua | grep -F 'local action,payload=mobile:released(id)'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:resourceLayout'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/game/reference_view.lua | grep -F 'visibleObjectLayers'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/runtime.lua | grep -F 'platform=="Android"'
