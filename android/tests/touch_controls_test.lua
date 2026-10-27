@@ -16,8 +16,8 @@ for i=1,10 do
   assert(type(id)=="number")
   eq(weapon,i<=3)
 end
--- Growth always stays in ONE row. All unlocked options are reachable
--- by a swipe instead of a second page; taps equip only on finger release.
+-- Every unlocked icon is visible in the same adaptive multirow tray.
+-- Taps equip only on finger release. No scrolling or extra buttons.
 local three,shortBar=m:hotbar(3,w,h)
 eq(#three,3);eq(three[2].x,l.hotbar.x);eq(shortBar.maxScroll,0)
 local two=m:hotbar(2,w,h)
@@ -32,8 +32,8 @@ eq(#ten,10)
 local cachedTen,cachedBounds=m:hotbar(10,w,h)
 assert(cachedTen==ten and cachedBounds==tenBar,
   "Unchanged skill layout should reuse cached slot positions")
-assert(tenBar.maxScroll>0 and tenBar.scroll==0,
-  "Unlocking a new item must not jump the bar or cut existing icons")
+assert(tenBar.maxScroll==0 and tenBar.rows>=2,
+  "New unlocked items must form visible additional rows, without scrolling")
 assert(m.page==nil and l.stripPrev==nil and l.stripNext==nil,
   "one continuous row must not have inventory paging controls")
 -- Visual HUD regression: the old vertical scissor clipped the circular
@@ -177,31 +177,28 @@ eq(m:released(4),"attack")
 assert(m.fireOrigin==nil and not m:attacking())
 -- No dormant base at a fixed screen coordinate.
 assert(m.moveOrigin==nil and m.fireOrigin==nil)
--- Swiping along a single row does not select items or start combat.
+-- Every icon, including the last one, must be directly visible and tappable.
 m:hotbar(3,w,h)
 local shown,bar=m:hotbar(Slots.total(world),w,h)
-eq(#shown,10);assert(bar.maxScroll>0)
-m.barScroll=bar.maxScroll
-shown,bar=m:hotbar(10,w,h) -- Navigate to the newest items explicitly.
+eq(#shown,10);assert(bar.maxScroll==0 and bar.rows>=2)
+for _,p in ipairs(shown) do
+  assert(p.x-p.r>=bar.clipX and p.x+p.r<=bar.clipX+bar.clipW)
+  assert(p.y-p.r>=bar.top and p.y+p.r<=bar.bottom)
+end
 local visible=shown[#shown]
-assert(visible.x>=bar.clipX and visible.x<=bar.clipX+bar.clipW)
 eq(m:pressed(25,visible.x,visible.y,w,h,14400,10),"bar_hold")
 local picked,index=m:released(25)
 eq(picked,"slot");eq(index,10)
-local middleX=bar.clipX+bar.clipW*.5
-eq(m:pressed(26,middleX,l.hotbar.y,w,h,14400,10),"bar_hold")
-eq(m:moved(26,middleX+bar.maxScroll+20,l.hotbar.y,w,h),"bar_scroll")
-local scrolled=m:hotbar(10,w,h)
-assert(scrolled[1].x>shown[1].x,"swipe must reveal earlier options")
-eq(m:released(26),"bar_release")
-assert(not m:attacking() and m.moveId==nil,
-  "swiping action row cannot trigger attack or movement")
-local left=m:hotbar(10,w,h)
-local first=left[1]
-assert(first.x>=bar.clipX and first.x<=bar.clipX+bar.clipW)
+local first=shown[1]
 eq(m:pressed(27,first.x,first.y,w,h,14400,10),"bar_hold")
 picked,index=m:released(27)
 eq(picked,"slot");eq(index,1)
+-- A drag does not select, scroll, attack or move.
+eq(m:pressed(26,first.x,first.y,w,h,14400,10),"bar_hold")
+eq(m:moved(26,first.x+bar.step*2,first.y,w,h),"bar_hold")
+eq(m:released(26),"bar_release")
+assert(not m:attacking() and m.moveId==nil,
+  "A tray drag cannot trigger attack or movement")
 local a,page
 a,page=m:pressed(40,l.auto.x,l.auto.y,w,h,14400,10)
 eq(a,"server_auto");eq(page,true)
