@@ -99,8 +99,10 @@ function M:layout(w,h)
  local panelH=min(sh*.82,555*u)
  -- Android navigation bars may cover a strip included in graphics dimensions.
  -- Keep HUD controls inside safe coordinates and give inventory more width.
- local barLeft=safe.left+max(125*u,sw*.12)
- local barRight=safe.right-max(100*u,sw*.10)
+ local moveKeepOut=safe.left+(142+86*self.moveScale)*u
+ local fireKeepOut=safe.right-(135+86*self.fireScale)*u
+ local barLeft=max(safe.left+max(125*u,sw*.12),moveKeepOut)
+ local barRight=min(safe.right-max(100*u,sw*.10),fireKeepOut)
  if barRight-barLeft<max(180*u,sw*.50) then
   barLeft=safe.left+sw*.08
   barRight=safe.right-sw*.08
