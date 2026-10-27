@@ -881,13 +881,21 @@ function M:draw(world,scale)
    end
  end
  g.setScissor()
- -- Subtle edge marks indicate more unlocked actions off-screen.
+ -- One permanent tray, navigated by swiping directly over the icons.
+ -- The slim progress rail is visual feedback, NEVER another button or page.
+ -- No < / > paging controls: every server-unlocked item stays in this strip.
  if bar.maxScroll>0 then
-   g.setFont(font);g.setColor(.74,.97,.86,.88*self.uiOpacity)
-   if bar.scroll>0 then g.print("<",bar.clipX-13*l.u,l.hotbar.y-13*l.u) end
-   if bar.scroll<bar.maxScroll then
-     g.print(">",bar.clipX+bar.clipW+2*l.u,l.hotbar.y-13*l.u)
-   end
+   local trackX=bar.clipX+10*bar.rowU
+   local trackW=max(1,bar.clipW-20*bar.rowU)
+   local trackH=max(2,3*bar.rowU)
+   local trackY=bar.top-6*bar.rowU
+   local thumbW=max(25*bar.rowU,trackW*bar.clipW/(bar.clipW+bar.maxScroll))
+   thumbW=min(trackW,thumbW)
+   local thumbX=trackX+(trackW-thumbW)*(bar.scroll/bar.maxScroll)
+   g.setColor(.015,.040,.035,.45*self.uiOpacity)
+   g.rectangle("fill",trackX,trackY,trackW,trackH,trackH*.5)
+   g.setColor(.60,.88,.73,.82*self.uiOpacity)
+   g.rectangle("fill",thumbX,trackY,thumbW,trackH,trackH*.5)
  end
  g.pop()
 end
