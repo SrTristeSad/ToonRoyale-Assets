@@ -4,6 +4,7 @@
 local Slots=require("src.mobile.slots")
 local Catalog=require("src.game.catalog")
 local Icons=require("src.game.reference_icons")
+local Assets=require("src.game.reference_assets")
 local M={}
 M.__index=M
 local sqrt=math.sqrt
@@ -16,6 +17,10 @@ local categories={"gold","health","food","wood","stone","kills","points"}
 local names={gold="OURO",health="VIDA",food="COMIDA",wood="MADEIRA",stone="PEDRA",kills="ABATES",points="PONTOS"}
 M.categories=categories
 M.rankingNames=names
+-- Only genuine MooMoo.io resources; points is the server gold balance.
+local resources={{key="food",icon="food"},{key="wood",icon="wood"},
+ {key="stone",icon="stone"},{key="points",icon="gold"}}
+M.resourceRows=resources
 local font,small=nil,nil
 local function fonts()
  if not font then
@@ -33,7 +38,9 @@ function M.new()
    barScroll=0,barCount=0,barTouchId=nil,barTouchX=nil,
    barTouchMoved=false,barTouchIndex=nil,
    topCollapsed=false,abilityPulse=nil,abilityPulseAt=0,
-   cachedW=0,cachedH=0,cachedLayout=nil},M)
+   cachedW=0,cachedH=0,cachedLayout=nil,
+    barCacheLayout=nil,barCacheTotal=nil,barCacheScroll=nil,
+    barCacheSlots=nil,barCacheBounds=nil},M)
 end
 function M:reset()
  self.moveId=nil;self.fireId=nil
@@ -42,6 +49,7 @@ function M:reset()
  self.barTouchId=nil;self.barTouchX=nil;self.barTouchIndex=nil
  self.barTouchMoved=false;self.barTouchDistance=0
  self.barScroll=0;self.barCount=0
+ self.barCacheLayout=nil;self.barCacheSlots=nil;self.barCacheBounds=nil
  self.mapOpen=false;self.rankOpen=false;self.rankRefresh=0;self.auto=false
  self.aimLocked=false;self.lockedDir=nil
 end
@@ -91,7 +99,7 @@ function M:layout(w,h)
    fire={x=w-135*u,y=h-132*u,r=86*u*self.fireScale},
    auto={x=w-88*u,y=h*.47,r=39*u},
    lock={x=w-88*u,y=h*.47+96*u,r=35*u},
-   hotbar={x=barX,y=h-76*u,r=35*u,step=73*u,
+   hotbar={x=barX,y=h-76*u,r=42*u,step=90*u,
      clipX=w*.255,clipW=w*.49},
    shop={x=w-452*u,y=topY,r=35*u},
    clan={x=w-531*u,y=topY,r=35*u},
@@ -119,11 +127,10 @@ function M:hotbar(total,w,h)
  local l=self:layout(w,h)
  total=max(0,math.floor(tonumber(total) or 0))
  local view=l.hotbar
- -- Respect the requested HUD scale, but keep at least six buttons usable
- -- when enough screen space exists. New unlocks extend the same line.
- local rowU=min(l.u,view.clipW/(6*73))
- local step=73*rowU
- local radius=35*rowU
+ -- Larger icons; overflow stays swipeable on the same row.
+ local rowU=min(l.u*1.08,view.clipW/(5*90))
+ local step=90*rowU
+ local radius=41*rowU
  -- Include outline, active pulse and shadow in the horizontal scroll extent:
  -- first/last ability circles must not be cut at the clipping boundary.
  local edge=radius+8*rowU
@@ -135,6 +142,10 @@ function M:hotbar(total,w,h)
    self.barCount=total
  end
  self.barScroll=clamp(self.barScroll,0,overflow)
+ if self.barCacheLayout==l and self.barCacheTotal==total
+   and self.barCacheScroll==self.barScroll and self.barCacheSlots then
+   return self.barCacheSlots,self.barCacheBounds
+ end
  local left=view.clipX+max(0,(view.clipW-width)/2)+edge-self.barScroll
  local slots={}
  for i=1,total do
@@ -144,9 +155,22 @@ function M:hotbar(total,w,h)
  -- vertical scissor used just 5*rowU and cut off the bottom of the circles.
  local top=view.y-radius-11*rowU
  local bottom=min(h,view.y+radius+25*rowU)
- return slots,{scroll=self.barScroll,maxScroll=overflow,
+ local bounds={scroll=self.barScroll,maxScroll=overflow,
    clipX=view.clipX,clipW=view.clipW,top=top,bottom=bottom,
    rowU=rowU,edge=edge}
+ self.barCacheLayout=l;self.barCacheTotal=total;self.barCacheScroll=self.barScroll
+ self.barCacheSlots=slots;self.barCacheBounds=bounds
+ return slots,bounds
+end
+
+-- Real resources are shown under the minimap, clear of the item bar.
+function M:resourceLayout(w,h)
+ local l=self:layout(w,h)
+ local u=l.u
+ local y=l.minimap.y+l.minimap.h+12*u
+ local height=38*u;local step=43*u
+ return {x=l.minimap.x,y=y,width=167*u,height=height,step=step,
+  bottom=y+step*3+height}
 end
 
 -- Geometry shared by HP/level drawing and regression checks: all numbers
@@ -546,6 +570,29 @@ function M:draw(world,scale)
    return
  end
  map(g,world,l.minimap,scale)
+ local bounds=self:resourceLayout(w,h)
+ local holdings=world and world.resources or {}
+ local recent=world and world.resourceGain or {}
+ for i,entry in ipairs(resources) do
+   local ry=bounds.y+(i-1)*bounds.step
+   g.setColor(.025,.075,.071,.81*self.uiOpacity)
+   g.rectangle("fill",bounds.x,ry,bounds.width,bounds.height,7*u,7*u)
+   g.setColor(.48,.78,.70,.65*self.uiOpacity)
+   g.setLineWidth(1.5*u)
+   g.rectangle("line",bounds.x,ry,bounds.width,bounds.height,7*u,7*u)
+   Assets.draw("resources",entry.icon.."_ico.png",
+     bounds.x+21*u,ry+bounds.height*.5,27*u,27*u)
+   local amount=tonumber(holdings[entry.key]) or 0
+   g.setFont(font);g.setColor(.96,.98,.94,1)
+   g.printf(tostring(math.floor(amount)),bounds.x+44*u,
+     ry+(bounds.height-font:getHeight())*.5,bounds.width-55*u,"right")
+   local gain=recent[entry.key]
+   if gain and (tonumber(gain.amount) or 0)>0
+     and (tonumber(gain.remaining) or 0)>0 then
+     g.setColor(.63,.98,.54,self.uiOpacity);g.setFont(small)
+     g.print("+"..tostring(math.floor(gain.amount)),bounds.x+50*u,ry+2*u)
+   end
+ end
  ring(g,l.ping,false,true);glyph(g,"ping",l.ping,u)
  ring(g,l.mark,false,false);glyph(g,"map",l.mark,u)
  -- Keep the actual map and ping actions visible next to the minimap.
@@ -714,10 +761,11 @@ function M:draw(world,scale)
        g.circle("line",p.x,p.y,p.r+4*bar.rowU)
      end
      local item=id and (weapon and Catalog.weaponById(id) or Catalog.itemById(id))
-     if item then Icons.draw(weapon and "weapon" or "item",item,p.x,p.y,p.r*1.3) end
+     if item then Icons.draw(weapon and "weapon" or "item",
+    item,p.x,p.y,p.r*1.55,true) end
      -- Draw a proper circular keycap as part of the ability wheel, rather
      -- than placing a number on top of the bottom ring where it gets cut.
-     local badgeR=p.r*.31
+     local badgeR=p.r*.32
      local badgeY=p.y+p.r*.80
      g.setColor(.018,.045,.056,.97*self.uiOpacity)
      g.circle("fill",p.x,badgeY,badgeR)
