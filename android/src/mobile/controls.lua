@@ -169,7 +169,7 @@ function M:hotbar(total,w,h)
  end
  -- The action-number badges are below the ring and its shadow. Previous
  -- vertical scissor used just 5*rowU and cut off the bottom of the circles.
- local top=view.y-radius-11*rowU
+ local top=math.max(l.safe.top,view.y-radius-11*rowU)
  local bottom=min(l.safe.bottom,view.y+radius+25*rowU)
  local bounds={scroll=self.barScroll,maxScroll=overflow,
    clipX=view.clipX,clipW=view.clipW,top=top,bottom=bottom,
@@ -680,9 +680,14 @@ function M:draw(world,scale)
    Assets.draw("resources",entry.icon.."_ico.png",
      bounds.x+21*u,ry+bounds.height*.5,27*u,27*u)
    local amount=tonumber(holdings[entry.key]) or 0
-   g.setFont(font);g.setColor(.96,.98,.94,1)
-   g.printf(tostring(math.floor(amount)),bounds.x+44*u,
-     ry+(bounds.height-font:getHeight())*.5,bounds.width-55*u,"right")
+   local amountText=tostring(math.floor(amount))
+   local numberWidth=bounds.width-55*u
+   -- Long resource totals must fit without colliding with the icon or border.
+   local numberFont=font
+   if font:getWidth(amountText)>numberWidth then numberFont=small end
+   g.setFont(numberFont);g.setColor(.96,.98,.94,1)
+   g.printf(amountText,bounds.x+44*u,
+     ry+(bounds.height-numberFont:getHeight())*.5,numberWidth,"right")
    local gain=recent[entry.key]
    if gain and (tonumber(gain.amount) or 0)>0
      and (tonumber(gain.remaining) or 0)>0 then
@@ -707,7 +712,7 @@ function M:draw(world,scale)
    ring(g,l.pause,false,false);glyph(g,"pause",l.pause,u)
    g.setFont(small);g.setColor(1,1,1,self.uiOpacity)
    g.printf("LOJA",l.shop.x-35*u,l.shop.y+25*u,70*u,"center")
-   g.printf("CLA",l.clan.x-35*u,l.clan.y+25*u,70*u,"center")
+   g.printf("CLÃ",l.clan.x-35*u,l.clan.y+25*u,70*u,"center")
    g.printf("TRIBO",l.tribe.x-35*u,l.tribe.y+25*u,70*u,"center")
    g.printf("CHAT",l.chat.x-35*u,l.chat.y+25*u,70*u,"center")
    g.printf("TOP",l.rank.x-35*u,l.rank.y+25*u,70*u,"center")
