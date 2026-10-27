@@ -7,6 +7,7 @@ local Icons=require("src.game.reference_icons")
 local Assets=require("src.game.reference_assets")
 local Editor=require("src.mobile.hud_editor")
 local Safe=require("src.mobile.safe_area")
+local Tray=require("src.mobile.tray_layout")
 local M={}
 M.__index=M
 local sqrt=math.sqrt
@@ -49,7 +50,7 @@ function M:reset()
  self.moveId=nil;self.fireId=nil
  self.moveX=0;self.moveY=0;self.moveOrigin=nil;self.fireOrigin=nil
  self.fireOffsetX=0;self.fireOffsetY=0;self.fireActive=false
- self.barTouchId=nil;self.barTouchX=nil;self.barTouchStartX=nil;self.barTouchIndex=nil
+ self.barTouchId=nil;self.barTouchX=nil;self.barTouchStartX=nil;self.barTouchStartY=nil;self.barTouchIndex=nil
  self.barTouchMoved=false;self.barTouchDistance=0
  self.barScroll=0;self.barCount=0
  self.barCacheLayout=nil;self.barCacheSlots=nil;self.barCacheBounds=nil
@@ -136,49 +137,22 @@ function M:layout(w,h)
  self.cachedW=w;self.cachedH=h;self.cachedLayout=l
  return l
 end
--- A single, continuous skill/quick-action row. The authoritative V packets
--- decide which weapon/build options are available. No client-side unlocks.
--- If too many exist to fit between the two thumbs, swipe the SAME row.
+-- Every server-unlocked weapon and building is visible without a scroll/page.
+-- Geometry only changes after an unlock, resolution or HUD-layout change.
 function M:hotbar(total,w,h)
  local l=self:layout(w,h)
  total=max(0,math.floor(tonumber(total) or 0))
- local view=l.hotbar
- -- Larger icons; overflow stays swipeable on the same row.
- local rowU=min(l.u*1.08,view.clipW/(5*90))
- local step=90*rowU
- local radius=41*rowU
- -- Include outline, active pulse and shadow in the horizontal scroll extent:
- -- first/last ability circles must not be cut at the clipping boundary.
- local edge=radius+8*rowU
- local width=total>0 and ((total-1)*step+2*edge) or 0
- local overflow=max(0,width-view.clipW)
- if total~=self.barCount then
-   -- Don't jump the item strip when the server unlocks a new item.
-   if total<self.barCount then self.barScroll=0 end
-   self.barCount=total
- end
- self.barScroll=clamp(self.barScroll,0,overflow)
  if self.barCacheLayout==l and self.barCacheTotal==total
-   and self.barCacheScroll==self.barScroll and self.barCacheSlots then
+   and self.barCacheSlots then
    return self.barCacheSlots,self.barCacheBounds
  end
- local left=view.clipX+max(0,(view.clipW-width)/2)+edge-self.barScroll
- local slots={}
- for i=1,total do
-   slots[i]={x=left+(i-1)*step,y=view.y,r=radius,index=i}
- end
- -- The action-number badges are below the ring and its shadow. Previous
- -- vertical scissor used just 5*rowU and cut off the bottom of the circles.
- local top=math.max(l.safe.top,view.y-radius-11*rowU)
- local bottom=min(l.safe.bottom,view.y+radius+25*rowU)
- local bounds={scroll=self.barScroll,maxScroll=overflow,
-   clipX=view.clipX,clipW=view.clipW,top=top,bottom=bottom,
-   rowU=rowU,edge=edge}
- self.barCacheLayout=l;self.barCacheTotal=total;self.barCacheScroll=self.barScroll
+ local slots,bounds=Tray.layout(total,l.hotbar,l.safe,l.u)
+ self.barCount=total
+ self.barScroll=0
+ self.barCacheLayout=l;self.barCacheTotal=total;self.barCacheScroll=0
  self.barCacheSlots=slots;self.barCacheBounds=bounds
  return slots,bounds
 end
-
 -- Real resources are shown under the minimap, clear of the item bar.
 function M:resourceLayout(w,h)
  local l=self:layout(w,h)
@@ -198,14 +172,16 @@ end
 
 -- Geometry shared by HP/level drawing and regression checks: all numbers
 -- live INSIDE the corresponding bar/capsule, not floating above the HUD.
-function M:statusLayout(w,h)
- local u=self:layout(w,h).u
+function M:statusLayout(w,h,total)
+ local layout=self:layout(w,h)
+ local u=layout.u
  local hpW=240*u
  local xpW=146*u
  local gap=12*u
- local safe=self:layout(w,h).safe
+ local safe=layout.safe
  local hpX=safe.left+(safe.width-hpW-xpW-gap)/2
- local y=safe.bottom-171*u
+ local _,bar=self:hotbar(total or self.barCount,w,h)
+ local y=min(safe.bottom-171*u,bar.top-39*u)
  local height=29*u
  return {life={x=hpX,y=y,w=hpW,h=height},
    level={x=hpX+hpW+gap,y=y,w=xpW,h=height}}
@@ -311,9 +287,11 @@ function M:isControlHit(x,y,w,h,total)
      if near(x,y,l[id]) then return true end
    end
  end
- local _,bar=self:hotbar(total,w,h)
- return x>=bar.clipX and x<=bar.clipX+bar.clipW
-   and y>=bar.top and y<=bar.bottom
+ local slots=self:hotbar(total,w,h)
+ for _,p in ipairs(slots) do
+   if near(x,y,{x=p.x,y=p.y,r=p.r*1.12}) then return true end
+ end
+ return false
 end
 function M:pressed(id,x,y,w,h,scale,total)
  local l=self:layout(w,h)
@@ -359,27 +337,23 @@ function M:pressed(id,x,y,w,h,scale,total)
    self:stopForOverlay();self.mapOpen=true
    return "map_open"
  end
- -- The bottom shortcuts form ONE persistent line, not an inventory page.
- -- Capture the pointer until release so swiping never accidentally equips.
+ -- All unlocked abilities remain on-screen. Capture a tap on a real icon.
+ -- A drag never equips or switches weapons accidentally.
  if near(x,y,l.auto) then self.auto=not self.auto;return "server_auto",self.auto end
  if near(x,y,l.lock) then return "lock_aim" end
- local slots,bar=self:hotbar(total,w,h)
- if self.barTouchId==nil and x>=bar.clipX and x<=bar.clipX+bar.clipW
-   and y>=bar.top and y<=bar.bottom then
-   self.barTouchId=id
-   self.barTouchX=x;self.barTouchStartX=x;self.barTouchDistance=0
-   self.barTouchMoved=false
-   self.barTouchIndex=nil
-   local nearest=math.huge
+ local slots=self:hotbar(total,w,h)
+ if self.barTouchId==nil then
    for _,p in ipairs(slots) do
-     local dx=math.abs(x-p.x)
-     if dx<nearest and dx<=p.r*1.15
-       and math.abs(y-p.y)<=p.r*1.15
-       and p.x-p.r>=bar.clipX and p.x+p.r<=bar.clipX+bar.clipW then
-       nearest=dx;self.barTouchIndex=p.index
+     local dx,dy=x-p.x,y-p.y
+     if dx*dx+dy*dy<=(p.r*1.12)^2 then
+       self.barTouchId=id
+       self.barTouchX=x;self.barTouchStartX=x
+       self.barTouchStartY=y
+       self.barTouchMoved=false
+       self.barTouchIndex=p.index
+       return "bar_hold"
      end
    end
-   return "bar_hold"
  end
  -- Floating joysticks retain open zones, plus the user-edited anchor.
  local moveOverride=self.editor.positions.move
@@ -404,23 +378,12 @@ function M:pressed(id,x,y,w,h,scale,total)
 end
 function M:moved(id,x,y,w,h)
  if id==self.barTouchId then
-   local previous=self.barTouchX or x
-   local delta=x-previous
-   self.barTouchX=x
-   -- Ignore incidental finger jitter; deliberate drag moves the whole
-   -- unlimited item strip without triggering a selection.
-   local drag=math.abs(x-(self.barTouchStartX or x))
-   if not self.barTouchMoved and drag>=24*self:layout(w,h).u then
-     self.barTouchMoved=true
-     -- Include the initial threshold distance. Otherwise every swipe loses
-     -- its first 24px and feels sticky on small Android screens.
-     delta=x-(self.barTouchStartX or x)
-   end
-   if self.barTouchMoved then
-     local _,bar=self:hotbar(self.barCount,w,h)
-     self.barScroll=clamp(self.barScroll-delta,0,bar.maxScroll)
-   end
-   return self.barTouchMoved and "bar_scroll" or "bar_hold"
+   -- Ignore a deliberate drag rather than selecting an unintended item.
+   local dx=x-(self.barTouchStartX or x)
+   local dy=y-(self.barTouchStartY or y)
+   local limit=18*self:layout(w,h).u
+   if dx*dx+dy*dy>limit*limit then self.barTouchMoved=true end
+   return "bar_hold"
  end
  if id==self.moveId and self.moveOrigin then
    self:joystick(x,y,self:layout(w,h))
@@ -438,14 +401,9 @@ end
 function M:released(id)
  if id==self.barTouchId then
    local index=not self.barTouchMoved and self.barTouchIndex or nil
-   local dragged=self.barTouchMoved
    self.barTouchId=nil;self.barTouchX=nil;self.barTouchStartX=nil
-   self.barTouchIndex=nil;self.barTouchMoved=false;self.barTouchDistance=0
-   if dragged and self.cachedW>0 and self.cachedH>0 then
-     local _,bounds=self:hotbar(self.barCount,self.cachedW,self.cachedH)
-     local step=90*bounds.rowU
-     self.barScroll=clamp(math.floor(self.barScroll/step+.5)*step,0,bounds.maxScroll)
-   end
+   self.barTouchStartY=nil;self.barTouchIndex=nil
+   self.barTouchMoved=false;self.barTouchDistance=0
    if index then return "slot",index end
    return "bar_release"
  end
@@ -788,6 +746,7 @@ function M:draw(world,scale)
  local xp=max(0,tonumber(world and world.xp) or 0)
  local maxXP=max(1,tonumber(world and world.maxXP) or 300)
  local level=max(1,math.floor(tonumber(world and world.age) or 1))
+ local slots,bar=self:hotbar(Slots.total(world),w,h)
  local status=self:statusLayout(w,h)
  local hp=status.life
  g.setColor(.025,.075,.075,.92*self.uiOpacity)
@@ -835,14 +794,10 @@ function M:draw(world,scale)
  g.setColor(.98,.80,.34,self.uiOpacity)
  g.rectangle("fill",trackX,trackY,trackW*clamp(xp/maxXP,0,1),
    trackH,trackH*.5,trackH*.5)
- -- The auto-gather/attack mode is an independent toggle: a held manual
- -- attack and opening an overlay never change the active auto state.
- local slots,bar=self:hotbar(Slots.total(world),w,h)
- -- Clip only the bottom row. More unlocked options extend horizontally,
- -- and the same row can be swiped. No arrows, pages or invented skills.
- g.setScissor(bar.clipX,bar.top,bar.clipW,bar.bottom-bar.top)
+ -- All icons are fully visible in a centered, adaptive multirow tray.
+ -- No scissor, pagination controls, or per-frame geometry allocations.
  for _,p in ipairs(slots) do
-   if p.x-p.r>=bar.clipX and p.x+p.r<=bar.clipX+bar.clipW then
+   do
      local id,weapon=Slots.at(world,p.index)
      local selected=false
      if player and type(player.buildIndex)=="number" then
@@ -879,23 +834,6 @@ function M:draw(world,scale)
      g.printf(tostring(p.index),p.x-badgeR,
        badgeY-small:getHeight()*.5,2*badgeR,"center")
    end
- end
- g.setScissor()
- -- One permanent tray, navigated by swiping directly over the icons.
- -- The slim progress rail is visual feedback, NEVER another button or page.
- -- No < / > paging controls: every server-unlocked item stays in this strip.
- if bar.maxScroll>0 then
-   local trackX=bar.clipX+10*bar.rowU
-   local trackW=max(1,bar.clipW-20*bar.rowU)
-   local trackH=max(2,3*bar.rowU)
-   local trackY=bar.top-6*bar.rowU
-   local thumbW=max(25*bar.rowU,trackW*bar.clipW/(bar.clipW+bar.maxScroll))
-   thumbW=min(trackW,thumbW)
-   local thumbX=trackX+(trackW-thumbW)*(bar.scroll/bar.maxScroll)
-   g.setColor(.015,.040,.035,.45*self.uiOpacity)
-   g.rectangle("fill",trackX,trackY,trackW,trackH,trackH*.5)
-   g.setColor(.60,.88,.73,.82*self.uiOpacity)
-   g.rectangle("fill",thumbX,trackY,thumbW,trackH,trackH*.5)
  end
  g.pop()
 end
