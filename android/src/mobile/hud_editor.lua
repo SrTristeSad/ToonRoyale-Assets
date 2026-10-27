@@ -49,22 +49,34 @@ function E:reset()
  self.positions={}
  self.dragId=nil;self.dragPointer=nil
 end
-function E:apply(layout,w,h)
- -- Update the same geometry used for button rendering AND hit detection.
+function E:apply(layout,w,h,safe)
+ -- Persisted positions are relative to the full display for compatibility,
+ -- but every draggable control must remain INSIDE Android's safe viewport.
+ safe=safe or {left=0,top=0,right=w,bottom=h}
  local u=layout.u
  for _,id in ipairs(ids) do
   local p=self.positions[id]
   local target=layout[id]
   if p and target then
    local radius=target.r or math.max(target.w or 0,target.h or 0)*.5
-   local x=clamp(p.x*w,radius,w-radius)
-   local y=clamp(p.y*h,radius,h-radius)
+   local minX=math.min(safe.right-radius,safe.left+radius)
+   local maxX=math.max(minX,safe.right-radius)
+   local minY=math.min(safe.bottom-radius,safe.top+radius)
+   local maxY=math.max(minY,safe.bottom-radius)
+   local x=clamp(p.x*w,minX,maxX)
+   local y=clamp(p.y*h,minY,maxY)
    if id=="minimap" then
-    target.x=clamp(x-target.w*.5,0,w-target.w)
-    target.y=clamp(y-target.h*.5,0,h-target.h)
+    target.x=clamp(x-target.w*.5,safe.left,
+     math.max(safe.left,safe.right-target.w))
+    target.y=clamp(y-target.h*.5,safe.top,
+     math.max(safe.top,safe.bottom-target.h))
    elseif id=="hotbar" then
-    target.x=x;target.y=clamp(y,52*u,h-48*u)
-    target.clipX=clamp(x-target.clipW*.5,0,w-target.clipW)
+    local width=math.min(target.clipW,safe.right-safe.left)
+    target.clipW=width
+    target.clipX=clamp(x-width*.5,safe.left,
+     math.max(safe.left,safe.right-width))
+    target.x=target.clipX+width*.5
+    target.y=clamp(y,safe.top+52*u,safe.bottom-48*u)
    else
     target.x=x;target.y=y
    end
