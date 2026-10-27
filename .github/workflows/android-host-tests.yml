@@ -1,7 +1,7 @@
 name: Moo IO Android host - testes Lua
 on:
   push:
-    branches: [main, fix/android-item-tap-custom-hud-v057]
+    branches: [main, fix/android-tap-input-audit-v058]
     paths:
       - "android/**"
       - "windows atualização/server-lua/**"
@@ -58,6 +58,8 @@ jobs:
           lua server-lua/tests/life-persistence-smoke.lua
           lua tests/touch_controls_test.lua
           lua tests/mobile_editor_test.lua
+          lua tests/mobile_input_audit_test.lua
+          luajit tests/mobile_input_audit_test.lua
           luajit tests/mobile_editor_test.lua
           lua tests/mobile_resources_test.lua
           luajit tests/mobile_resources_test.lua
