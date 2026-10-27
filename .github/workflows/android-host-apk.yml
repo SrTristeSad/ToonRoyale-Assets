@@ -39,8 +39,8 @@ jobs:
           sed -i '/^app.name_byte_array=/d' "$engine/gradle.properties"
           sed -i 's/^#app.name=.*/app.name=Moo IO Beta/' "$engine/gradle.properties"
           sed -i 's/^app.application_id=.*/app.application_id=io.srtristesad.mooio.beta/' "$engine/gradle.properties"
-          sed -i 's/^app.version_code=.*/app.version_code=14/' "$engine/gradle.properties"
-          sed -i 's/^app.version_name=.*/app.version_name=0.5.10-swipe-tray/' "$engine/gradle.properties"
+          sed -i 's/^app.version_code=.*/app.version_code=15/' "$engine/gradle.properties"
+          sed -i 's/^app.version_name=.*/app.version_name=0.5.11-all-visible/' "$engine/gradle.properties"
           sed -i 's/^app.orientation=.*/app.orientation=landscape/' "$engine/gradle.properties"
           game="$engine/app/src/embed/assets"
           mkdir -p "$game"
@@ -52,6 +52,7 @@ jobs:
           rm -rf "$game/server-lua/tests"
           test -s android/src/mobile/controls.lua
           test -s "$game/src/mobile/controls.lua"
+          test -s "$game/src/mobile/tray_layout.lua"
           test -s "$game/src/mobile/slots.lua"
           test -s "$game/src/game/reference_view.lua"
           grep -F 'function View.touchInteraction' "$game/src/game/reference_view.lua"
@@ -134,6 +135,7 @@ jobs:
           grep -F 'assets/server-lua/maps/cabana-e-mina.json' "$RUNNER_TEMP/apk-files.txt"
           grep -F 'assets/src/game/pc_menu_style.lua' "$RUNNER_TEMP/apk-files.txt"
           grep -F 'assets/src/mobile/controls.lua' "$RUNNER_TEMP/apk-files.txt"
+          grep -F 'assets/src/mobile/tray_layout.lua' "$RUNNER_TEMP/apk-files.txt"
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:attackJoystick'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:pressed'
           unzip -p dist/Moo-IO-Android-Beta-Instalavel.apk assets/src/mobile/controls.lua | grep -F 'function M:hotbar'
