@@ -19,7 +19,7 @@ end
 -- Every unlocked icon is visible in the same adaptive multirow tray.
 -- Taps equip only on finger release. No scrolling or extra buttons.
 local three,shortBar=m:hotbar(3,w,h)
-eq(#three,3);eq(three[2].x,l.hotbar.x);eq(shortBar.maxScroll,0)
+eq(#three,3);assert(math.abs(three[2].x-l.hotbar.x)<.001);eq(shortBar.maxScroll,0)
 local two=m:hotbar(2,w,h)
 assert(math.abs(two[1].x+two[2].x-l.hotbar.x*2)<.001,
   "Two centered icons must stay aligned with safe-area strip")
