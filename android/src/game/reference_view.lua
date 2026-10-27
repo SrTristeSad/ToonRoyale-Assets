@@ -114,15 +114,25 @@ local function boundaries(camera,w,h)
   if y1<h then love.graphics.rectangle("fill",0,math.max(0,y1),w,h-math.max(0,y1)) end
 end
 
-local function drawObjectLayer(orderedObjects,camera,w,h,layer)
-  -- JS prepareObjectRenderLists fills buckets in objectManager ARRAY order.
-  -- No pairs(): that reorders overlapping sprites unpredictably in Lua.
+-- Cull and classify each object ONCE per visible frame, not once per
+-- render layer (the old pipeline scanned the entire object array five times).
+-- The five bucket orders still match the authoritative objectManager array.
+local function visibleObjectLayers(orderedObjects,camera,w,h)
+  local layers={[-1]={},[0]={},[1]={},[2]={},[3]={}}
   for _,o in ipairs(orderedObjects) do
-    if Objects.layer(o)==layer and see(o,camera,w,h,tonumber(o.scale) or 100) then
-      local x,y=camera:worldToScreen(o.x,o.y)
-      Objects.draw(o,x+(o.wiggleX or 0)*camera.zoom,
-        y+(o.wiggleY or 0)*camera.zoom,camera.zoom)
+    local layer=Objects.layer(o)
+    local bucket=layers[layer]
+    if bucket and see(o,camera,w,h,tonumber(o.scale) or 100) then
+      bucket[#bucket+1]=o
     end
+  end
+  return layers
+end
+local function drawObjectLayer(layers,camera,layer)
+  for _,o in ipairs(layers[layer]) do
+    local x,y=camera:worldToScreen(o.x,o.y)
+    Objects.draw(o,x+(o.wiggleX or 0)*camera.zoom,
+      y+(o.wiggleY or 0)*camera.zoom,camera.zoom)
   end
 end
 -- Packet X includes the projectile TYPE, not an image name or diameter.
@@ -890,12 +900,12 @@ function View.draw(world,camera,dt,options)
   -- Show server-defined attack areas on the ground, below animals/players.
   -- This makes the imminent boss hit visible without changing collisions.
   BossEffects.draw(world.bossEffects,camera)
-  local objects=world:orderedObjects()
+  local objects=visibleObjectLayers(world:orderedObjects(),camera,w,h)
   -- The JS engine iterates the same players[] and ais[] arrays for each
   -- rendering pass, preserving overlap and zIndex across frames.
   local players=world:orderedPlayers()
   local animals=world:orderedAnimals()
-  drawObjectLayer(objects,camera,w,h,-1)
+  drawObjectLayer(objects,camera,-1)
   drawProjectiles(world,camera,w,h,0)
   for _,p in ipairs(players) do
     if (p.zIndex or 0)==0 and p.x and p.y and p.invisible~=1
@@ -908,15 +918,15 @@ function View.draw(world,camera,dt,options)
   for _,ghost in ipairs(world.mobDeathEffects or {}) do
     renderAnimal(ghost,camera,world,true)
   end
-  drawObjectLayer(objects,camera,w,h,0)
+  drawObjectLayer(objects,camera,0)
   drawProjectiles(world,camera,w,h,1)
-  drawObjectLayer(objects,camera,w,h,1)
+  drawObjectLayer(objects,camera,1)
   for _,p in ipairs(players) do
     if (p.zIndex or 0)==1 and p.x and p.y and p.invisible~=1
       then drawPlayer(p,camera,dt or 0,aimFor(p)) end
   end
-  drawObjectLayer(objects,camera,w,h,2)
-  drawObjectLayer(objects,camera,w,h,3)
+  drawObjectLayer(objects,camera,2)
+  drawObjectLayer(objects,camera,3)
   if world.map then
     drawHouses(world,camera)
     drawMapInteractables(world,camera)

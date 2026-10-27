@@ -7,7 +7,7 @@ local PI=math.pi
 local ICON_PAD=0.9     -- shared/config.js iconPad
 local ICON_PADDING=15 -- shared/config.js iconPadding
 
-function I.draw(kind,data,x,y,slot)
+function I.draw(kind,data,x,y,slot,mobileLarger)
   slot=slot or 66
   if kind=="weapon" then
     if type(data)~="table" or type(data.src)~="string" then return false end
@@ -26,7 +26,10 @@ function I.draw(kind,data,x,y,slot)
     if type(data)~="table" or type(data.id)~="number" then return false end
     local image=Objects.sprite({id=data.id},true)
     if not image then return false end
-    local size=math.min(slot-ICON_PADDING,image:getWidth())
+    -- Android icons can upscale the original cached sprite; do not clamp
+    -- the image to its native canvas resolution on high-density screens.
+    local size=mobileLarger and slot*.87
+      or math.min(slot-ICON_PADDING,image:getWidth())
     love.graphics.setColor(1,1,1)
     love.graphics.draw(image,x,y,0,size/image:getWidth(),
       size/image:getHeight(),image:getWidth()/2,image:getHeight()/2)
