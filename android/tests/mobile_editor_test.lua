@@ -7,10 +7,9 @@ local original=m:layout(w,h)
 local seven=m:hotbar(7,w,h)
 assert(#seven==7,"Never cap inventory at five")
 local sixteen,bar=m:hotbar(16,w,h)
-assert(#sixteen==16 and bar.maxScroll>0,
-  "All actual unlocked items must remain in the scrolling hotbar")
+assert(#sixteen==16 and bar.maxScroll==0 and bar.rows>=2,
+  "All unlocked items must be visible in the same adaptive tray")
 assert(m.barCount==16)
-m.barScroll=bar.maxScroll
 sixteen,bar=m:hotbar(16,w,h)
 local last=sixteen[16]
 assert(last.x>bar.clipX and last.x<bar.clipX+bar.clipW)
@@ -26,12 +25,11 @@ local main=fd:read("*a");fd:close()
 assert(main:find("local action,payload=mobile:released(id)",1,true)
   and main:find("mobileAction(action,payload)",1,true),
   "The main event loop must forward selected item index, not drop payload")
-local middle=bar.clipX+bar.clipW*.5
-assert(m:pressed(52,middle,original.hotbar.y,w,h,14400,16)=="bar_hold")
-local changed=m:moved(52,middle+300,original.hotbar.y,w,h)
-assert(changed=="bar_scroll","Deliberate long swipe must scroll the item row")
+assert(m:pressed(52,last.x,last.y,w,h,14400,16)=="bar_hold")
+local changed=m:moved(52,last.x+300,last.y,w,h)
+assert(changed=="bar_hold","Long drags must not scroll or select anything")
 assert(m:released(52)=="bar_release",
-  "A swipe must never accidentally equip an item")
+  "Dragging must never accidentally equip an item")
 local unedited=m:layout(w,h)
 m:startEditing()
 local action2,selected=m:editorPressed(77,unedited.auto.x,unedited.auto.y,w,h)
@@ -61,7 +59,7 @@ fresh:resetEditor()
 assert(near(fresh:layout(w,h).auto.x,original.auto.x))
 fresh:finishEditing(true)
 assert(fresh:serializeEditor()=="")
--- Hotbar dragging moves the entire continuously expanding row, not five slots.
+-- Editing relocates the adaptive tray without hiding any items.
 fresh:startEditing()
 local l=fresh:layout(w,h)
 local e,group=fresh:editorPressed(90,l.hotbar.x,l.hotbar.y,w,h)
@@ -76,4 +74,4 @@ assert(near(resized.hotbar.x,1600*.57),
   "Normalized layout must work on different display sizes")
 assert(#(fresh:hotbar(25,1600,900))==25,
   "Customization must preserve all 25 unlocked options")
-print("ANDROID TOUCH EDITOR PASS: tap-to-use, scrolling 25 items, drag/save/cancel")
+print("ANDROID TOUCH EDITOR PASS: 25 visible icons, drag/save/cancel")
