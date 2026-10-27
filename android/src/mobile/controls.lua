@@ -6,6 +6,7 @@ local Catalog=require("src.game.catalog")
 local Icons=require("src.game.reference_icons")
 local Assets=require("src.game.reference_assets")
 local Editor=require("src.mobile.hud_editor")
+local Safe=require("src.mobile.safe_area")
 local M={}
 M.__index=M
 local sqrt=math.sqrt
@@ -85,41 +86,48 @@ function M:abilityFeedback(index,now)
 end
 function M:layout(w,h)
  if self.cachedW==w and self.cachedH==h and self.cachedLayout then
-   return self.cachedLayout
+  return self.cachedLayout
  end
- local u=clamp(min(w/1280,h/720)*self.uiScale,.50,2.15)
- local board=min(h*.78,w*.58)
- local panelW=min(w*.76,735*u)
- local panelH=min(h*.82,555*u)
- -- Only the weapons, constructions and consumables actually unlocked by
- -- the MooMoo.io server appear in one continuous, centered bottom row.
- -- Overflow is touch-scrollable in the SAME row, never split into pages.
- -- Touch joysticks have no static base until a finger touches the playfield.
- local barX=w*.50
- local topY=53*u
- local l={u=u,move={x=142*u,y=h-128*u,r=86*u*self.moveScale},
-   fire={x=w-135*u,y=h-132*u,r=86*u*self.fireScale},
-   auto={x=w-88*u,y=h*.47,r=39*u},
-   lock={x=w-88*u,y=h*.47+96*u,r=35*u},
-   hotbar={x=barX,y=h-76*u,r=42*u,step=90*u,
-     clipX=w*.255,clipW=w*.49},
-   shop={x=w-452*u,y=topY,r=35*u},
-   clan={x=w-531*u,y=topY,r=35*u},
-   tribe={x=w-373*u,y=topY,r=35*u},
-   chat={x=w-294*u,y=topY,r=35*u},
-   rank={x=w-215*u,y=topY,r=35*u},
-   pause={x=w-136*u,y=topY,r=35*u},
-   fold={x=w-57*u,y=topY,r=35*u},
-   ping={x=235*u,y=85*u,r=37*u},
-   mark={x=235*u,y=181*u,r=37*u},
-   minimap={x=21*u,y=20*u,w=167*u,h=167*u},
-   bigmap={x=(w-board)/2,y=(h-board)/2,w=board,h=board},
-   close={x=w-52*u,y=45*u,r=30*u},
-   rankPanel={x=(w-panelW)/2,y=(h-panelH)/2,w=panelW,h=panelH},
-    chatPanel={x=w*.17,y=h*.17,w=w*.66,h=h*.23},
-   chatSend={x=w*.70,y=h*.275,w=w*.12,h=h*.079},
-   chatCancel={x=w*.77,y=h*.182,w=w*.055,h=h*.06}}
- self.editor:apply(l,w,h)
+ local safe=Safe.bounds(w,h)
+ local sw,sh=safe.width,safe.height
+ local u=clamp(min(sw/1280,sh/720)*self.uiScale,.50,2.15)
+ local board=min(sh*.78,sw*.58)
+ local panelW=min(sw*.76,735*u)
+ local panelH=min(sh*.82,555*u)
+ -- Android navigation bars may cover a strip included in graphics dimensions.
+ -- Keep HUD controls inside safe coordinates and give inventory more width.
+ local barLeft=safe.left+max(125*u,sw*.12)
+ local barRight=safe.right-max(100*u,sw*.10)
+ if barRight-barLeft<max(180*u,sw*.50) then
+  barLeft=safe.left+sw*.08
+  barRight=safe.right-sw*.08
+ end
+ local right=safe.right
+ local topY=safe.top+53*u
+ local l={u=u,safe=safe,
+  move={x=safe.left+142*u,y=safe.bottom-128*u,r=86*u*self.moveScale},
+  fire={x=right-135*u,y=safe.bottom-132*u,r=86*u*self.fireScale},
+  auto={x=right-88*u,y=safe.top+sh*.47,r=39*u},
+  lock={x=right-88*u,y=safe.top+sh*.47+96*u,r=35*u},
+  hotbar={x=(barLeft+barRight)*.5,y=safe.bottom-76*u,
+   r=42*u,step=90*u,clipX=barLeft,clipW=barRight-barLeft},
+  shop={x=right-452*u,y=topY,r=35*u},
+  clan={x=right-531*u,y=topY,r=35*u},
+  tribe={x=right-373*u,y=topY,r=35*u},
+  chat={x=right-294*u,y=topY,r=35*u},
+  rank={x=right-215*u,y=topY,r=35*u},
+  pause={x=right-136*u,y=topY,r=35*u},
+  fold={x=right-57*u,y=topY,r=35*u},
+  ping={x=safe.left+235*u,y=safe.top+85*u,r=37*u},
+  mark={x=safe.left+235*u,y=safe.top+181*u,r=37*u},
+  minimap={x=safe.left+21*u,y=safe.top+20*u,w=167*u,h=167*u},
+  bigmap={x=safe.left+(sw-board)/2,y=safe.top+(sh-board)/2,w=board,h=board},
+  close={x=right-52*u,y=safe.top+45*u,r=30*u},
+  rankPanel={x=safe.left+(sw-panelW)/2,y=safe.top+(sh-panelH)/2,w=panelW,h=panelH},
+  chatPanel={x=safe.left+sw*.17,y=safe.top+sh*.17,w=sw*.66,h=sh*.23},
+  chatSend={x=safe.left+sw*.70,y=safe.top+sh*.275,w=sw*.12,h=sh*.079},
+  chatCancel={x=safe.left+sw*.77,y=safe.top+sh*.182,w=sw*.055,h=sh*.06}}
+ self.editor:apply(l,w,h,safe)
  self.cachedW=w;self.cachedH=h;self.cachedLayout=l
  return l
 end
