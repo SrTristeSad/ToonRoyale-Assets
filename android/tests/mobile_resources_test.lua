@@ -67,9 +67,9 @@ hud.barScroll=70
 local nextSlots=hud:hotbar(5,1280,720)
 -- No actual overflow for five items: scrolling stays clamped to zero.
 assert(nextSlots==slots)
-local more,overflow=hud:hotbar(10,1280,720)
-assert(overflow.maxScroll>0)
-hud.barScroll=math.max(0,overflow.maxScroll-50)
-local moved=hud:hotbar(10,1280,720)
-assert(moved~=more,"Scrolling must invalidate cached hitboxes")
-print("ANDROID RESOURCES PASS: food/wood/stone/gold and enlarged cached hotbar")
+local more,visible=hud:hotbar(10,1280,720)
+assert(visible.maxScroll==0 and visible.rows>=2,
+  "Every real inventory icon must be visible in the multirow tray")
+local cached=hud:hotbar(10,1280,720)
+assert(cached==more,"Multirow item geometry must remain cached between frames")
+print("ANDROID RESOURCES PASS: authentic materials and cached always-visible hotbar")
