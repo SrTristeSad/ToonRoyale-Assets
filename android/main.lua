@@ -63,6 +63,7 @@ local function saveHudSettings()
     love.filesystem.write("mooio-hud-v1.cfg",
       string.format("%.3f %.3f %.3f %.3f %.3f",
         home.hudScale,home.hudOpacity,home.moveScale,home.fireScale,home.deadzone))
+    love.filesystem.write("mooio-hud-layout-v1.cfg",mobile:serializeEditor())
   end
 end
 local function loadHudSettings()
@@ -84,8 +85,13 @@ local function loadHudSettings()
       end
     end
   end
-  if mobile then mobile:configure(home.hudScale,home.hudOpacity,
-    home.moveScale,home.fireScale,home.deadzone) end
+  if mobile then
+    mobile:configure(home.hudScale,home.hudOpacity,
+      home.moveScale,home.fireScale,home.deadzone)
+    if love.filesystem then
+      mobile:loadEditor(love.filesystem.read("mooio-hud-layout-v1.cfg"))
+    end
+  end
 end
 local pause=Pause.new()
 local sessionIsHost=false
@@ -581,7 +587,10 @@ function love.draw()
     -- Shop/Tribe overlays remain available, but their Windows HUD buttons
     -- must not appear on Android, over the dedicated mobile shortcuts.
     panels:draw(world,not mobile)
-    if mobile and not pause:isOpen() and not panels:isOpen()
+    if mobile and pause.page=="editor" then
+      -- Edits never send attack, move, equip or build packets.
+      mobile:drawEditor(world,Config.mapScale)
+    elseif mobile and not pause:isOpen() and not panels:isOpen()
       and not clans:isOpen() and not profile:isOpen() then
       if chatOpen then
         mobile:drawChat(chatDraft)
@@ -600,8 +609,10 @@ function love.draw()
       love.event.quit(0)
     end
     if pause:isOpen() then
-      pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world,
-        mobile and home or nil)
+      if pause.page~="editor" then
+        pause:draw(home.showGrid,home.fullscreen,home:roomInvite(),world,
+          mobile and home or nil)
+      end
       return
     end
     -- Only show missing PNG diagnostics on explicit developer opt-in.
@@ -982,6 +993,19 @@ end
 local function pauseAction(action)
   if action=="edit_controls" then
     if mobile then mobile:stopForOverlay();pause.page="hud" end
+  elseif action=="editor_open" then
+    if mobile and phase=="playing" then
+      mobile:startEditing();stopPlayerControls();pause.page="editor"
+    end
+  elseif action=="editor_save" then
+    if mobile then
+      mobile:finishEditing(true);saveHudSettings();pause.page="hud"
+    end
+  elseif action=="editor_reset" then
+    if mobile then mobile:resetEditor() end
+  elseif action=="editor_cancel" then
+    if mobile then mobile:finishEditing(false) end
+    pause.page="hud"
   elseif action=="hud_smaller" or action=="hud_bigger"
     or action=="opacity_less" or action=="opacity_more"
     or action=="move_less" or action=="move_more"
@@ -1033,7 +1057,11 @@ function love.keypressed(key)
     return
   end
   if pause:isOpen() then
-    pauseAction(pause:keypressed(key))
+    if pause.page=="editor" and key=="escape" then
+      pauseAction("editor_cancel")
+    else
+      pauseAction(pause:keypressed(key))
+    end
     return
   end
   if home.roomOverlay then
@@ -1472,6 +1500,15 @@ local function mobileMouse(x,y)
 end
 function love.touchpressed(id,x,y)
   if not mobile then return end
+  if pause.page=="editor" then
+    local w,h=love.graphics.getDimensions()
+    local action=mobile:editorPressed(id,x,y,w,h)
+    if action=="editor_save" or action=="editor_reset"
+      or action=="editor_cancel" then
+      mobile:editorReleased(id);pauseAction(action)
+    end
+    return
+  end
   if phase=="death_choice" then
     mobileForwardMouse=true
     love.mousepressed(x,y,1)
@@ -1521,7 +1558,13 @@ function love.touchpressed(id,x,y)
   if action then mobileAction(action,payload) end
 end
 function love.touchmoved(id,x,y)
-  if not mobile or phase~="playing" or pause:isOpen() then return end
+  if not mobile then return end
+  if pause.page=="editor" then
+    local w,h=love.graphics.getDimensions()
+    mobile:editorMoved(id,x,y,w,h)
+    return
+  end
+  if phase~="playing" or pause:isOpen() then return end
   local w,h=love.graphics.getDimensions()
   local action,attackChanged=mobile:moved(id,x,y,w,h)
   -- Inner right drag aims; moving outward activates manual attack.
@@ -1542,8 +1585,10 @@ function love.touchmoved(id,x,y)
 end
 function love.touchreleased(id)
   if not mobile then return end
-  local action=mobile:released(id)
-  if action then mobileAction(action) end
+  if pause.page=="editor" then mobile:editorReleased(id);return end
+  local action,payload=mobile:released(id)
+  -- The actual slot index must survive release for z/F item packets.
+  if action then mobileAction(action,payload) end
 end
 function love.quit()
   if not allowQuit and (hosted.state=="ready" or hosted.state=="starting") then

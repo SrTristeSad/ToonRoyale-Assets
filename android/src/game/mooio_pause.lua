@@ -26,6 +26,7 @@ local rects={
   hudFireLess={407,374,88,41},hudFireMore={785,374,88,41},
   hudDeadLess={407,425,88,41},hudDeadMore={785,425,88,41},
   hudReset={400,493,222,45},hudBack={652,493,222,45},
+  hudEditor={410,545,460,47},
   copyInvite={410,359,460,58},
   inviteBack={410,431,460,52},
   confirm={410,404,216,56},
@@ -79,6 +80,9 @@ function Pause:keypressed(key)
       return "back"
     elseif self.page=="hud" then
       self.page="settings"
+    elseif self.page=="editor" then
+      self.page="hud"
+      return "editor_cancel"
     elseif self.page=="confirm" or self.page=="settings" or self.page=="info" then
       self.page="root"
       self.confirmQuit=false
@@ -112,6 +116,7 @@ function Pause:click(screenX,screenY)
     if which("controls") then return "edit_controls" end
     if which("settingsBack") then self.page="root";return "back" end
   elseif self.page=="hud" then
+    if which("hudEditor") then return "editor_open" end
     local actions={
       hudSizeLess="hud_smaller",hudSizeMore="hud_bigger",
       hudOpacityLess="opacity_less",hudOpacityMore="opacity_more",
@@ -148,7 +153,8 @@ function Pause:draw(grid,fullscreen,inviteText,world,mobileHud)
   local z=math.min(w/W,h/H)
   love.graphics.translate((w-W*z)/2,(h-H*z)/2)
   love.graphics.scale(z)
-  UI.panel(360,114,560,465,{0.19,0.21,0.20})
+  UI.panel(360,self.page=="hud" and 105 or 114,560,
+    self.page=="hud" and 550 or 465,{0.19,0.21,0.20})
   love.graphics.setColor(0.77,0.82,0.77,0.27)
   love.graphics.rectangle("fill",366,120,548,3)
   if self.page=="root" then
@@ -187,6 +193,7 @@ function Pause:draw(grid,fullscreen,inviteText,world,mobileHud)
       label(r[3].."   "..string.format("%.0f%%",r[4]*100),502,r[5],275,42,18)
     end
     button("RESTAURAR","hudReset");button("VOLTAR","hudBack")
+    button("EDITAR POSICOES NA TELA","hudEditor")
   elseif self.page=="info" then
     label("INFORMACOES DA PARTIDA",395,146,490,58,28)
     local map=world and world.map
@@ -220,7 +227,8 @@ function Pause:draw(grid,fullscreen,inviteText,world,mobileHud)
       376,508,528,35,14,{0.79,0.85,0.77})
   end
   if mobileHud then
-    label("ANDROID LUA 0.5.6 - HUD MOVEL",392,550,500,20,13,{0.82,0.89,0.83})
+    label("ANDROID LUA 0.5.7 - HUD MOVEL",392,
+      self.page=="hud" and 615 or 550,500,20,13,{0.82,0.89,0.83})
   end
   love.graphics.pop()
 end

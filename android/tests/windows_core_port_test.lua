@@ -125,6 +125,9 @@ assert(pause:click(450,342)=="move_less")
 assert(pause:click(830,393)=="fire_more")
 assert(pause:click(830,447)=="dead_more")
 assert(pause:click(510,514)=="hud_reset")
+assert(pause:click(620,564)=="editor_open")
+pause.page="editor"
+assert(pause:keypressed("escape")=="editor_cancel" and pause.page=="hud")
 assert(pause:click(760,514)=="back" and pause.page=="settings")
 pause:close()
 screen.modIds="lobos-em-matilha,mais-lobos"
