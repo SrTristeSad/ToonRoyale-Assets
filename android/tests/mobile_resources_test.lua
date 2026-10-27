@@ -1,7 +1,7 @@
 package.path="./?.lua;./?/init.lua;"..package.path
 -- Regression: only the real MooMoo resources appear beneath the minimap.
 -- The server's points field is the original gold display.
-local images={},texts={},icons={}
+local images,texts,icons={},{},{}
 local function nop() end
 local function font(size)
  return {getHeight=function()return size end,getWidth=function(_,s)return #tostring(s)*size*.5 end}
