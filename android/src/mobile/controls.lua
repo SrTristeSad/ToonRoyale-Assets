@@ -433,8 +433,14 @@ end
 function M:released(id)
  if id==self.barTouchId then
    local index=not self.barTouchMoved and self.barTouchIndex or nil
+   local dragged=self.barTouchMoved
    self.barTouchId=nil;self.barTouchX=nil;self.barTouchStartX=nil
    self.barTouchIndex=nil;self.barTouchMoved=false;self.barTouchDistance=0
+   if dragged and self.cachedW>0 and self.cachedH>0 then
+     local _,bounds=self:hotbar(self.barCount,self.cachedW,self.cachedH)
+     local step=90*bounds.rowU
+     self.barScroll=clamp(math.floor(self.barScroll/step+.5)*step,0,bounds.maxScroll)
+   end
    if index then return "slot",index end
    return "bar_release"
  end
