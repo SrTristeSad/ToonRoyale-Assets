@@ -85,10 +85,13 @@ function M:abilityFeedback(index,now)
  self.abilityPulseAt=tonumber(now) or 0
 end
 function M:layout(w,h)
- if self.cachedW==w and self.cachedH==h and self.cachedLayout then
-  return self.cachedLayout
- end
  local safe=Safe.bounds(w,h)
+ local old=self.cachedLayout
+ if self.cachedW==w and self.cachedH==h and old and old.safe
+   and old.safe.left==safe.left and old.safe.top==safe.top
+   and old.safe.right==safe.right and old.safe.bottom==safe.bottom then
+  return old
+ end
  local sw,sh=safe.width,safe.height
  local u=clamp(min(sw/1280,sh/720)*self.uiScale,.50,2.15)
  local board=min(sh*.78,sw*.58)
